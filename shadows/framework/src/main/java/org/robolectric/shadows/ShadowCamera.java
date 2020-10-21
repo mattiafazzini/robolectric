@@ -1,5 +1,6 @@
 package org.robolectric.shadows;
 
+import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR1;
 import static org.robolectric.shadow.api.Shadow.newInstanceOf;
 
 import android.graphics.ImageFormat;
@@ -33,6 +34,7 @@ public class ShadowCamera {
   private int displayOrientation;
   private Camera.AutoFocusCallback autoFocusCallback;
   private boolean autoFocusing;
+  private boolean shutterEnabled;
 
   private static Map<Integer, Camera.CameraInfo> cameras = new HashMap<>();
 
@@ -43,6 +45,7 @@ public class ShadowCamera {
     locked = true;
     previewing = false;
     released = false;
+    shutterEnabled = true;
   }
 
   @Implementation
@@ -211,6 +214,19 @@ public class ShadowCamera {
     if (jpeg != null) {
       jpeg.onPictureTaken(new byte[0], realCamera);
     }
+  }
+
+  @Implementation(minSdk = JELLY_BEAN_MR1)
+  protected boolean enableShutterSound(boolean enabled) {
+    if (!enabled && cameras.containsKey(id) && !cameras.get(id).canDisableShutterSound) {
+      return false;
+    }
+    shutterEnabled = enabled;
+    return true;
+  }
+
+  public boolean isShutterEnabled() {
+    return shutterEnabled;
   }
 
   public boolean isLocked() {
