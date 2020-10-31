@@ -9,9 +9,11 @@ import org.robolectric.annotation.Implements;
 @Implements(SearchManager.class)
 public class ShadowSearchManager {
 
-  @Implementation
-  protected SearchableInfo getSearchableInfo(ComponentName componentName) {
-    // Prevent Robolectric from calling through
-    return null;
-  }
+    @Implementation
+    protected SearchableInfo getSearchableInfo(ComponentName componentName) {
+        System.out.println("ShadowSearchManager#getSearchableInfo");
+        // Prevent Robolectric from calling through
+        return null;
+    }
 }
+

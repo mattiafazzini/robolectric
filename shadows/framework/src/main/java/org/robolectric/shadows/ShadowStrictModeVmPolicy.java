@@ -8,17 +8,21 @@ import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 import org.robolectric.util.ReflectionHelpers;
 
-/** Shadow for StrictMode.VmPolicy */
-@Implements(value=StrictMode.VmPolicy.class, minSdk = Build.VERSION_CODES.P)
+/**
+ * Shadow for StrictMode.VmPolicy
+ */
+@Implements(value = StrictMode.VmPolicy.class, minSdk = Build.VERSION_CODES.P)
 public class ShadowStrictModeVmPolicy {
 
-  @Implementation
-  protected static void __staticInitializer__() {
-    ReflectionHelpers.callStaticMethod(StrictMode.VmPolicy.class, "__staticInitializer__");
-    if (RuntimeEnvironment.getApiLevel() >= Build.VERSION_CODES.P) {
-      // if VmPolicy was referenced first, sVmPolicy won't be set properly. So force a
-      // re-initialization
-      ReflectionHelpers.setStaticField(StrictMode.class, "sVmPolicy", VmPolicy.LAX);
+    @Implementation
+    protected static void __staticInitializer__() {
+        System.out.println("ShadowStrictModeVmPolicy#__staticInitializer__");
+        ReflectionHelpers.callStaticMethod(StrictMode.VmPolicy.class, "__staticInitializer__");
+        if (RuntimeEnvironment.getApiLevel() >= Build.VERSION_CODES.P) {
+            // if VmPolicy was referenced first, sVmPolicy won't be set properly. So force a
+            // re-initialization
+            ReflectionHelpers.setStaticField(StrictMode.class, "sVmPolicy", VmPolicy.LAX);
+        }
     }
-  }
 }
+

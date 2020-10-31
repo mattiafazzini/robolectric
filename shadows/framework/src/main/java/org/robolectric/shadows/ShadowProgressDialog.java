@@ -1,7 +1,6 @@
 package org.robolectric.shadows;
 
 import static org.robolectric.shadow.api.Shadow.directlyOn;
-
 import android.app.ProgressDialog;
 import android.widget.TextView;
 import org.robolectric.annotation.Implementation;
@@ -9,36 +8,40 @@ import org.robolectric.annotation.Implements;
 import org.robolectric.annotation.RealObject;
 import org.robolectric.util.ReflectionHelpers;
 
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings({ "UnusedDeclaration" })
 @Implements(ProgressDialog.class)
 public class ShadowProgressDialog extends ShadowAlertDialog {
-  @RealObject ProgressDialog realProgressDialog;
 
-  private int mProgressStyle;
+    @RealObject
+    ProgressDialog realProgressDialog;
 
-  /**
-   * @return the message displayed in the dialog
-   */
-  @Override
-  public CharSequence getMessage() {
-    if (mProgressStyle == ProgressDialog.STYLE_HORIZONTAL) {
-      return super.getMessage();
-    } else {
-      TextView message = ReflectionHelpers.getField(realProgressDialog, "mMessageView");
-      return message.getText();
+    private int mProgressStyle;
+
+    /**
+     * @return the message displayed in the dialog
+     */
+    @Override
+    public CharSequence getMessage() {
+        if (mProgressStyle == ProgressDialog.STYLE_HORIZONTAL) {
+            return super.getMessage();
+        } else {
+            TextView message = ReflectionHelpers.getField(realProgressDialog, "mMessageView");
+            return message.getText();
+        }
     }
-  }
 
-  @Implementation
-  protected void setProgressStyle(int style) {
-    mProgressStyle = style;
-    directlyOn(realProgressDialog, ProgressDialog.class).setProgressStyle(style);
-  }
+    @Implementation
+    protected void setProgressStyle(int style) {
+        System.out.println("ShadowProgressDialog#setProgressStyle");
+        mProgressStyle = style;
+        directlyOn(realProgressDialog, ProgressDialog.class).setProgressStyle(style);
+    }
 
-  /**
-   * @return the style of the progress dialog
-   */
-  public int getProgressStyle() {
-    return mProgressStyle;
-  }
+    /**
+     * @return the style of the progress dialog
+     */
+    public int getProgressStyle() {
+        return mProgressStyle;
+    }
 }
+

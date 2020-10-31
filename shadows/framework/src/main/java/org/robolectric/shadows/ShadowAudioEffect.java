@@ -10,19 +10,21 @@ import org.robolectric.annotation.Resetter;
 @Implements(AudioEffect.class)
 public class ShadowAudioEffect {
 
-  private static List<AudioEffect.Descriptor> DESCRIPTORS = new ArrayList<>();
+    private static List<AudioEffect.Descriptor> DESCRIPTORS = new ArrayList<>();
 
-  public static void addEffect(AudioEffect.Descriptor descriptor) {
-    DESCRIPTORS.add(descriptor);
-  }
+    public static void addEffect(AudioEffect.Descriptor descriptor) {
+        DESCRIPTORS.add(descriptor);
+    }
 
-  @Implementation
-  protected static AudioEffect.Descriptor[] queryEffects() {
-    return DESCRIPTORS.toArray(new AudioEffect.Descriptor[DESCRIPTORS.size()]);
-  }
+    @Implementation
+    protected static AudioEffect.Descriptor[] queryEffects() {
+        System.out.println("ShadowAudioEffect#queryEffects");
+        return DESCRIPTORS.toArray(new AudioEffect.Descriptor[DESCRIPTORS.size()]);
+    }
 
-  @Resetter
-  public static void reset() {
-    DESCRIPTORS.clear();
-  }
+    @Resetter
+    public static void reset() {
+        DESCRIPTORS.clear();
+    }
 }
+

@@ -2,7 +2,6 @@ package org.robolectric.shadows;
 
 import static android.os.Build.VERSION_CODES.KITKAT_WATCH;
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
-
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Picture;
@@ -12,38 +11,47 @@ import org.robolectric.annotation.Implements;
 @Implements(Picture.class)
 public class ShadowPicture {
 
-  private int width;
-  private int height;
+    private int width;
 
-  @Implementation
-  protected void __constructor__() {}
+    private int height;
 
-  @Implementation(minSdk = LOLLIPOP)
-  protected void __constructor__(long nativePicture) {}
+    @Implementation
+    protected void __constructor__() {
+    }
 
-  @Implementation(maxSdk = KITKAT_WATCH)
-  protected void __constructor__(int nativePicture, boolean fromStream) {}
+    @Implementation(minSdk = LOLLIPOP)
+    protected void __constructor__(long nativePicture) {
+    }
 
-  @Implementation
-  protected void __constructor__(Picture src) {
-    width = src.getWidth();
-    height = src.getHeight();
-  }
+    @Implementation(maxSdk = KITKAT_WATCH)
+    protected void __constructor__(int nativePicture, boolean fromStream) {
+    }
 
-  @Implementation
-  protected int getWidth() {
-    return width;
-  }
+    @Implementation
+    protected void __constructor__(Picture src) {
+        System.out.println("ShadowPicture#__constructor__");
+        width = src.getWidth();
+        height = src.getHeight();
+    }
 
-  @Implementation
-  protected int getHeight() {
-    return height;
-  }
+    @Implementation
+    protected int getWidth() {
+        System.out.println("ShadowPicture#getWidth");
+        return width;
+    }
 
-  @Implementation
-  protected Canvas beginRecording(int width, int height) {
-    this.width = width;
-    this.height = height;
-    return new Canvas(Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888));
-  }
+    @Implementation
+    protected int getHeight() {
+        System.out.println("ShadowPicture#getHeight");
+        return height;
+    }
+
+    @Implementation
+    protected Canvas beginRecording(int width, int height) {
+        System.out.println("ShadowPicture#beginRecording");
+        this.width = width;
+        this.height = height;
+        return new Canvas(Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888));
+    }
 }
+

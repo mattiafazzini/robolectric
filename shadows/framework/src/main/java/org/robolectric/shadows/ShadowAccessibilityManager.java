@@ -3,7 +3,6 @@ package org.robolectric.shadows;
 import static android.os.Build.VERSION_CODES.KITKAT;
 import static android.os.Build.VERSION_CODES.O_MR1;
 import static org.robolectric.RuntimeEnvironment.getApiLevel;
-
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.content.Context;
 import android.content.pm.ServiceInfo;
@@ -25,145 +24,160 @@ import org.robolectric.util.ReflectionHelpers.ClassParameter;
 
 @Implements(AccessibilityManager.class)
 public class ShadowAccessibilityManager {
-  private static AccessibilityManager sInstance;
-  private static final Object sInstanceSync = new Object();
 
-  @RealObject AccessibilityManager realAccessibilityManager;
-  private boolean enabled;
-  private List<AccessibilityServiceInfo> installedAccessibilityServiceList;
-  private List<AccessibilityServiceInfo> enabledAccessibilityServiceList;
-  private List<ServiceInfo> accessibilityServiceList;
-  private boolean touchExplorationEnabled;
+    private static AccessibilityManager sInstance;
 
-  private static boolean isAccessibilityButtonSupported = true;
+    private static final Object sInstanceSync = new Object();
 
-  @Resetter
-  public static void reset() {
-    synchronized (sInstanceSync) {
-      sInstance = null;
-    }
-    isAccessibilityButtonSupported = true;
-  }
+    @RealObject
+    AccessibilityManager realAccessibilityManager;
 
-  @HiddenApi
-  @Implementation
-  public static AccessibilityManager getInstance(Context context) throws Exception {
-    synchronized (sInstanceSync) {
-      if (sInstance == null) {
-          sInstance = createInstance(context);
-      }
-    }
-    return sInstance;
-  }
+    private boolean enabled;
 
-  private static AccessibilityManager createInstance(Context context) throws Exception {
-    if (getApiLevel() >= KITKAT) {
-      AccessibilityManager accessibilityManager = Shadow.newInstance(AccessibilityManager.class,
-          new Class[]{Context.class, IAccessibilityManager.class, int.class},
-          new Object[]{context, ReflectionHelpers.createNullProxy(IAccessibilityManager.class), 0});
-      ReflectionHelpers.setField(accessibilityManager, "mHandler", new MyHandler(context.getMainLooper(), accessibilityManager));
-      return accessibilityManager;
-    } else {
-      AccessibilityManager accessibilityManager = Shadow.newInstance(AccessibilityManager.class, new Class[0], new Object[0]);
-      ReflectionHelpers.setField(accessibilityManager, "mHandler", new MyHandler(context.getMainLooper(), accessibilityManager));
-      return accessibilityManager;
-    }
-  }
+    private List<AccessibilityServiceInfo> installedAccessibilityServiceList;
 
-  @Implementation
-  protected boolean addAccessibilityStateChangeListener(
-      AccessibilityManager.AccessibilityStateChangeListener listener) {
-    return true;
-  }
+    private List<AccessibilityServiceInfo> enabledAccessibilityServiceList;
 
-  @Implementation
-  protected boolean removeAccessibilityStateChangeListener(
-      AccessibilityManager.AccessibilityStateChangeListener listener) {
-    return true;
-  }
+    private List<ServiceInfo> accessibilityServiceList;
 
-  @Implementation
-  protected List<ServiceInfo> getAccessibilityServiceList() {
-    return accessibilityServiceList;
-  }
+    private boolean touchExplorationEnabled;
 
-  public void setAccessibilityServiceList(List<ServiceInfo> accessibilityServiceList) {
-    this.accessibilityServiceList = accessibilityServiceList;
-  }
+    private static boolean isAccessibilityButtonSupported = true;
 
-  @Implementation
-  protected List<AccessibilityServiceInfo> getEnabledAccessibilityServiceList(
-      int feedbackTypeFlags) {
-    return enabledAccessibilityServiceList;
-  }
-
-  public void setEnabledAccessibilityServiceList(List<AccessibilityServiceInfo> enabledAccessibilityServiceList) {
-    this.enabledAccessibilityServiceList = enabledAccessibilityServiceList;
-  }
-
-  @Implementation
-  protected List<AccessibilityServiceInfo> getInstalledAccessibilityServiceList() {
-    return installedAccessibilityServiceList;
-  }
-
-  public void setInstalledAccessibilityServiceList(List<AccessibilityServiceInfo> installedAccessibilityServiceList) {
-    this.installedAccessibilityServiceList = installedAccessibilityServiceList;
-  }
-
-  @Implementation
-  protected boolean isEnabled() {
-    return enabled;
-  }
-
-  public void setEnabled(boolean enabled) {
-    this.enabled = enabled;
-    ReflectionHelpers.setField(realAccessibilityManager, "mIsEnabled", enabled);
-  }
-
-  @Implementation
-  protected boolean isTouchExplorationEnabled() {
-    return touchExplorationEnabled;
-  }
-
-  public void setTouchExplorationEnabled(boolean touchExplorationEnabled) {
-    this.touchExplorationEnabled = touchExplorationEnabled;
-  }
-
-  /**
-   * Returns {@code true} by default, or the value specified via {@link
-   * #setAccessibilityButtonSupported(boolean)}
-   */
-  @Implementation(minSdk = O_MR1)
-  protected static boolean isAccessibilityButtonSupported() {
-    return isAccessibilityButtonSupported;
-  }
-
-  /**
-   * Sets that the system navigation area is supported accessibility button; controls the return
-   * value of {@link AccessibilityManager#isAccessibilityButtonSupported()}.
-   */
-  public static void setAccessibilityButtonSupported(boolean supported) {
-    isAccessibilityButtonSupported = supported;
-  }
-
-  static class MyHandler extends Handler {
-    private static final int DO_SET_STATE = 10;
-    private final AccessibilityManager accessibilityManager;
-
-    MyHandler(Looper mainLooper, AccessibilityManager accessibilityManager) {
-      super(mainLooper);
-      this.accessibilityManager = accessibilityManager;
+    @Resetter
+    public static void reset() {
+        synchronized (sInstanceSync) {
+            sInstance = null;
+        }
+        isAccessibilityButtonSupported = true;
     }
 
-    @Override
-    public void handleMessage(Message message) {
-      switch (message.what) {
-        case DO_SET_STATE:
-          ReflectionHelpers.callInstanceMethod(accessibilityManager, "setState", ClassParameter.from(int.class, message.arg1));
-          return;
-        default:
-          Log.w("AccessibilityManager", "Unknown message type: " + message.what);
-      }
+    @HiddenApi
+    @Implementation
+    public static AccessibilityManager getInstance(Context context) throws Exception {
+        System.out.println("ShadowAccessibilityManager#getInstance");
+        synchronized (sInstanceSync) {
+            if (sInstance == null) {
+                sInstance = createInstance(context);
+            }
+        }
+        return sInstance;
     }
-  }
+
+    private static AccessibilityManager createInstance(Context context) throws Exception {
+        if (getApiLevel() >= KITKAT) {
+            AccessibilityManager accessibilityManager = Shadow.newInstance(AccessibilityManager.class, new Class[] { Context.class, IAccessibilityManager.class, int.class }, new Object[] { context, ReflectionHelpers.createNullProxy(IAccessibilityManager.class), 0 });
+            ReflectionHelpers.setField(accessibilityManager, "mHandler", new MyHandler(context.getMainLooper(), accessibilityManager));
+            return accessibilityManager;
+        } else {
+            AccessibilityManager accessibilityManager = Shadow.newInstance(AccessibilityManager.class, new Class[0], new Object[0]);
+            ReflectionHelpers.setField(accessibilityManager, "mHandler", new MyHandler(context.getMainLooper(), accessibilityManager));
+            return accessibilityManager;
+        }
+    }
+
+    @Implementation
+    protected boolean addAccessibilityStateChangeListener(AccessibilityManager.AccessibilityStateChangeListener listener) {
+        System.out.println("ShadowAccessibilityManager#addAccessibilityStateChangeListener");
+        return true;
+    }
+
+    @Implementation
+    protected boolean removeAccessibilityStateChangeListener(AccessibilityManager.AccessibilityStateChangeListener listener) {
+        System.out.println("ShadowAccessibilityManager#removeAccessibilityStateChangeListener");
+        return true;
+    }
+
+    @Implementation
+    protected List<ServiceInfo> getAccessibilityServiceList() {
+        System.out.println("ShadowAccessibilityManager#getAccessibilityServiceList");
+        return accessibilityServiceList;
+    }
+
+    public void setAccessibilityServiceList(List<ServiceInfo> accessibilityServiceList) {
+        this.accessibilityServiceList = accessibilityServiceList;
+    }
+
+    @Implementation
+    protected List<AccessibilityServiceInfo> getEnabledAccessibilityServiceList(int feedbackTypeFlags) {
+        System.out.println("ShadowAccessibilityManager#getEnabledAccessibilityServiceList");
+        return enabledAccessibilityServiceList;
+    }
+
+    public void setEnabledAccessibilityServiceList(List<AccessibilityServiceInfo> enabledAccessibilityServiceList) {
+        this.enabledAccessibilityServiceList = enabledAccessibilityServiceList;
+    }
+
+    @Implementation
+    protected List<AccessibilityServiceInfo> getInstalledAccessibilityServiceList() {
+        System.out.println("ShadowAccessibilityManager#getInstalledAccessibilityServiceList");
+        return installedAccessibilityServiceList;
+    }
+
+    public void setInstalledAccessibilityServiceList(List<AccessibilityServiceInfo> installedAccessibilityServiceList) {
+        this.installedAccessibilityServiceList = installedAccessibilityServiceList;
+    }
+
+    @Implementation
+    protected boolean isEnabled() {
+        System.out.println("ShadowAccessibilityManager#isEnabled");
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+        ReflectionHelpers.setField(realAccessibilityManager, "mIsEnabled", enabled);
+    }
+
+    @Implementation
+    protected boolean isTouchExplorationEnabled() {
+        System.out.println("ShadowAccessibilityManager#isTouchExplorationEnabled");
+        return touchExplorationEnabled;
+    }
+
+    public void setTouchExplorationEnabled(boolean touchExplorationEnabled) {
+        this.touchExplorationEnabled = touchExplorationEnabled;
+    }
+
+    /**
+     * Returns {@code true} by default, or the value specified via {@link
+     * #setAccessibilityButtonSupported(boolean)}
+     */
+    @Implementation(minSdk = O_MR1)
+    protected static boolean isAccessibilityButtonSupported() {
+        System.out.println("ShadowAccessibilityManager#isAccessibilityButtonSupported");
+        return isAccessibilityButtonSupported;
+    }
+
+    /**
+     * Sets that the system navigation area is supported accessibility button; controls the return
+     * value of {@link AccessibilityManager#isAccessibilityButtonSupported()}.
+     */
+    public static void setAccessibilityButtonSupported(boolean supported) {
+        isAccessibilityButtonSupported = supported;
+    }
+
+    static class MyHandler extends Handler {
+
+        private static final int DO_SET_STATE = 10;
+
+        private final AccessibilityManager accessibilityManager;
+
+        MyHandler(Looper mainLooper, AccessibilityManager accessibilityManager) {
+            super(mainLooper);
+            this.accessibilityManager = accessibilityManager;
+        }
+
+        @Override
+        public void handleMessage(Message message) {
+            switch(message.what) {
+                case DO_SET_STATE:
+                    ReflectionHelpers.callInstanceMethod(accessibilityManager, "setState", ClassParameter.from(int.class, message.arg1));
+                    return;
+                default:
+                    Log.w("AccessibilityManager", "Unknown message type: " + message.what);
+            }
+        }
+    }
 }
+

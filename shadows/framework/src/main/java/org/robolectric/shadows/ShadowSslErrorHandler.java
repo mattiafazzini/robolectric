@@ -7,24 +7,28 @@ import org.robolectric.annotation.Implements;
 @Implements(SslErrorHandler.class)
 public class ShadowSslErrorHandler extends ShadowHandler {
 
-  private boolean cancelCalled = false;
-  private boolean proceedCalled = false;
+    private boolean cancelCalled = false;
 
-  @Implementation
-  protected void cancel() {
-    cancelCalled = true;
-  }
+    private boolean proceedCalled = false;
 
-  public boolean wasCancelCalled() {
-    return cancelCalled;
-  }
+    @Implementation
+    protected void cancel() {
+        System.out.println("ShadowSslErrorHandler#cancel");
+        cancelCalled = true;
+    }
 
-  @Implementation
-  protected void proceed() {
-    proceedCalled = true;
-  }
+    public boolean wasCancelCalled() {
+        return cancelCalled;
+    }
 
-  public boolean wasProceedCalled() {
-    return proceedCalled;
-  }
+    @Implementation
+    protected void proceed() {
+        System.out.println("ShadowSslErrorHandler#proceed");
+        proceedCalled = true;
+    }
+
+    public boolean wasProceedCalled() {
+        return proceedCalled;
+    }
 }
+

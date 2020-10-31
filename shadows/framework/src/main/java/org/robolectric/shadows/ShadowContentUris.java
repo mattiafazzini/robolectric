@@ -8,18 +8,22 @@ import org.robolectric.annotation.Implements;
 @Implements(ContentUris.class)
 public class ShadowContentUris {
 
-  @Implementation
-  protected static Uri withAppendedId(Uri contentUri, long id) {
-    return Uri.withAppendedPath(contentUri, String.valueOf(id));
-  }
-
-  @Implementation
-  protected static long parseId(Uri contentUri) {
-    if (!contentUri.isHierarchical()) {
-      throw new UnsupportedOperationException();
+    @Implementation
+    protected static Uri withAppendedId(Uri contentUri, long id) {
+        System.out.println("ShadowContentUris#withAppendedId");
+        return Uri.withAppendedPath(contentUri, String.valueOf(id));
     }
-    String path = contentUri.getLastPathSegment();
-    if (path == null) return -1;
-    return Long.parseLong(path);
-  }
+
+    @Implementation
+    protected static long parseId(Uri contentUri) {
+        System.out.println("ShadowContentUris#parseId");
+        if (!contentUri.isHierarchical()) {
+            throw new UnsupportedOperationException();
+        }
+        String path = contentUri.getLastPathSegment();
+        if (path == null)
+            return -1;
+        return Long.parseLong(path);
+    }
 }
+

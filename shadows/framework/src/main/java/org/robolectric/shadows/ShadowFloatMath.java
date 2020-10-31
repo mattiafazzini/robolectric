@@ -13,38 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.robolectric.shadows;
 
 import android.util.FloatMath;
 import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings({ "UnusedDeclaration" })
 @Implements(FloatMath.class)
 public class ShadowFloatMath {
-  @Implementation
-  protected static float floor(float value) {
-    return (float) Math.floor(value);
-  }
 
-  @Implementation
-  protected static float ceil(float value) {
-    return (float) Math.ceil(value);
-  }
+    @Implementation
+    protected static float floor(float value) {
+        System.out.println("ShadowFloatMath#floor");
+        return (float) Math.floor(value);
+    }
 
-  @Implementation
-  protected static float sin(float angle) {
-    return (float) Math.sin(angle);
-  }
+    @Implementation
+    protected static float ceil(float value) {
+        System.out.println("ShadowFloatMath#ceil");
+        return (float) Math.ceil(value);
+    }
 
-  @Implementation
-  protected static float cos(float angle) {
-    return (float) Math.cos(angle);
-  }
+    @Implementation
+    protected static float sin(float angle) {
+        System.out.println("ShadowFloatMath#sin");
+        return (float) Math.sin(angle);
+    }
 
-  @Implementation
-  protected static float sqrt(float value) {
-    return (float) Math.sqrt(value);
-  }
+    @Implementation
+    protected static float cos(float angle) {
+        System.out.println("ShadowFloatMath#cos");
+        return (float) Math.cos(angle);
+    }
+
+    @Implementation
+    protected static float sqrt(float value) {
+        System.out.println("ShadowFloatMath#sqrt");
+        return (float) Math.sqrt(value);
+    }
 }
+

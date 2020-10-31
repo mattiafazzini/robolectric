@@ -15,72 +15,80 @@ import org.robolectric.util.ReflectionHelpers.ClassParameter;
 @Implements(AccessibilityRecord.class)
 public class ShadowAccessibilityRecord {
 
-  @RealObject private AccessibilityRecord realRecord;
+    @RealObject
+    private AccessibilityRecord realRecord;
 
-  public static final int NO_VIRTUAL_ID = -1;
+    public static final int NO_VIRTUAL_ID = -1;
 
-  private View sourceRoot;
-  private int virtualDescendantId;
-  private AccessibilityNodeInfo sourceNode;
-  private int windowId = -1;
+    private View sourceRoot;
 
-  @Implementation
-  protected void setSource(View root, int virtualDescendantId) {
-    this.sourceRoot = root;
-    this.virtualDescendantId = virtualDescendantId;
-    Shadow.directlyOn(realRecord, AccessibilityRecord.class, "setSource",
-        ClassParameter.from(View.class, root),
-        ClassParameter.from(Integer.TYPE, virtualDescendantId));
-  }
+    private int virtualDescendantId;
 
-  @Implementation
-  protected void setSource(View root) {
-    this.sourceRoot = root;
-    this.virtualDescendantId = NO_VIRTUAL_ID;
-    Shadow.directlyOn(realRecord, AccessibilityRecord.class, "setSource",
-        ClassParameter.from(View.class, root));
-  }
+    private AccessibilityNodeInfo sourceNode;
 
-  /**
-   * Sets the {@link AccessibilityNodeInfo} of the event source.
-   *
-   * @param node The node to set
-   */
-  public void setSourceNode(AccessibilityNodeInfo node) {
-    sourceNode = node;
-  }
+    private int windowId = -1;
 
-  /**
-   * Returns the {@link AccessibilityNodeInfo} of the event source or {@code null} if there is none.
-   */
-  @Implementation
-  protected AccessibilityNodeInfo getSource() {
-    if (sourceNode == null) {
-      return null;
+    @Implementation
+    protected void setSource(View root, int virtualDescendantId) {
+        System.out.println("ShadowAccessibilityRecord#setSource");
+        this.sourceRoot = root;
+        this.virtualDescendantId = virtualDescendantId;
+        Shadow.directlyOn(realRecord, AccessibilityRecord.class, "setSource", ClassParameter.from(View.class, root), ClassParameter.from(Integer.TYPE, virtualDescendantId));
     }
-    return AccessibilityNodeInfo.obtain(sourceNode);
-  }
 
-  /**
-   * Sets the id of the window from which the event comes.
-   *
-   * @param id The id to set
-   */
-  public void setWindowId(int id) {
-    windowId = id;
-  }
+    @Implementation
+    protected void setSource(View root) {
+        System.out.println("ShadowAccessibilityRecord#setSource");
+        this.sourceRoot = root;
+        this.virtualDescendantId = NO_VIRTUAL_ID;
+        Shadow.directlyOn(realRecord, AccessibilityRecord.class, "setSource", ClassParameter.from(View.class, root));
+    }
 
-  /** Returns the id of the window from which the event comes. */
-  @Implementation
-  protected int getWindowId() {
-    return windowId;
-  }
+    /**
+     * Sets the {@link AccessibilityNodeInfo} of the event source.
+     *
+     * @param node The node to set
+     */
+    public void setSourceNode(AccessibilityNodeInfo node) {
+        sourceNode = node;
+    }
 
-  public View getSourceRoot() {
-    return sourceRoot;
-  }
+    /**
+     * Returns the {@link AccessibilityNodeInfo} of the event source or {@code null} if there is none.
+     */
+    @Implementation
+    protected AccessibilityNodeInfo getSource() {
+        System.out.println("ShadowAccessibilityRecord#getSource");
+        if (sourceNode == null) {
+            return null;
+        }
+        return AccessibilityNodeInfo.obtain(sourceNode);
+    }
 
-  public int getVirtualDescendantId() {
-    return virtualDescendantId;
-  }
+    /**
+     * Sets the id of the window from which the event comes.
+     *
+     * @param id The id to set
+     */
+    public void setWindowId(int id) {
+        windowId = id;
+    }
+
+    /**
+     * Returns the id of the window from which the event comes.
+     */
+    @Implementation
+    protected int getWindowId() {
+        System.out.println("ShadowAccessibilityRecord#getWindowId");
+        return windowId;
+    }
+
+    public View getSourceRoot() {
+        return sourceRoot;
+    }
+
+    public int getVirtualDescendantId() {
+        return virtualDescendantId;
+    }
 }
+

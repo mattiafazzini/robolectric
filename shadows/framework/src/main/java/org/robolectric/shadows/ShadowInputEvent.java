@@ -7,14 +7,17 @@ import org.robolectric.annotation.Implements;
 
 @Implements(InputEvent.class)
 public class ShadowInputEvent {
-  protected InputDevice device;
 
-  @Implementation
-  protected InputDevice getDevice() {
-    return device;
-  }
+    protected InputDevice device;
 
-  public void setDevice(InputDevice device) {
-    this.device = device;
-  }
+    @Implementation
+    protected InputDevice getDevice() {
+        System.out.println("ShadowInputEvent#getDevice");
+        return device;
+    }
+
+    public void setDevice(InputDevice device) {
+        this.device = device;
+    }
 }
+

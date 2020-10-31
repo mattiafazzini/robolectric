@@ -7,20 +7,22 @@ import android.provider.MediaStore;
 import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings({ "UnusedDeclaration" })
 @Implements(MediaStore.class)
 public class ShadowMediaStore {
 
-  @Implements(MediaStore.Images.class)
-  public static class ShadowImages {
+    @Implements(MediaStore.Images.class)
+    public static class ShadowImages {
 
-    @Implements(MediaStore.Images.Media.class)
-    public static class ShadowMedia {
+        @Implements(MediaStore.Images.Media.class)
+        public static class ShadowMedia {
 
-      @Implementation
-      protected static Bitmap getBitmap(ContentResolver cr, Uri url) {
-        return ShadowBitmapFactory.create(url.toString());
-      }
+            @Implementation
+            protected static Bitmap getBitmap(ContentResolver cr, Uri url) {
+                System.out.println("ShadowMedia#getBitmap");
+                return ShadowBitmapFactory.create(url.toString());
+            }
+        }
     }
-  }
 }
+

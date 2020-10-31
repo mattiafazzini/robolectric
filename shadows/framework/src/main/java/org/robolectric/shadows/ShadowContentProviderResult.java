@@ -9,23 +9,24 @@ import org.robolectric.annotation.RealObject;
 
 @Implements(ContentProviderResult.class)
 public class ShadowContentProviderResult {
-  @RealObject ContentProviderResult realResult;
 
-  @Implementation
-  protected void __constructor__(Uri uri)
-      throws SecurityException, NoSuchFieldException, IllegalArgumentException,
-          IllegalAccessException {
-    Field field = realResult.getClass().getField("uri");
-    field.setAccessible(true);
-    field.set(realResult, uri);
-  }
+    @RealObject
+    ContentProviderResult realResult;
 
-  @Implementation
-  protected void __constructor__(int count)
-      throws SecurityException, NoSuchFieldException, IllegalArgumentException,
-          IllegalAccessException {
-    Field field = realResult.getClass().getField("count");
-    field.setAccessible(true);
-    field.set(realResult, count);
-  }
+    @Implementation
+    protected void __constructor__(Uri uri) throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+        System.out.println("ShadowContentProviderResult#__constructor__");
+        Field field = realResult.getClass().getField("uri");
+        field.setAccessible(true);
+        field.set(realResult, uri);
+    }
+
+    @Implementation
+    protected void __constructor__(int count) throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+        System.out.println("ShadowContentProviderResult#__constructor__");
+        Field field = realResult.getClass().getField("count");
+        field.setAccessible(true);
+        field.set(realResult, count);
+    }
 }
+

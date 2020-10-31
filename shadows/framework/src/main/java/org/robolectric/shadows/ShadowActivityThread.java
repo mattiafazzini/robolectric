@@ -14,61 +14,58 @@ import org.robolectric.annotation.Implements;
 
 @Implements(value = ActivityThread.class, isInAndroidSdk = false, looseSignatures = true)
 public class ShadowActivityThread {
-  private static ApplicationInfo applicationInfo;
 
-  @Implementation
-  public static Object getPackageManager() {
-    ClassLoader classLoader = ShadowActivityThread.class.getClassLoader();
-    Class<?> iPackageManagerClass;
-    try {
-      iPackageManagerClass = classLoader.loadClass("android.content.pm.IPackageManager");
-    } catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
-    return Proxy.newProxyInstance(
-        classLoader,
-        new Class[] {iPackageManagerClass},
-        new InvocationHandler() {
-          @Override
-          public Object invoke(Object proxy, @Nonnull Method method, Object[] args)
-              throws Exception {
-            if (method.getName().equals("getApplicationInfo")) {
-              String packageName = (String) args[0];
-              int flags = (Integer) args[1];
+    private static ApplicationInfo applicationInfo;
 
-              if (packageName.equals(ShadowActivityThread.applicationInfo.packageName)) {
-                return ShadowActivityThread.applicationInfo;
-              }
+    @Implementation
+    public static Object getPackageManager() {
+        System.out.println("ShadowActivityThread#getPackageManager");
+        ClassLoader classLoader = ShadowActivityThread.class.getClassLoader();
+        Class<?> iPackageManagerClass;
+        try {
+            iPackageManagerClass = classLoader.loadClass("android.content.pm.IPackageManager");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        return Proxy.newProxyInstance(classLoader, new Class[] { iPackageManagerClass }, new InvocationHandler() {
 
-              try {
-                return RuntimeEnvironment.application
-                    .getPackageManager()
-                    .getApplicationInfo(packageName, flags);
-              } catch (PackageManager.NameNotFoundException e) {
-                throw new RemoteException(e.getMessage());
-              }
-            } else if (method.getName().equals("notifyPackageUse")) {
-              return null;
-            } else if (method.getName().equals("getPackageInstaller")) {
-              return null;
+            @Override
+            public Object invoke(Object proxy, @Nonnull Method method, Object[] args) throws Exception {
+                if (method.getName().equals("getApplicationInfo")) {
+                    String packageName = (String) args[0];
+                    int flags = (Integer) args[1];
+                    if (packageName.equals(ShadowActivityThread.applicationInfo.packageName)) {
+                        return ShadowActivityThread.applicationInfo;
+                    }
+                    try {
+                        return RuntimeEnvironment.application.getPackageManager().getApplicationInfo(packageName, flags);
+                    } catch (PackageManager.NameNotFoundException e) {
+                        throw new RemoteException(e.getMessage());
+                    }
+                } else if (method.getName().equals("notifyPackageUse")) {
+                    return null;
+                } else if (method.getName().equals("getPackageInstaller")) {
+                    return null;
+                }
+                throw new UnsupportedOperationException("sorry, not supporting " + method + " yet!");
             }
-            throw new UnsupportedOperationException("sorry, not supporting " + method + " yet!");
-          }
         });
-  }
+    }
 
-  @Implementation
-  public static Object currentActivityThread() {
-    return RuntimeEnvironment.getActivityThread();
-  }
+    @Implementation
+    public static Object currentActivityThread() {
+        System.out.println("ShadowActivityThread#currentActivityThread");
+        return RuntimeEnvironment.getActivityThread();
+    }
 
-  /**
-   * Internal use only.
-   *
-   * @deprecated do not use
-   */
-  @Deprecated
-  public static void setApplicationInfo(ApplicationInfo applicationInfo) {
-    ShadowActivityThread.applicationInfo = applicationInfo;
-  }
+    /**
+     * Internal use only.
+     *
+     * @deprecated do not use
+     */
+    @Deprecated
+    public static void setApplicationInfo(ApplicationInfo applicationInfo) {
+        ShadowActivityThread.applicationInfo = applicationInfo;
+    }
 }
+

@@ -7,47 +7,55 @@ import org.robolectric.annotation.RealObject;
 
 @Implements(CountDownTimer.class)
 public class ShadowCountDownTimer {
-  private boolean started;
-  private long countDownInterval;
-  private long millisInFuture;
 
-  @RealObject CountDownTimer countDownTimer;
+    private boolean started;
 
-  @Implementation
-  protected void __constructor__(long millisInFuture, long countDownInterval) {
-    this.countDownInterval = countDownInterval;
-    this.millisInFuture = millisInFuture;
-    this.started = false;
-  }
+    private long countDownInterval;
 
-  @Implementation
-  protected final synchronized CountDownTimer start() {
-    started = true;
-    return countDownTimer;
-  }
+    private long millisInFuture;
 
-  @Implementation
-  protected final void cancel() {
-    started = false;
-  }
+    @RealObject
+    CountDownTimer countDownTimer;
 
-  public void invokeTick(long millisUntilFinished) {
-    countDownTimer.onTick(millisUntilFinished);
-  }
+    @Implementation
+    protected void __constructor__(long millisInFuture, long countDownInterval) {
+        System.out.println("ShadowCountDownTimer#__constructor__");
+        this.countDownInterval = countDownInterval;
+        this.millisInFuture = millisInFuture;
+        this.started = false;
+    }
 
-  public void invokeFinish() {
-    countDownTimer.onFinish();
-  }
+    @Implementation
+    protected final synchronized CountDownTimer start() {
+        System.out.println("ShadowCountDownTimer#start");
+        started = true;
+        return countDownTimer;
+    }
 
-  public boolean hasStarted() {
-    return started;
-  }
+    @Implementation
+    protected final void cancel() {
+        System.out.println("ShadowCountDownTimer#cancel");
+        started = false;
+    }
 
-  public long getCountDownInterval() {
-    return countDownInterval;
-  }
+    public void invokeTick(long millisUntilFinished) {
+        countDownTimer.onTick(millisUntilFinished);
+    }
 
-  public long getMillisInFuture() {
-    return millisInFuture;
-  }
+    public void invokeFinish() {
+        countDownTimer.onFinish();
+    }
+
+    public boolean hasStarted() {
+        return started;
+    }
+
+    public long getCountDownInterval() {
+        return countDownInterval;
+    }
+
+    public long getMillisInFuture() {
+        return millisInFuture;
+    }
 }
+

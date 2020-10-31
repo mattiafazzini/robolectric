@@ -10,17 +10,21 @@ import org.robolectric.util.ReflectionHelpers.ClassParameter;
 
 @Implements(Surface.class)
 public class ShadowSurface {
-  private SurfaceTexture surfaceTexture;
-  @RealObject private Surface realSurface;
 
-  @Implementation
-  protected void __constructor__(SurfaceTexture surfaceTexture) {
-    this.surfaceTexture = surfaceTexture;
-    Shadow.invokeConstructor(
-        Surface.class, realSurface, ClassParameter.from(SurfaceTexture.class, surfaceTexture));
-  }
+    private SurfaceTexture surfaceTexture;
 
-  public SurfaceTexture getSurfaceTexture() {
-    return surfaceTexture;
-  }
+    @RealObject
+    private Surface realSurface;
+
+    @Implementation
+    protected void __constructor__(SurfaceTexture surfaceTexture) {
+        System.out.println("ShadowSurface#__constructor__");
+        this.surfaceTexture = surfaceTexture;
+        Shadow.invokeConstructor(Surface.class, realSurface, ClassParameter.from(SurfaceTexture.class, surfaceTexture));
+    }
+
+    public SurfaceTexture getSurfaceTexture() {
+        return surfaceTexture;
+    }
 }
+

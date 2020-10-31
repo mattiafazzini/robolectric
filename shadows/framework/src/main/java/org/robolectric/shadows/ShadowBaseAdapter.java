@@ -1,29 +1,33 @@
 package org.robolectric.shadows;
 
 import static org.robolectric.shadow.api.Shadow.directlyOn;
-
 import android.widget.BaseAdapter;
 import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 import org.robolectric.annotation.RealObject;
 
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings({ "UnusedDeclaration" })
 @Implements(BaseAdapter.class)
 public class ShadowBaseAdapter {
-  @RealObject private BaseAdapter realBaseAdapter;
-  private boolean wasNotifyDataSetChangedCalled;
 
-  @Implementation
-  protected void notifyDataSetChanged() {
-    wasNotifyDataSetChangedCalled = true;
-    directlyOn(realBaseAdapter, BaseAdapter.class, "notifyDataSetChanged");
-  }
+    @RealObject
+    private BaseAdapter realBaseAdapter;
 
-  public void clearWasDataSetChangedCalledFlag() {
-    wasNotifyDataSetChangedCalled = false;
-  }
+    private boolean wasNotifyDataSetChangedCalled;
 
-  public boolean wasNotifyDataSetChangedCalled() {
-    return wasNotifyDataSetChangedCalled;
-  }
+    @Implementation
+    protected void notifyDataSetChanged() {
+        System.out.println("ShadowBaseAdapter#notifyDataSetChanged");
+        wasNotifyDataSetChangedCalled = true;
+        directlyOn(realBaseAdapter, BaseAdapter.class, "notifyDataSetChanged");
+    }
+
+    public void clearWasDataSetChangedCalledFlag() {
+        wasNotifyDataSetChangedCalled = false;
+    }
+
+    public boolean wasNotifyDataSetChangedCalled() {
+        return wasNotifyDataSetChangedCalled;
+    }
 }
+

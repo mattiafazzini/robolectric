@@ -9,128 +9,147 @@ import org.robolectric.util.Scheduler;
 
 @Implements(OverScroller.class)
 public class ShadowOverScroller {
-  private int startX;
-  private int startY;
-  private int finalX;
-  private int finalY;
-  private long startTime;
-  private long duration;
-  private boolean started;
 
-  @Implementation
-  protected int getStartX() {
-    return startX;
-  }
+    private int startX;
 
-  @Implementation
-  protected int getStartY() {
-    return startY;
-  }
+    private int startY;
 
-  @Implementation
-  protected int getCurrX() {
-    long dt = deltaTime();
-    return dt >= duration ? finalX : startX + (int) ((deltaX() * dt) / duration);
-  }
+    private int finalX;
 
-  @Implementation
-  protected int getCurrY() {
-    long dt = deltaTime();
-    return dt >= duration ? finalY : startY + (int) ((deltaY() * dt) / duration);
-  }
+    private int finalY;
 
-  @Implementation
-  protected int getFinalX() {
-    return finalX;
-  }
+    private long startTime;
 
-  @Implementation
-  protected int getFinalY() {
-    return finalY;
-  }
+    private long duration;
 
-  @Implementation
-  protected int getDuration() {
-    return (int) duration;
-  }
+    private boolean started;
 
-  @Implementation
-  protected void startScroll(int startX, int startY, int dx, int dy, int duration) {
-    this.startX = startX;
-    this.startY = startY;
-    finalX = startX + dx;
-    finalY = startY + dy;
-    startTime = getScheduler().getCurrentTime();
-    this.duration = duration;
-    started = true;
-    // post a task so that the scheduler will actually run
-    getScheduler().postDelayed(new Runnable() {
-      @Override
-      public void run() {
-        // do nothing
-      }
-    }, duration);
-  }
-
-  @Implementation
-  protected void abortAnimation() {
-    duration = deltaTime() - 1;
-  }
-
-  @Implementation
-  protected void forceFinished(boolean finished) {
-    if (!finished) {
-      throw new RuntimeException("Not implemented.");
+    @Implementation
+    protected int getStartX() {
+        System.out.println("ShadowOverScroller#getStartX");
+        return startX;
     }
 
-    finalX = getCurrX();
-    finalY = getCurrY();
-    duration = deltaTime() - 1;
-  }
-
-  @Implementation
-  protected boolean computeScrollOffset() {
-    if (!started) {
-      return false;
+    @Implementation
+    protected int getStartY() {
+        System.out.println("ShadowOverScroller#getStartY");
+        return startY;
     }
-    started &= deltaTime() < duration;
-    return true;
-  }
 
-  @Implementation
-  protected boolean isFinished() {
-    return deltaTime() > duration;
-  }
+    @Implementation
+    protected int getCurrX() {
+        System.out.println("ShadowOverScroller#getCurrX");
+        long dt = deltaTime();
+        return dt >= duration ? finalX : startX + (int) ((deltaX() * dt) / duration);
+    }
 
-  @Implementation
-  protected int timePassed() {
-    return (int) deltaTime();
-  }
+    @Implementation
+    protected int getCurrY() {
+        System.out.println("ShadowOverScroller#getCurrY");
+        long dt = deltaTime();
+        return dt >= duration ? finalY : startY + (int) ((deltaY() * dt) / duration);
+    }
 
-  @Implementation
-  protected boolean isScrollingInDirection(float xvel, float yvel) {
-    final int dx = finalX - startX;
-    final int dy = finalY - startY;
-    return !isFinished()
-        && Math.signum(xvel) == Math.signum(dx)
-        && Math.signum(yvel) == Math.signum(dy);
-  }
+    @Implementation
+    protected int getFinalX() {
+        System.out.println("ShadowOverScroller#getFinalX");
+        return finalX;
+    }
 
-  private long deltaTime() {
-    return getScheduler().getCurrentTime() - startTime;
-  }
+    @Implementation
+    protected int getFinalY() {
+        System.out.println("ShadowOverScroller#getFinalY");
+        return finalY;
+    }
 
-  private Scheduler getScheduler() {
-    ShadowLooper shadowLooper = Shadow.extract(Looper.getMainLooper());
-    return shadowLooper.getScheduler();
-  }
+    @Implementation
+    protected int getDuration() {
+        System.out.println("ShadowOverScroller#getDuration");
+        return (int) duration;
+    }
 
-  private int deltaX() {
-    return (finalX - startX);
-  }
+    @Implementation
+    protected void startScroll(int startX, int startY, int dx, int dy, int duration) {
+        System.out.println("ShadowOverScroller#startScroll");
+        this.startX = startX;
+        this.startY = startY;
+        finalX = startX + dx;
+        finalY = startY + dy;
+        startTime = getScheduler().getCurrentTime();
+        this.duration = duration;
+        started = true;
+        // post a task so that the scheduler will actually run
+        getScheduler().postDelayed(new Runnable() {
 
-  private int deltaY() {
-    return (finalY - startY);
-  }
+            @Override
+            public void run() {
+            // do nothing
+            }
+        }, duration);
+    }
+
+    @Implementation
+    protected void abortAnimation() {
+        System.out.println("ShadowOverScroller#abortAnimation");
+        duration = deltaTime() - 1;
+    }
+
+    @Implementation
+    protected void forceFinished(boolean finished) {
+        System.out.println("ShadowOverScroller#forceFinished");
+        if (!finished) {
+            throw new RuntimeException("Not implemented.");
+        }
+        finalX = getCurrX();
+        finalY = getCurrY();
+        duration = deltaTime() - 1;
+    }
+
+    @Implementation
+    protected boolean computeScrollOffset() {
+        System.out.println("ShadowOverScroller#computeScrollOffset");
+        if (!started) {
+            return false;
+        }
+        started &= deltaTime() < duration;
+        return true;
+    }
+
+    @Implementation
+    protected boolean isFinished() {
+        System.out.println("ShadowOverScroller#isFinished");
+        return deltaTime() > duration;
+    }
+
+    @Implementation
+    protected int timePassed() {
+        System.out.println("ShadowOverScroller#timePassed");
+        return (int) deltaTime();
+    }
+
+    @Implementation
+    protected boolean isScrollingInDirection(float xvel, float yvel) {
+        System.out.println("ShadowOverScroller#isScrollingInDirection");
+        final int dx = finalX - startX;
+        final int dy = finalY - startY;
+        return !isFinished() && Math.signum(xvel) == Math.signum(dx) && Math.signum(yvel) == Math.signum(dy);
+    }
+
+    private long deltaTime() {
+        return getScheduler().getCurrentTime() - startTime;
+    }
+
+    private Scheduler getScheduler() {
+        ShadowLooper shadowLooper = Shadow.extract(Looper.getMainLooper());
+        return shadowLooper.getScheduler();
+    }
+
+    private int deltaX() {
+        return (finalX - startX);
+    }
+
+    private int deltaY() {
+        return (finalY - startY);
+    }
 }
 

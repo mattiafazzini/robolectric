@@ -8,252 +8,300 @@ import org.robolectric.annotation.Implements;
 
 @Implements(MediaRecorder.class)
 public class ShadowMediaRecorder {
-  @SuppressWarnings("UnusedDeclaration")
-  @Implementation
-  protected static void __staticInitializer__() {
-    // don't bind the JNI library
-  }
 
-  // Recording machine state, as per:
-  // http://developer.android.com/reference/android/media/MediaRecorder.html
-  public static final int STATE_ERROR = -1;
-  public static final int STATE_INITIAL = 1;
-  public static final int STATE_INITIALIZED = 2;
-  public static final int STATE_DATA_SOURCE_CONFIGURED = 3;
-  public static final int STATE_PREPARED = 4;
-  public static final int STATE_RECORDING = 5;
-  public static final int STATE_RELEASED = 6;
+    @SuppressWarnings("UnusedDeclaration")
+    @Implementation
+    protected static void __staticInitializer__() {
+    }
 
-  private int state;
+    // Recording machine state, as per:
+    // http://developer.android.com/reference/android/media/MediaRecorder.html
+    public static final int STATE_ERROR = -1;
 
-  private Camera camera;
-  private int audioChannels;
-  private int audioEncoder;
-  private int audioBitRate;
-  private int audioSamplingRate;
-  private int audioSource;
-  private int maxDuration;
-  private long maxFileSize;
-  private String outputPath;
-  private int outputFormat;
-  private int videoEncoder;
-  private int videoBitRate;
-  private int videoFrameRate;
-  private int videoWidth;
-  private int videoHeight;
-  private int videoSource;
+    public static final int STATE_INITIAL = 1;
 
-  private Surface previewDisplay;
-  private MediaRecorder.OnErrorListener errorListener;
-  private MediaRecorder.OnInfoListener infoListener;
+    public static final int STATE_INITIALIZED = 2;
 
-  @Implementation
-  protected void __constructor__() {
-    state = STATE_INITIAL;
-  }
+    public static final int STATE_DATA_SOURCE_CONFIGURED = 3;
 
-  @Implementation
-  protected void setAudioChannels(int numChannels) {
-    audioChannels = numChannels;
-  }
+    public static final int STATE_PREPARED = 4;
 
-  @Implementation
-  protected void setAudioEncoder(int audio_encoder) {
-    audioEncoder = audio_encoder;
-    state = STATE_DATA_SOURCE_CONFIGURED;
-  }
+    public static final int STATE_RECORDING = 5;
 
-  @Implementation
-  protected void setAudioEncodingBitRate(int bitRate) {
-    audioBitRate = bitRate;
-  }
+    public static final int STATE_RELEASED = 6;
 
-  @Implementation
-  protected void setAudioSamplingRate(int samplingRate) {
-    audioSamplingRate = samplingRate;
-  }
+    private int state;
 
-  @Implementation
-  protected void setAudioSource(int audio_source) {
-    audioSource = audio_source;
-    state = STATE_INITIALIZED;
-  }
+    private Camera camera;
 
-  @Implementation
-  protected void setCamera(Camera c) {
-    camera = c;
-  }
+    private int audioChannels;
 
-  @Implementation
-  protected void setMaxDuration(int max_duration_ms) {
-    maxDuration = max_duration_ms;
-  }
+    private int audioEncoder;
 
-  @Implementation
-  protected void setMaxFileSize(long max_filesize_bytes) {
-    maxFileSize = max_filesize_bytes;
-  }
+    private int audioBitRate;
 
-  @Implementation
-  protected void setOnErrorListener(MediaRecorder.OnErrorListener l) {
-    errorListener = l;
-  }
+    private int audioSamplingRate;
 
-  @Implementation
-  protected void setOnInfoListener(MediaRecorder.OnInfoListener listener) {
-    infoListener = listener;
-  }
+    private int audioSource;
 
-  @Implementation
-  protected void setOutputFile(String path) {
-    outputPath = path;
-    state = STATE_DATA_SOURCE_CONFIGURED;
-  }
+    private int maxDuration;
 
-  @Implementation
-  protected void setOutputFormat(int output_format) {
-    outputFormat = output_format;
-    state = STATE_DATA_SOURCE_CONFIGURED;
-  }
+    private long maxFileSize;
 
-  @Implementation
-  protected void setPreviewDisplay(Surface sv) {
-    previewDisplay = sv;
-    state = STATE_DATA_SOURCE_CONFIGURED;
-  }
+    private String outputPath;
 
-  @Implementation
-  protected void setVideoEncoder(int video_encoder) {
-    videoEncoder = video_encoder;
-    state = STATE_DATA_SOURCE_CONFIGURED;
-  }
+    private int outputFormat;
 
-  @Implementation
-  protected void setVideoEncodingBitRate(int bitRate) {
-    videoBitRate = bitRate;
-  }
+    private int videoEncoder;
 
-  @Implementation
-  protected void setVideoFrameRate(int rate) {
-    videoFrameRate = rate;
-    state = STATE_DATA_SOURCE_CONFIGURED;
-  }
+    private int videoBitRate;
 
-  @Implementation
-  protected void setVideoSize(int width, int height) {
-    videoWidth = width;
-    videoHeight = height;
-    state = STATE_DATA_SOURCE_CONFIGURED;
-  }
+    private int videoFrameRate;
 
-  @Implementation
-  protected void setVideoSource(int video_source) {
-    videoSource = video_source;
-    state = STATE_INITIALIZED;
-  }
+    private int videoWidth;
 
-  @Implementation
-  protected void prepare() {
-    state = STATE_PREPARED;
-  }
+    private int videoHeight;
 
-  @Implementation
-  protected void start() {
-    state = STATE_RECORDING;
-  }
+    private int videoSource;
 
-  @Implementation
-  protected void stop() {
-    state = STATE_INITIAL;
-  }
+    private Surface previewDisplay;
 
-  @Implementation
-  protected void reset() {
-    state = STATE_INITIAL;
-  }
+    private MediaRecorder.OnErrorListener errorListener;
 
-  @Implementation
-  protected void release() {
-    state = STATE_RELEASED;
-  }
+    private MediaRecorder.OnInfoListener infoListener;
 
-  public Camera getCamera() {
-    return camera;
-  }
+    @Implementation
+    protected void __constructor__() {
+        System.out.println("ShadowMediaRecorder#__constructor__");
+        state = STATE_INITIAL;
+    }
 
-  public int getAudioChannels() {
-    return audioChannels;
-  }
+    @Implementation
+    protected void setAudioChannels(int numChannels) {
+        System.out.println("ShadowMediaRecorder#setAudioChannels");
+        audioChannels = numChannels;
+    }
 
-  public int getAudioEncoder() {
-    return audioEncoder;
-  }
+    @Implementation
+    protected void setAudioEncoder(int audio_encoder) {
+        System.out.println("ShadowMediaRecorder#setAudioEncoder");
+        audioEncoder = audio_encoder;
+        state = STATE_DATA_SOURCE_CONFIGURED;
+    }
 
-  public int getAudioEncodingBitRate() {
-    return audioBitRate;
-  }
+    @Implementation
+    protected void setAudioEncodingBitRate(int bitRate) {
+        System.out.println("ShadowMediaRecorder#setAudioEncodingBitRate");
+        audioBitRate = bitRate;
+    }
 
-  public int getAudioSamplingRate() {
-    return audioSamplingRate;
-  }
+    @Implementation
+    protected void setAudioSamplingRate(int samplingRate) {
+        System.out.println("ShadowMediaRecorder#setAudioSamplingRate");
+        audioSamplingRate = samplingRate;
+    }
 
-  public int getAudioSource() {
-    return audioSource;
-  }
+    @Implementation
+    protected void setAudioSource(int audio_source) {
+        System.out.println("ShadowMediaRecorder#setAudioSource");
+        audioSource = audio_source;
+        state = STATE_INITIALIZED;
+    }
 
-  public int getMaxDuration() {
-    return maxDuration;
-  }
+    @Implementation
+    protected void setCamera(Camera c) {
+        System.out.println("ShadowMediaRecorder#setCamera");
+        camera = c;
+    }
 
-  public long getMaxFileSize() {
-    return maxFileSize;
-  }
+    @Implementation
+    protected void setMaxDuration(int max_duration_ms) {
+        System.out.println("ShadowMediaRecorder#setMaxDuration");
+        maxDuration = max_duration_ms;
+    }
 
-  public String getOutputPath() {
-    return outputPath;
-  }
+    @Implementation
+    protected void setMaxFileSize(long max_filesize_bytes) {
+        System.out.println("ShadowMediaRecorder#setMaxFileSize");
+        maxFileSize = max_filesize_bytes;
+    }
 
-  public int getOutputFormat() {
-    return outputFormat;
-  }
+    @Implementation
+    protected void setOnErrorListener(MediaRecorder.OnErrorListener l) {
+        System.out.println("ShadowMediaRecorder#setOnErrorListener");
+        errorListener = l;
+    }
 
-  public int getVideoEncoder() {
-    return videoEncoder;
-  }
+    @Implementation
+    protected void setOnInfoListener(MediaRecorder.OnInfoListener listener) {
+        System.out.println("ShadowMediaRecorder#setOnInfoListener");
+        infoListener = listener;
+    }
 
-  public int getVideoEncodingBitRate() {
-    return videoBitRate;
-  }
+    @Implementation
+    protected void setOutputFile(String path) {
+        System.out.println("ShadowMediaRecorder#setOutputFile");
+        outputPath = path;
+        state = STATE_DATA_SOURCE_CONFIGURED;
+    }
 
-  public int getVideoFrameRate() {
-    return videoFrameRate;
-  }
+    @Implementation
+    protected void setOutputFormat(int output_format) {
+        System.out.println("ShadowMediaRecorder#setOutputFormat");
+        outputFormat = output_format;
+        state = STATE_DATA_SOURCE_CONFIGURED;
+    }
 
-  public int getVideoWidth() {
-    return videoWidth;
-  }
+    @Implementation
+    protected void setPreviewDisplay(Surface sv) {
+        System.out.println("ShadowMediaRecorder#setPreviewDisplay");
+        previewDisplay = sv;
+        state = STATE_DATA_SOURCE_CONFIGURED;
+    }
 
-  public int getVideoHeight() {
-    return videoHeight;
-  }
+    @Implementation
+    protected void setVideoEncoder(int video_encoder) {
+        System.out.println("ShadowMediaRecorder#setVideoEncoder");
+        videoEncoder = video_encoder;
+        state = STATE_DATA_SOURCE_CONFIGURED;
+    }
 
-  public int getVideoSource() {
-    return videoSource;
-  }
+    @Implementation
+    protected void setVideoEncodingBitRate(int bitRate) {
+        System.out.println("ShadowMediaRecorder#setVideoEncodingBitRate");
+        videoBitRate = bitRate;
+    }
 
-  public Surface getPreviewDisplay() {
-    return previewDisplay;
-  }
+    @Implementation
+    protected void setVideoFrameRate(int rate) {
+        System.out.println("ShadowMediaRecorder#setVideoFrameRate");
+        videoFrameRate = rate;
+        state = STATE_DATA_SOURCE_CONFIGURED;
+    }
 
-  public MediaRecorder.OnErrorListener getErrorListener() {
-    return errorListener;
-  }
+    @Implementation
+    protected void setVideoSize(int width, int height) {
+        System.out.println("ShadowMediaRecorder#setVideoSize");
+        videoWidth = width;
+        videoHeight = height;
+        state = STATE_DATA_SOURCE_CONFIGURED;
+    }
 
-  public MediaRecorder.OnInfoListener getInfoListener() {
-    return infoListener;
-  }
+    @Implementation
+    protected void setVideoSource(int video_source) {
+        System.out.println("ShadowMediaRecorder#setVideoSource");
+        videoSource = video_source;
+        state = STATE_INITIALIZED;
+    }
 
-  public int getState() {
-    return state;
-  }
+    @Implementation
+    protected void prepare() {
+        System.out.println("ShadowMediaRecorder#prepare");
+        state = STATE_PREPARED;
+    }
+
+    @Implementation
+    protected void start() {
+        System.out.println("ShadowMediaRecorder#start");
+        state = STATE_RECORDING;
+    }
+
+    @Implementation
+    protected void stop() {
+        System.out.println("ShadowMediaRecorder#stop");
+        state = STATE_INITIAL;
+    }
+
+    @Implementation
+    protected void reset() {
+        System.out.println("ShadowMediaRecorder#reset");
+        state = STATE_INITIAL;
+    }
+
+    @Implementation
+    protected void release() {
+        System.out.println("ShadowMediaRecorder#release");
+        state = STATE_RELEASED;
+    }
+
+    public Camera getCamera() {
+        return camera;
+    }
+
+    public int getAudioChannels() {
+        return audioChannels;
+    }
+
+    public int getAudioEncoder() {
+        return audioEncoder;
+    }
+
+    public int getAudioEncodingBitRate() {
+        return audioBitRate;
+    }
+
+    public int getAudioSamplingRate() {
+        return audioSamplingRate;
+    }
+
+    public int getAudioSource() {
+        return audioSource;
+    }
+
+    public int getMaxDuration() {
+        return maxDuration;
+    }
+
+    public long getMaxFileSize() {
+        return maxFileSize;
+    }
+
+    public String getOutputPath() {
+        return outputPath;
+    }
+
+    public int getOutputFormat() {
+        return outputFormat;
+    }
+
+    public int getVideoEncoder() {
+        return videoEncoder;
+    }
+
+    public int getVideoEncodingBitRate() {
+        return videoBitRate;
+    }
+
+    public int getVideoFrameRate() {
+        return videoFrameRate;
+    }
+
+    public int getVideoWidth() {
+        return videoWidth;
+    }
+
+    public int getVideoHeight() {
+        return videoHeight;
+    }
+
+    public int getVideoSource() {
+        return videoSource;
+    }
+
+    public Surface getPreviewDisplay() {
+        return previewDisplay;
+    }
+
+    public MediaRecorder.OnErrorListener getErrorListener() {
+        return errorListener;
+    }
+
+    public MediaRecorder.OnInfoListener getInfoListener() {
+        return infoListener;
+    }
+
+    public int getState() {
+        return state;
+    }
 }
+

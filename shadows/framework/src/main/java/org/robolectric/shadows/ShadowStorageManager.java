@@ -3,7 +3,6 @@ package org.robolectric.shadows;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N;
 import static org.robolectric.RuntimeEnvironment.application;
-
 import android.os.UserManager;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
@@ -22,85 +21,94 @@ import org.robolectric.shadow.api.Shadow;
 @Implements(StorageManager.class)
 public class ShadowStorageManager {
 
-  private static boolean isFileEncryptionSupported = true;
-  private final List<StorageVolume> storageVolumeList = new ArrayList<>();
+    private static boolean isFileEncryptionSupported = true;
 
-  @Implementation(minSdk = M)
-  protected static StorageVolume[] getVolumeList(int userId, int flags) {
-    return new StorageVolume[0];
-  }
+    private final List<StorageVolume> storageVolumeList = new ArrayList<>();
 
-  /**
-   * Gets the volume list from {@link #getVolumeList(int, int)}
-   *
-   * @return volume list
-   */
-  public StorageVolume[] getVolumeList() {
-    return getVolumeList(0, 0);
-  }
-
-  /**
-   * Adds a {@link StorageVolume} to the list returned by {@link #getStorageVolumes()}.
-   *
-   * @param StorageVolume to add to list
-   */
-  public void addStorageVolume(StorageVolume storageVolume) {
-    Preconditions.checkNotNull(storageVolume);
-    storageVolumeList.add(storageVolume);
-  }
-
-  /**
-   * Returns the storage volumes configured via {@link #addStorageVolume()}.
-   *
-   * @return StorageVolume list
-   */
-  @Implementation(minSdk = N)
-  protected List<StorageVolume> getStorageVolumes() {
-    return storageVolumeList;
-  }
-
-  /** Clears the storageVolumeList. */
-  public void resetStorageVolumeList() {
-    storageVolumeList.clear();
-  }
-
-  /**
-   * Checks whether File belongs to any {@link StorageVolume} in the list returned by {@link
-   * #getStorageVolumes()}.
-   *
-   * @param File to check
-   * @return StorageVolume for the file
-   */
-  @Implementation(minSdk = N)
-  public StorageVolume getStorageVolume(File file) {
-    for (StorageVolume volume : storageVolumeList) {
-      File volumeFile = volume.getPathFile();
-      if (file.getAbsolutePath().equals(volumeFile.getAbsolutePath())) {
-        return volume;
-      }
+    @Implementation(minSdk = M)
+    protected static StorageVolume[] getVolumeList(int userId, int flags) {
+        System.out.println("ShadowStorageManager#getVolumeList");
+        return new StorageVolume[0];
     }
-    return null;
-  }
 
-  @HiddenApi
-  @Implementation(minSdk = N)
-  protected static boolean isFileEncryptedNativeOrEmulated() {
-    return isFileEncryptionSupported;
-  }
+    /**
+     * Gets the volume list from {@link #getVolumeList(int, int)}
+     *
+     * @return volume list
+     */
+    public StorageVolume[] getVolumeList() {
+        return getVolumeList(0, 0);
+    }
 
-  /**
-   * Setter for {@link #isFileEncryptedNativeOrEmulated()}
-   *
-   * @param isSupported a boolean value to set file encrypted native or not
-   */
-  public void setFileEncryptedNativeOrEmulated(boolean isSupported) {
-    isFileEncryptionSupported = isSupported;
-  }
+    /**
+     * Adds a {@link StorageVolume} to the list returned by {@link #getStorageVolumes()}.
+     *
+     * @param StorageVolume to add to list
+     */
+    public void addStorageVolume(StorageVolume storageVolume) {
+        Preconditions.checkNotNull(storageVolume);
+        storageVolumeList.add(storageVolume);
+    }
 
-  @HiddenApi
-  @Implementation(minSdk = N)
-  protected static boolean isUserKeyUnlocked(int userId) {
-    ShadowUserManager extract = Shadow.extract(application.getSystemService(UserManager.class));
-    return extract.isUserUnlocked();
-  }
+    /**
+     * Returns the storage volumes configured via {@link #addStorageVolume()}.
+     *
+     * @return StorageVolume list
+     */
+    @Implementation(minSdk = N)
+    protected List<StorageVolume> getStorageVolumes() {
+        System.out.println("ShadowStorageManager#getStorageVolumes");
+        return storageVolumeList;
+    }
+
+    /**
+     * Clears the storageVolumeList.
+     */
+    public void resetStorageVolumeList() {
+        storageVolumeList.clear();
+    }
+
+    /**
+     * Checks whether File belongs to any {@link StorageVolume} in the list returned by {@link
+     * #getStorageVolumes()}.
+     *
+     * @param File to check
+     * @return StorageVolume for the file
+     */
+    @Implementation(minSdk = N)
+    public StorageVolume getStorageVolume(File file) {
+        System.out.println("ShadowStorageManager#getStorageVolume");
+        for (StorageVolume volume : storageVolumeList) {
+            File volumeFile = volume.getPathFile();
+            if (file.getAbsolutePath().equals(volumeFile.getAbsolutePath())) {
+                return volume;
+            }
+        }
+        return null;
+    }
+
+    @HiddenApi
+    @Implementation(minSdk = N)
+    protected static boolean isFileEncryptedNativeOrEmulated() {
+        System.out.println("ShadowStorageManager#isFileEncryptedNativeOrEmulated");
+        return isFileEncryptionSupported;
+    }
+
+    /**
+     * Setter for {@link #isFileEncryptedNativeOrEmulated()}
+     *
+     * @param isSupported a boolean value to set file encrypted native or not
+     */
+    public void setFileEncryptedNativeOrEmulated(boolean isSupported) {
+        isFileEncryptionSupported = isSupported;
+    }
+
+    @HiddenApi
+    @Implementation(minSdk = N)
+    protected static boolean isUserKeyUnlocked(int userId) {
+        System.out.println("ShadowStorageManager#isUserKeyUnlocked");
+        ShadowUserManager extract = Shadow.extract(application.getSystemService(UserManager.class));
+        return extract.isUserUnlocked();
+    }
 }
+

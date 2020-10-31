@@ -5,10 +5,14 @@ import android.service.quicksettings.Tile;
 import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 
-/** Shadow for {@link Tile}. */
+/**
+ * Shadow for {@link Tile}.
+ */
 @Implements(value = Tile.class, minSdk = Build.VERSION_CODES.N)
 public final class ShadowTile {
 
-  @Implementation
-  protected void updateTile() {}
+    @Implementation
+    protected void updateTile() {
+    }
 }
+

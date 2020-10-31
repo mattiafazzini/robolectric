@@ -8,19 +8,23 @@ import org.robolectric.annotation.Resetter;
 
 @Implements(CookieManager.class)
 public class ShadowCookieManager {
-  private static RoboCookieManager cookieManager;
-  private boolean flushed;
 
-  @Resetter
-  public static void resetCookies() {
-    cookieManager = null;
-  }
+    private static RoboCookieManager cookieManager;
 
-  @Implementation
-  protected static CookieManager getInstance() {
-    if (cookieManager == null) {
-      cookieManager = new RoboCookieManager();
+    private boolean flushed;
+
+    @Resetter
+    public static void resetCookies() {
+        cookieManager = null;
     }
-    return cookieManager;
-  }
+
+    @Implementation
+    protected static CookieManager getInstance() {
+        System.out.println("ShadowCookieManager#getInstance");
+        if (cookieManager == null) {
+            cookieManager = new RoboCookieManager();
+        }
+        return cookieManager;
+    }
 }
+

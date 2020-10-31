@@ -1,7 +1,6 @@
 package org.robolectric.shadows;
 
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
-
 import android.content.Context;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
@@ -11,71 +10,83 @@ import org.robolectric.annotation.Implements;
 
 @Implements(TextToSpeech.class)
 public class ShadowTextToSpeech {
-  private Context context;
-  private TextToSpeech.OnInitListener listener;
-  private String lastSpokenText;
-  private boolean shutdown = false;
-  private boolean stopped = true;
-  private int queueMode = -1;
 
-  @Implementation
-  protected void __constructor__(Context context, TextToSpeech.OnInitListener listener) {
-    this.context = context;
-    this.listener = listener;
-  }
+    private Context context;
 
-  @Implementation
-  protected int speak(
-      final String text, final int queueMode, final HashMap<String, String> params) {
-    stopped = false;
-    lastSpokenText = text;
-    this.queueMode = queueMode;
-    return TextToSpeech.SUCCESS;
-  }
+    private TextToSpeech.OnInitListener listener;
 
-  @Implementation(minSdk = LOLLIPOP)
-  protected int speak(
-      final CharSequence text, final int queueMode, final Bundle params, final String utteranceId) {
-    return speak(text.toString(), queueMode, new HashMap<>());
-  }
+    private String lastSpokenText;
 
-  @Implementation
-  protected void shutdown() {
-    shutdown = true;
-  }
+    private boolean shutdown = false;
 
-  @Implementation
-  protected int stop() {
-    stopped = true;
-    return TextToSpeech.SUCCESS;
-  }
+    private boolean stopped = true;
 
-  public Context getContext() {
-    return context;
-  }
+    private int queueMode = -1;
 
-  public TextToSpeech.OnInitListener getOnInitListener() {
-    return listener;
-  }
+    @Implementation
+    protected void __constructor__(Context context, TextToSpeech.OnInitListener listener) {
+        System.out.println("ShadowTextToSpeech#__constructor__");
+        this.context = context;
+        this.listener = listener;
+    }
 
-  public String getLastSpokenText() {
-    return lastSpokenText;
-  }
+    @Implementation
+    protected int speak(final String text, final int queueMode, final HashMap<String, String> params) {
+        System.out.println("ShadowTextToSpeech#speak");
+        stopped = false;
+        lastSpokenText = text;
+        this.queueMode = queueMode;
+        return TextToSpeech.SUCCESS;
+    }
 
-  public void clearLastSpokenText() {
-    lastSpokenText = null;
-  }
+    @Implementation(minSdk = LOLLIPOP)
+    protected int speak(final CharSequence text, final int queueMode, final Bundle params, final String utteranceId) {
+        System.out.println("ShadowTextToSpeech#speak");
+        return speak(text.toString(), queueMode, new HashMap<>());
+    }
 
-  public boolean isShutdown() {
-    return shutdown;
-  }
+    @Implementation
+    protected void shutdown() {
+        System.out.println("ShadowTextToSpeech#shutdown");
+        shutdown = true;
+    }
 
-  /** @return {@code true} if the TTS is stopped. */
-  public boolean isStopped() {
-    return stopped;
-  }
+    @Implementation
+    protected int stop() {
+        System.out.println("ShadowTextToSpeech#stop");
+        stopped = true;
+        return TextToSpeech.SUCCESS;
+    }
 
-  public int getQueueMode() {
-    return queueMode;
-  }
+    public Context getContext() {
+        return context;
+    }
+
+    public TextToSpeech.OnInitListener getOnInitListener() {
+        return listener;
+    }
+
+    public String getLastSpokenText() {
+        return lastSpokenText;
+    }
+
+    public void clearLastSpokenText() {
+        lastSpokenText = null;
+    }
+
+    public boolean isShutdown() {
+        return shutdown;
+    }
+
+    /**
+     * @return {@code true} if the TTS is stopped.
+     */
+    public boolean isStopped() {
+        return stopped;
+    }
+
+    public int getQueueMode() {
+        return queueMode;
+    }
 }
+

@@ -8,9 +8,8 @@ import org.robolectric.annotation.Implements;
 @SuppressWarnings("robolectric.internal.IgnoreMissingClass")
 public class ShadowAndroidXMultiDex {
 
-  @Implementation
-  protected static void install(Context context) {
-    // Do nothing since with Robolectric nothing is dexed.
-  }
-
+    @Implementation
+    protected static void install(Context context) {
+    }
 }
+

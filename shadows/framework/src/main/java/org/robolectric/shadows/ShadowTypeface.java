@@ -5,7 +5,6 @@ import static android.os.Build.VERSION_CODES.N_MR1;
 import static android.os.Build.VERSION_CODES.O;
 import static android.os.Build.VERSION_CODES.P;
 import static org.robolectric.RuntimeEnvironment.getApiLevel;
-
 import android.annotation.SuppressLint;
 import android.content.res.AssetManager;
 import android.graphics.FontFamily;
@@ -28,173 +27,191 @@ import org.robolectric.util.ReflectionHelpers.ClassParameter;
 @Implements(value = Typeface.class, looseSignatures = true)
 @SuppressLint("NewApi")
 public class ShadowTypeface {
-  private static Map<Long, FontDesc> FONTS = new HashMap<>();
-  private static long nextFontId = 1;
-  private FontDesc description;
-  @RealObject private Typeface realTypeface;
 
-  @HiddenApi
-  @Implementation
-  protected void __constructor__(int fontId) {
-    description = findById((long) fontId);
-  }
+    private static Map<Long, FontDesc> FONTS = new HashMap<>();
 
-  @HiddenApi
-  @Implementation
-  protected void __constructor__(long fontId) {
-    description = findById(fontId);
-  }
+    private static long nextFontId = 1;
 
-  @Implementation
-  protected static Typeface create(String familyName, int style) {
-    return createUnderlyingTypeface(familyName, style);
-  }
+    private FontDesc description;
 
-  @Implementation
-  protected static Typeface create(Typeface family, int style) {
-    if (family == null) {
-      return createUnderlyingTypeface(null, style);
-    } else {
-      ShadowTypeface shadowTypeface = Shadow.extract(family);
-      return createUnderlyingTypeface(shadowTypeface.getFontDescription().getFamilyName(), style);
+    @RealObject
+    private Typeface realTypeface;
+
+    @HiddenApi
+    @Implementation
+    protected void __constructor__(int fontId) {
+        System.out.println("ShadowTypeface#__constructor__");
+        description = findById((long) fontId);
     }
-  }
 
-  @Implementation
-  protected static Typeface createFromAsset(AssetManager mgr, String path) {
-    ShadowAssetManager shadowAssetManager = Shadow.extract(mgr);
-    Collection<FsFile> assetDirs = shadowAssetManager.getAllAssetDirs();
-    for (FsFile assetDir : assetDirs) {
-      FsFile[] files = assetDir.listFiles(new StartsWith(path));
-      FsFile assetFile = assetDir.join(path);
-      if (assetFile.exists() || files.length != 0) {
+    @HiddenApi
+    @Implementation
+    protected void __constructor__(long fontId) {
+        System.out.println("ShadowTypeface#__constructor__");
+        description = findById(fontId);
+    }
+
+    @Implementation
+    protected static Typeface create(String familyName, int style) {
+        System.out.println("ShadowTypeface#create");
+        return createUnderlyingTypeface(familyName, style);
+    }
+
+    @Implementation
+    protected static Typeface create(Typeface family, int style) {
+        System.out.println("ShadowTypeface#create");
+        if (family == null) {
+            return createUnderlyingTypeface(null, style);
+        } else {
+            ShadowTypeface shadowTypeface = Shadow.extract(family);
+            return createUnderlyingTypeface(shadowTypeface.getFontDescription().getFamilyName(), style);
+        }
+    }
+
+    @Implementation
+    protected static Typeface createFromAsset(AssetManager mgr, String path) {
+        System.out.println("ShadowTypeface#createFromAsset");
+        ShadowAssetManager shadowAssetManager = Shadow.extract(mgr);
+        Collection<FsFile> assetDirs = shadowAssetManager.getAllAssetDirs();
+        for (FsFile assetDir : assetDirs) {
+            FsFile[] files = assetDir.listFiles(new StartsWith(path));
+            FsFile assetFile = assetDir.join(path);
+            if (assetFile.exists() || files.length != 0) {
+                return createUnderlyingTypeface(path, Typeface.NORMAL);
+            }
+        }
+        throw new RuntimeException("Font asset not found " + path);
+    }
+
+    @Implementation(minSdk = O)
+    protected static Typeface createFromResources(AssetManager mgr, String path, int cookie) {
+        System.out.println("ShadowTypeface#createFromResources");
         return createUnderlyingTypeface(path, Typeface.NORMAL);
-      }
     }
 
-    throw new RuntimeException("Font asset not found " + path);
-  }
-
-  @Implementation(minSdk = O)
-  protected static Typeface createFromResources(AssetManager mgr, String path, int cookie) {
-    return createUnderlyingTypeface(path, Typeface.NORMAL);
-  }
-
-  @Implementation
-  protected static Typeface createFromFile(File path) {
-    String familyName = path.toPath().getFileName().toString();
-    return createUnderlyingTypeface(familyName, Typeface.NORMAL);
-  }
-
-  @Implementation
-  protected static Typeface createFromFile(String path) {
-    return createFromFile(new File(path));
-  }
-
-  @Implementation
-  protected int getStyle() {
-    return description.getStyle();
-  }
-
-  @HiddenApi
-  @Implementation(minSdk = LOLLIPOP)
-  protected static Typeface createFromFamilies(Object /*FontFamily[]*/ families) {
-    return null;
-  }
-
-  @HiddenApi
-  @Implementation(minSdk = LOLLIPOP, maxSdk = N_MR1)
-  protected static Typeface createFromFamiliesWithDefault(Object /*FontFamily[]*/ families) {
-    return null;
-  }
-
-  @Implementation(minSdk = P)
-  protected static void buildSystemFallback(String xmlPath, String fontDir,
-      ArrayMap<String, Typeface> fontMap, ArrayMap<String, FontFamily[]> fallbackMap) {
-    fontMap.put("sans-serif", createUnderlyingTypeface("sans-serif", 0));
-  }
-
-
-  @Resetter
-  synchronized public static void reset() {
-    FONTS.clear();
-  }
-
-  private static Typeface createUnderlyingTypeface(String familyName, int style) {
-    long thisFontId = nextFontId++;
-    FONTS.put(thisFontId, new FontDesc(familyName, style));
-    if (getApiLevel() >= LOLLIPOP) {
-      return ReflectionHelpers.callConstructor(Typeface.class, ClassParameter.from(long.class, thisFontId));
-    } else {
-      return ReflectionHelpers.callConstructor(Typeface.class, ClassParameter.from(int.class, (int) thisFontId));
-    }
-  }
-
-  private synchronized static FontDesc findById(long fontId) {
-    if (FONTS.containsKey(fontId)) {
-      return FONTS.get(fontId);
-    }
-    throw new RuntimeException("Unknown font id: " + fontId);
-  }
-
-  /**
-   * Returns the font description.
-   *
-   * @return Font description.
-   */
-  public FontDesc getFontDescription() {
-    return description;
-  }
-
-  public static class FontDesc {
-    public final String familyName;
-    public final int style;
-
-    public FontDesc(String familyName, int style) {
-      this.familyName = familyName;
-      this.style = style;
+    @Implementation
+    protected static Typeface createFromFile(File path) {
+        System.out.println("ShadowTypeface#createFromFile");
+        String familyName = path.toPath().getFileName().toString();
+        return createUnderlyingTypeface(familyName, Typeface.NORMAL);
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      FontDesc fontDesc = (FontDesc) o;
-
-      if (style != fontDesc.style) return false;
-      if (familyName != null ? !familyName.equals(fontDesc.familyName) : fontDesc.familyName != null)
-        return false;
-
-      return true;
+    @Implementation
+    protected static Typeface createFromFile(String path) {
+        System.out.println("ShadowTypeface#createFromFile");
+        return createFromFile(new File(path));
     }
 
-    @Override
-    public int hashCode() {
-      int result = familyName != null ? familyName.hashCode() : 0;
-      result = 31 * result + style;
-      return result;
+    @Implementation
+    protected int getStyle() {
+        System.out.println("ShadowTypeface#getStyle");
+        return description.getStyle();
     }
 
-    public String getFamilyName() {
-      return familyName;
+    @HiddenApi
+    @Implementation(minSdk = LOLLIPOP)
+    protected static Typeface createFromFamilies(Object families) {
+        System.out.println("ShadowTypeface#createFromFamilies");
+        return null;
     }
 
-    public int getStyle() {
-      return style;
-    }
-  }
-
-  private static class StartsWith implements FsFile.Filter {
-    private final String contains;
-
-    public StartsWith(String contains) {
-      this.contains = contains;
+    @HiddenApi
+    @Implementation(minSdk = LOLLIPOP, maxSdk = N_MR1)
+    protected static Typeface createFromFamiliesWithDefault(Object families) {
+        System.out.println("ShadowTypeface#createFromFamiliesWithDefault");
+        return null;
     }
 
-    @Override
-    public boolean accept(FsFile file) {
-      return file.getName().startsWith(contains);
+    @Implementation(minSdk = P)
+    protected static void buildSystemFallback(String xmlPath, String fontDir, ArrayMap<String, Typeface> fontMap, ArrayMap<String, FontFamily[]> fallbackMap) {
+        System.out.println("ShadowTypeface#buildSystemFallback");
+        fontMap.put("sans-serif", createUnderlyingTypeface("sans-serif", 0));
     }
-  }
+
+    @Resetter
+    synchronized public static void reset() {
+        FONTS.clear();
+    }
+
+    private static Typeface createUnderlyingTypeface(String familyName, int style) {
+        long thisFontId = nextFontId++;
+        FONTS.put(thisFontId, new FontDesc(familyName, style));
+        if (getApiLevel() >= LOLLIPOP) {
+            return ReflectionHelpers.callConstructor(Typeface.class, ClassParameter.from(long.class, thisFontId));
+        } else {
+            return ReflectionHelpers.callConstructor(Typeface.class, ClassParameter.from(int.class, (int) thisFontId));
+        }
+    }
+
+    private synchronized static FontDesc findById(long fontId) {
+        if (FONTS.containsKey(fontId)) {
+            return FONTS.get(fontId);
+        }
+        throw new RuntimeException("Unknown font id: " + fontId);
+    }
+
+    /**
+     * Returns the font description.
+     *
+     * @return Font description.
+     */
+    public FontDesc getFontDescription() {
+        return description;
+    }
+
+    public static class FontDesc {
+
+        public final String familyName;
+
+        public final int style;
+
+        public FontDesc(String familyName, int style) {
+            this.familyName = familyName;
+            this.style = style;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+            FontDesc fontDesc = (FontDesc) o;
+            if (style != fontDesc.style)
+                return false;
+            if (familyName != null ? !familyName.equals(fontDesc.familyName) : fontDesc.familyName != null)
+                return false;
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = familyName != null ? familyName.hashCode() : 0;
+            result = 31 * result + style;
+            return result;
+        }
+
+        public String getFamilyName() {
+            return familyName;
+        }
+
+        public int getStyle() {
+            return style;
+        }
+    }
+
+    private static class StartsWith implements FsFile.Filter {
+
+        private final String contains;
+
+        public StartsWith(String contains) {
+            this.contains = contains;
+        }
+
+        @Override
+        public boolean accept(FsFile file) {
+            return file.getName().startsWith(contains);
+        }
+    }
 }
+

@@ -7,21 +7,24 @@ import org.robolectric.shadow.api.Shadow;
 
 @Implements(InputDevice.class)
 public class ShadowInputDevice {
-  private String deviceName;
 
-  public static InputDevice makeInputDeviceNamed(String deviceName) {
-    InputDevice inputDevice = Shadow.newInstanceOf(InputDevice.class);
-    ShadowInputDevice shadowInputDevice = Shadow.extract(inputDevice);
-    shadowInputDevice.setDeviceName(deviceName);
-    return inputDevice;
-  }
+    private String deviceName;
 
-  @Implementation
-  protected String getName() {
-    return deviceName;
-  }
+    public static InputDevice makeInputDeviceNamed(String deviceName) {
+        InputDevice inputDevice = Shadow.newInstanceOf(InputDevice.class);
+        ShadowInputDevice shadowInputDevice = Shadow.extract(inputDevice);
+        shadowInputDevice.setDeviceName(deviceName);
+        return inputDevice;
+    }
 
-  public void setDeviceName(String deviceName) {
-    this.deviceName = deviceName;
-  }
+    @Implementation
+    protected String getName() {
+        System.out.println("ShadowInputDevice#getName");
+        return deviceName;
+    }
+
+    public void setDeviceName(String deviceName) {
+        this.deviceName = deviceName;
+    }
 }
+

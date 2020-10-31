@@ -7,22 +7,28 @@ import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 import org.robolectric.annotation.RealObject;
 
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings({ "UnusedDeclaration" })
 @Implements(TabActivity.class)
 public class ShadowTabActivity extends ShadowActivityGroup {
-  @RealObject private TabActivity realTabActivity;
-  private TabHost tabhost;
 
-  @Implementation
-  protected TabHost getTabHost() {
-    if (tabhost==null) {
-      tabhost = new TabHost(realTabActivity);
+    @RealObject
+    private TabActivity realTabActivity;
+
+    private TabHost tabhost;
+
+    @Implementation
+    protected TabHost getTabHost() {
+        System.out.println("ShadowTabActivity#getTabHost");
+        if (tabhost == null) {
+            tabhost = new TabHost(realTabActivity);
+        }
+        return tabhost;
     }
-    return tabhost;
-  }
 
-  @Implementation
-  protected TabWidget getTabWidget() {
-    return getTabHost().getTabWidget();
-  }
+    @Implementation
+    protected TabWidget getTabWidget() {
+        System.out.println("ShadowTabActivity#getTabWidget");
+        return getTabHost().getTabWidget();
+    }
 }
+

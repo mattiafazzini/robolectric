@@ -19,10 +19,8 @@ import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
 import static android.os.Build.VERSION_CODES.O_MR1;
 import static android.os.Build.VERSION_CODES.P;
-
 import static org.robolectric.shadow.api.Shadow.invokeConstructor;
 import static org.robolectric.util.ReflectionHelpers.ClassParameter.from;
-
 import android.annotation.DrawableRes;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
@@ -98,1796 +96,1749 @@ import org.robolectric.annotation.RealObject;
 @Implements(value = ApplicationPackageManager.class, isInAndroidSdk = false, looseSignatures = true)
 public class ShadowApplicationPackageManager extends ShadowPackageManager {
 
-  /** Package name of the Android platform. */
-  private static final String PLATFORM_PACKAGE_NAME = "android";
+    /**
+     * Package name of the Android platform.
+     */
+    private static final String PLATFORM_PACKAGE_NAME = "android";
 
-  /** MIME type of Android Packages (APKs). */
-  private static final String PACKAGE_MIME_TYPE = "application/vnd.android.package-archive";
+    /**
+     * MIME type of Android Packages (APKs).
+     */
+    private static final String PACKAGE_MIME_TYPE = "application/vnd.android.package-archive";
 
-  /** {@link Uri} scheme of installed apps. */
-  private static final String PACKAGE_SCHEME = "package";
+    /**
+     * {@link Uri} scheme of installed apps.
+     */
+    private static final String PACKAGE_SCHEME = "package";
 
-  @RealObject private ApplicationPackageManager realObject;
+    @RealObject
+    private ApplicationPackageManager realObject;
 
-  private Context context;
+    private Context context;
 
-  @Implementation
-  protected void __constructor__(Object contextImpl, Object pm) {
-    try {
-      invokeConstructor(
-          ApplicationPackageManager.class,
-          realObject,
-          from(Class.forName(ShadowContextImpl.CLASS_NAME), contextImpl),
-          from(IPackageManager.class, pm));
-    } catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
-    context = (Context) contextImpl;
-  }
-
-  @Implementation
-  public List<PackageInfo> getInstalledPackages(int flags) {
-    List<PackageInfo> result = new ArrayList<>();
-    for (PackageInfo packageInfo : packageInfos.values()) {
-      String packageName = packageInfo.packageName;
-
-      if (applicationEnabledSettingMap.get(packageName) == COMPONENT_ENABLED_STATE_DISABLED
-          && (flags & MATCH_UNINSTALLED_PACKAGES) != MATCH_UNINSTALLED_PACKAGES
-          && (flags & MATCH_DISABLED_COMPONENTS) != MATCH_DISABLED_COMPONENTS) {
-        continue;
-      }
-
-      if (hiddenPackages.contains(packageName) && !isFlagSet(flags, MATCH_UNINSTALLED_PACKAGES)) {
-        continue;
-      }
-
-      result.add(packageInfo);
+    @Implementation
+    protected void __constructor__(Object contextImpl, Object pm) {
+        System.out.println("ShadowApplicationPackageManager#__constructor__");
+        try {
+            invokeConstructor(ApplicationPackageManager.class, realObject, from(Class.forName(ShadowContextImpl.CLASS_NAME), contextImpl), from(IPackageManager.class, pm));
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        context = (Context) contextImpl;
     }
 
-    return result;
-  }
-
-  @Implementation
-  protected ActivityInfo getActivityInfo(ComponentName component, int flags)
-      throws NameNotFoundException {
-    String activityName = component.getClassName();
-    String packageName = component.getPackageName();
-    PackageInfo packageInfo = packageInfos.get(packageName);
-
-    if (packageInfo != null) {
-      if (packageInfo.activities != null) {
-        for (ActivityInfo activity : packageInfo.activities) {
-          if (activityName.equals(activity.name)) {
-            ActivityInfo result = new ActivityInfo(activity);
-            if ((flags & GET_META_DATA) != 0) {
-              result.metaData = activity.metaData;
+    @Implementation
+    public List<PackageInfo> getInstalledPackages(int flags) {
+        System.out.println("ShadowApplicationPackageManager#getInstalledPackages");
+        List<PackageInfo> result = new ArrayList<>();
+        for (PackageInfo packageInfo : packageInfos.values()) {
+            String packageName = packageInfo.packageName;
+            if (applicationEnabledSettingMap.get(packageName) == COMPONENT_ENABLED_STATE_DISABLED && (flags & MATCH_UNINSTALLED_PACKAGES) != MATCH_UNINSTALLED_PACKAGES && (flags & MATCH_DISABLED_COMPONENTS) != MATCH_DISABLED_COMPONENTS) {
+                continue;
             }
+            if (hiddenPackages.contains(packageName) && !isFlagSet(flags, MATCH_UNINSTALLED_PACKAGES)) {
+                continue;
+            }
+            result.add(packageInfo);
+        }
+        return result;
+    }
 
+    @Implementation
+    protected ActivityInfo getActivityInfo(ComponentName component, int flags) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getActivityInfo");
+        String activityName = component.getClassName();
+        String packageName = component.getPackageName();
+        PackageInfo packageInfo = packageInfos.get(packageName);
+        if (packageInfo != null) {
+            if (packageInfo.activities != null) {
+                for (ActivityInfo activity : packageInfo.activities) {
+                    if (activityName.equals(activity.name)) {
+                        ActivityInfo result = new ActivityInfo(activity);
+                        if ((flags & GET_META_DATA) != 0) {
+                            result.metaData = activity.metaData;
+                        }
+                        return result;
+                    }
+                }
+            }
+            // Activity is requested is not listed in the AndroidManifest.xml
+            ActivityInfo result = new ActivityInfo();
+            result.name = activityName;
+            result.packageName = packageName;
+            result.applicationInfo = new ApplicationInfo(packageInfo.applicationInfo);
             return result;
-          }
         }
-      }
-
-      // Activity is requested is not listed in the AndroidManifest.xml
-      ActivityInfo result = new ActivityInfo();
-      result.name = activityName;
-      result.packageName = packageName;
-      result.applicationInfo = new ApplicationInfo(packageInfo.applicationInfo);
-      return result;
+        // In the cases where an Activity from another package has been requested.
+        ActivityInfo result = new ActivityInfo();
+        result.name = activityName;
+        result.packageName = packageName;
+        result.applicationInfo = new ApplicationInfo();
+        result.applicationInfo.packageName = packageName;
+        return result;
     }
 
-    // TODO: Should throw a NameNotFoundException
-    // In the cases where an Activity from another package has been requested.
-    ActivityInfo result = new ActivityInfo();
-    result.name = activityName;
-    result.packageName = packageName;
-    result.applicationInfo = new ApplicationInfo();
-    result.applicationInfo.packageName = packageName;
-    return result;
-  }
-
-  @Implementation
-  protected boolean hasSystemFeature(String name) {
-    return systemFeatureList.containsKey(name) ? systemFeatureList.get(name) : false;
-  }
-
-  @Implementation
-  protected int getComponentEnabledSetting(ComponentName componentName) {
-    ComponentState state = componentList.get(componentName);
-    return state != null ? state.newState : PackageManager.COMPONENT_ENABLED_STATE_DEFAULT;
-  }
-
-  @Implementation
-  protected @Nullable String getNameForUid(int uid) {
-    return namesForUid.get(uid);
-  }
-
-  @Implementation
-  protected @Nullable String[] getPackagesForUid(int uid) {
-    String[] packageNames = packagesForUid.get(uid);
-    if (packageNames != null) {
-      return packageNames;
+    @Implementation
+    protected boolean hasSystemFeature(String name) {
+        System.out.println("ShadowApplicationPackageManager#hasSystemFeature");
+        return systemFeatureList.containsKey(name) ? systemFeatureList.get(name) : false;
     }
 
-    Set<String> results = new HashSet<>();
-    for (PackageInfo packageInfo : packageInfos.values()) {
-      if (packageInfo.applicationInfo != null && packageInfo.applicationInfo.uid == uid) {
-        results.add(packageInfo.packageName);
-      }
+    @Implementation
+    protected int getComponentEnabledSetting(ComponentName componentName) {
+        System.out.println("ShadowApplicationPackageManager#getComponentEnabledSetting");
+        ComponentState state = componentList.get(componentName);
+        return state != null ? state.newState : PackageManager.COMPONENT_ENABLED_STATE_DEFAULT;
     }
 
-    return results.isEmpty() ? null : results.toArray(new String[results.size()]);
-  }
-
-  @Implementation
-  protected int getApplicationEnabledSetting(String packageName) {
-    try {
-      getPackageInfo(packageName, -1);
-    } catch (NameNotFoundException e) {
-      throw new IllegalArgumentException(e);
+    @Implementation
+    @Nullable
+    protected String getNameForUid(int uid) {
+        System.out.println("ShadowApplicationPackageManager#getNameForUid");
+        return namesForUid.get(uid);
     }
 
-    return applicationEnabledSettingMap.get(packageName);
-  }
-
-  @Implementation
-  protected ProviderInfo getProviderInfo(ComponentName component, int flags)
-      throws NameNotFoundException {
-    String packageName = component.getPackageName();
-
-    PackageInfo packageInfo = packageInfos.get(packageName);
-    if (packageInfo != null && packageInfo.providers != null) {
-      for (ProviderInfo provider : packageInfo.providers) {
-        if (resolvePackageName(packageName, component).equals(provider.name)) {
-          ProviderInfo result = new ProviderInfo();
-          result.packageName = provider.packageName;
-          result.name = provider.name;
-          result.authority = provider.authority;
-          result.readPermission = provider.readPermission;
-          result.writePermission = provider.writePermission;
-          result.pathPermissions = provider.pathPermissions;
-
-          if ((flags & GET_META_DATA) != 0) {
-            result.metaData = provider.metaData;
-          }
-          return result;
+    @Implementation
+    @Nullable
+    protected String[] getPackagesForUid(int uid) {
+        System.out.println("ShadowApplicationPackageManager#getPackagesForUid");
+        String[] packageNames = packagesForUid.get(uid);
+        if (packageNames != null) {
+            return packageNames;
         }
-      }
-    }
-
-    throw new NameNotFoundException("Package not found: " + packageName);
-  }
-
-  @Implementation
-  protected void setComponentEnabledSetting(ComponentName componentName, int newState, int flags) {
-    componentList.put(componentName, new ComponentState(newState, flags));
-  }
-
-  @Implementation
-  protected void setApplicationEnabledSetting(String packageName, int newState, int flags) {
-    applicationEnabledSettingMap.put(packageName, newState);
-  }
-
-  @Implementation
-  protected ResolveInfo resolveActivity(Intent intent, int flags) {
-    HashSet<ComponentName> preferredComponents = new HashSet<>();
-
-    for (Entry<IntentFilterWrapper, ComponentName> preferred : preferredActivities.entrySet()) {
-      if ((preferred.getKey().getFilter().match(context.getContentResolver(), intent, false, "robo")
-              & MATCH_CATEGORY_MASK)
-          != 0) {
-        preferredComponents.add(preferred.getValue());
-      }
-    }
-    List<ResolveInfo> candidates = queryIntentActivities(intent, flags);
-
-    return candidates.isEmpty()
-        ? null
-        : Collections.max(candidates, new ResolveInfoComparator(preferredComponents));
-  }
-
-  @Implementation
-  protected ProviderInfo resolveContentProvider(String name, int flags) {
-    if (name == null) {
-      return null;
-    }
-    for (PackageInfo packageInfo : packageInfos.values()) {
-      if (packageInfo.providers == null) continue;
-
-      for (ProviderInfo providerInfo : packageInfo.providers) {
-        if (name.equals(providerInfo.authority)) { // todo: support multiple authorities
-          return providerInfo;
+        Set<String> results = new HashSet<>();
+        for (PackageInfo packageInfo : packageInfos.values()) {
+            if (packageInfo.applicationInfo != null && packageInfo.applicationInfo.uid == uid) {
+                results.add(packageInfo.packageName);
+            }
         }
-      }
-    }
-    return null;
-  }
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected ProviderInfo resolveContentProviderAsUser(
-      String name, int flags, @UserIdInt int userId) {
-    return null;
-  }
-
-  @Implementation
-  protected PackageInfo getPackageInfo(String packageName, int flags) throws NameNotFoundException {
-    PackageInfo info = packageInfos.get(packageName);
-    if (info != null) {
-      if (applicationEnabledSettingMap.get(packageName) == COMPONENT_ENABLED_STATE_DISABLED
-          && (flags & MATCH_UNINSTALLED_PACKAGES) != MATCH_UNINSTALLED_PACKAGES
-          && (flags & MATCH_DISABLED_COMPONENTS) != MATCH_DISABLED_COMPONENTS) {
-        throw new NameNotFoundException("Package is disabled, can't find");
-      }
-      if (hiddenPackages.contains(packageName) && !isFlagSet(flags, MATCH_UNINSTALLED_PACKAGES)) {
-        throw new NameNotFoundException("Package is hidden, can't find");
-      }
-      return info;
-    } else {
-      throw new NameNotFoundException(packageName);
-    }
-  }
-
-  @Implementation
-  protected List<ResolveInfo> queryIntentServices(Intent intent, int flags) {
-    List<ResolveInfo> result = new ArrayList<>();
-    List<ResolveInfo> resolveInfoList = queryOverriddenIntents(intent, flags);
-    if (!resolveInfoList.isEmpty()) {
-      result.addAll(
-          filterResolvedComponent(
-              resolveInfoList, flags, (resolveInfo) -> resolveInfo.serviceInfo));
+        return results.isEmpty() ? null : results.toArray(new String[results.size()]);
     }
 
-    if (isExplicitIntent(intent)) {
-      ResolveInfo resolvedService = resolveServiceForExplicitIntent(intent);
-      if (resolvedService != null) {
-        result.addAll(
-            filterResolvedComponent(
-                Arrays.asList(resolvedService), flags, (resolveInfo) -> resolveInfo.serviceInfo));
-      }
-    } else {
-      result.addAll(
-          filterResolvedComponent(
-              queryImplicitIntentServices(intent, flags),
-              flags,
-              (resolveInfo) -> resolveInfo.serviceInfo));
+    @Implementation
+    protected int getApplicationEnabledSetting(String packageName) {
+        System.out.println("ShadowApplicationPackageManager#getApplicationEnabledSetting");
+        try {
+            getPackageInfo(packageName, -1);
+        } catch (NameNotFoundException e) {
+            throw new IllegalArgumentException(e);
+        }
+        return applicationEnabledSettingMap.get(packageName);
     }
-    return result;
-  }
 
-  private List<ResolveInfo> filterResolvedComponent(
-      List<ResolveInfo> resolveInfoList,
-      int flags,
-      Function<ResolveInfo, ComponentInfo> componentInfoFn) {
-    // If the flag is set, no further filtering will happen.
-    if (isFlagSet(flags, PackageManager.MATCH_ALL)) {
-      return resolveInfoList;
+    @Implementation
+    protected ProviderInfo getProviderInfo(ComponentName component, int flags) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getProviderInfo");
+        String packageName = component.getPackageName();
+        PackageInfo packageInfo = packageInfos.get(packageName);
+        if (packageInfo != null && packageInfo.providers != null) {
+            for (ProviderInfo provider : packageInfo.providers) {
+                if (resolvePackageName(packageName, component).equals(provider.name)) {
+                    ProviderInfo result = new ProviderInfo();
+                    result.packageName = provider.packageName;
+                    result.name = provider.name;
+                    result.authority = provider.authority;
+                    result.readPermission = provider.readPermission;
+                    result.writePermission = provider.writePermission;
+                    result.pathPermissions = provider.pathPermissions;
+                    if ((flags & GET_META_DATA) != 0) {
+                        result.metaData = provider.metaData;
+                    }
+                    return result;
+                }
+            }
+        }
+        throw new NameNotFoundException("Package not found: " + packageName);
     }
-    // Create a copy of the list for filtering
-    resolveInfoList = new ArrayList<>(resolveInfoList);
 
-    for (Iterator<ResolveInfo> iterator = resolveInfoList.iterator(); iterator.hasNext(); ) {
-      ResolveInfo resolveInfo = iterator.next();
-      ComponentInfo componentInfo = componentInfoFn.apply(resolveInfo);
+    @Implementation
+    protected void setComponentEnabledSetting(ComponentName componentName, int newState, int flags) {
+        System.out.println("ShadowApplicationPackageManager#setComponentEnabledSetting");
+        componentList.put(componentName, new ComponentState(newState, flags));
+    }
 
-      boolean hasSomeComponentInfo =
-          resolveInfo.activityInfo != null
-              || resolveInfo.serviceInfo != null
-              || (VERSION.SDK_INT >= VERSION_CODES.KITKAT && resolveInfo.providerInfo != null);
-      if (componentInfo == null && hasSomeComponentInfo) {
-        // wrong type of component. For backward compatibility we keep those entries that doesn't
-        // have any component.
-        iterator.remove();
-        continue;
-      }
+    @Implementation
+    protected void setApplicationEnabledSetting(String packageName, int newState, int flags) {
+        System.out.println("ShadowApplicationPackageManager#setApplicationEnabledSetting");
+        applicationEnabledSettingMap.put(packageName, newState);
+    }
 
-      if (isFlagSet(flags, PackageManager.MATCH_SYSTEM_ONLY)) {
-        if (componentInfo == null || componentInfo.applicationInfo == null) {
-          // TODO: for backwards compatibility just skip filtering. In future should just remove
-          // invalid resolve infos from list
-          iterator.remove();
-          continue;
+    @Implementation
+    protected ResolveInfo resolveActivity(Intent intent, int flags) {
+        System.out.println("ShadowApplicationPackageManager#resolveActivity");
+        HashSet<ComponentName> preferredComponents = new HashSet<>();
+        for (Entry<IntentFilterWrapper, ComponentName> preferred : preferredActivities.entrySet()) {
+            if ((preferred.getKey().getFilter().match(context.getContentResolver(), intent, false, "robo") & MATCH_CATEGORY_MASK) != 0) {
+                preferredComponents.add(preferred.getValue());
+            }
+        }
+        List<ResolveInfo> candidates = queryIntentActivities(intent, flags);
+        return candidates.isEmpty() ? null : Collections.max(candidates, new ResolveInfoComparator(preferredComponents));
+    }
+
+    @Implementation
+    protected ProviderInfo resolveContentProvider(String name, int flags) {
+        System.out.println("ShadowApplicationPackageManager#resolveContentProvider");
+        if (name == null) {
+            return null;
+        }
+        for (PackageInfo packageInfo : packageInfos.values()) {
+            if (packageInfo.providers == null)
+                continue;
+            for (ProviderInfo providerInfo : packageInfo.providers) {
+                if (name.equals(providerInfo.authority)) {
+                    // todo: support multiple authorities
+                    return providerInfo;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected ProviderInfo resolveContentProviderAsUser(String name, int flags, @UserIdInt int userId) {
+        System.out.println("ShadowApplicationPackageManager#resolveContentProviderAsUser");
+        return null;
+    }
+
+    @Implementation
+    protected PackageInfo getPackageInfo(String packageName, int flags) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getPackageInfo");
+        PackageInfo info = packageInfos.get(packageName);
+        if (info != null) {
+            if (applicationEnabledSettingMap.get(packageName) == COMPONENT_ENABLED_STATE_DISABLED && (flags & MATCH_UNINSTALLED_PACKAGES) != MATCH_UNINSTALLED_PACKAGES && (flags & MATCH_DISABLED_COMPONENTS) != MATCH_DISABLED_COMPONENTS) {
+                throw new NameNotFoundException("Package is disabled, can't find");
+            }
+            if (hiddenPackages.contains(packageName) && !isFlagSet(flags, MATCH_UNINSTALLED_PACKAGES)) {
+                throw new NameNotFoundException("Package is hidden, can't find");
+            }
+            return info;
         } else {
-          final int applicationFlags = componentInfo.applicationInfo.flags;
-          if ((applicationFlags & ApplicationInfo.FLAG_SYSTEM) != ApplicationInfo.FLAG_SYSTEM) {
-            iterator.remove();
-            continue;
-          }
+            throw new NameNotFoundException(packageName);
         }
-      }
-      if (!isFlagSet(flags, PackageManager.MATCH_DISABLED_COMPONENTS)
-          && resolveInfo != null
-          && isValidComponentInfo(componentInfo)) {
-        ComponentName componentName =
-            new ComponentName(componentInfo.applicationInfo.packageName, componentInfo.name);
-        if ((getComponentEnabledSetting(componentName)
-            & PackageManager.COMPONENT_ENABLED_STATE_DISABLED)
-            != 0) {
-          iterator.remove();
-          continue;
+    }
+
+    @Implementation
+    protected List<ResolveInfo> queryIntentServices(Intent intent, int flags) {
+        System.out.println("ShadowApplicationPackageManager#queryIntentServices");
+        List<ResolveInfo> result = new ArrayList<>();
+        List<ResolveInfo> resolveInfoList = queryOverriddenIntents(intent, flags);
+        if (!resolveInfoList.isEmpty()) {
+            result.addAll(filterResolvedComponent(resolveInfoList, flags, (resolveInfo) -> resolveInfo.serviceInfo));
         }
-      }
-      if (!isFlagSet(flags, MATCH_UNINSTALLED_PACKAGES)
-          && resolveInfo != null
-          && isValidComponentInfo(componentInfo)
-          && hiddenPackages.contains(componentInfo.applicationInfo.packageName)) {
-        iterator.remove();
-        continue;
-      }
-    }
-    return resolveInfoList;
-  }
-
-  private static boolean isFlagSet(int flags, int matchFlag) {
-    return (flags & matchFlag) == matchFlag;
-  }
-
-  private static boolean isValidComponentInfo(ComponentInfo componentInfo) {
-    return componentInfo != null
-        && componentInfo.applicationInfo != null
-        && componentInfo.applicationInfo.packageName != null
-        && componentInfo.name != null;
-  }
-
-  /** Behaves as {@link #queryIntentServices(Intent, int)} and currently ignores userId. */
-  @Implementation(minSdk = JELLY_BEAN_MR1)
-  protected List<ResolveInfo> queryIntentServicesAsUser(Intent intent, int flags, int userId) {
-    return queryIntentServices(intent, flags);
-  }
-
-  @Implementation
-  protected List<ResolveInfo> queryIntentActivities(Intent intent, int flags) {
-    List<ResolveInfo> result = new ArrayList<>();
-    List<ResolveInfo> resolveInfoList = queryOverriddenIntents(intent, flags);
-    if (!resolveInfoList.isEmpty()) {
-      result.addAll(
-          filterResolvedComponent(
-              resolveInfoList, flags, (resolveInfo) -> resolveInfo.activityInfo));
+        if (isExplicitIntent(intent)) {
+            ResolveInfo resolvedService = resolveServiceForExplicitIntent(intent);
+            if (resolvedService != null) {
+                result.addAll(filterResolvedComponent(Arrays.asList(resolvedService), flags, (resolveInfo) -> resolveInfo.serviceInfo));
+            }
+        } else {
+            result.addAll(filterResolvedComponent(queryImplicitIntentServices(intent, flags), flags, (resolveInfo) -> resolveInfo.serviceInfo));
+        }
+        return result;
     }
 
-    if (isExplicitIntent(intent)) {
-      ResolveInfo resolvedActivity = resolveActivityForExplicitIntent(intent);
-      if (resolvedActivity != null) {
-        result.addAll(
-            filterResolvedComponent(
-                Arrays.asList(resolvedActivity), flags, (resolveInfo) -> resolveInfo.activityInfo));
-      }
-    } else {
-      result.addAll(
-          filterResolvedComponent(
-              queryImplicitIntentActivities(intent, flags),
-              flags,
-              (resolveInfo) -> resolveInfo.activityInfo));
+    private List<ResolveInfo> filterResolvedComponent(List<ResolveInfo> resolveInfoList, int flags, Function<ResolveInfo, ComponentInfo> componentInfoFn) {
+        // If the flag is set, no further filtering will happen.
+        if (isFlagSet(flags, PackageManager.MATCH_ALL)) {
+            return resolveInfoList;
+        }
+        // Create a copy of the list for filtering
+        resolveInfoList = new ArrayList<>(resolveInfoList);
+        for (Iterator<ResolveInfo> iterator = resolveInfoList.iterator(); iterator.hasNext(); ) {
+            ResolveInfo resolveInfo = iterator.next();
+            ComponentInfo componentInfo = componentInfoFn.apply(resolveInfo);
+            boolean hasSomeComponentInfo = resolveInfo.activityInfo != null || resolveInfo.serviceInfo != null || (VERSION.SDK_INT >= VERSION_CODES.KITKAT && resolveInfo.providerInfo != null);
+            if (componentInfo == null && hasSomeComponentInfo) {
+                // wrong type of component. For backward compatibility we keep those entries that doesn't
+                // have any component.
+                iterator.remove();
+                continue;
+            }
+            if (isFlagSet(flags, PackageManager.MATCH_SYSTEM_ONLY)) {
+                if (componentInfo == null || componentInfo.applicationInfo == null) {
+                    // TODO: for backwards compatibility just skip filtering. In future should just remove
+                    // invalid resolve infos from list
+                    iterator.remove();
+                    continue;
+                } else {
+                    final int applicationFlags = componentInfo.applicationInfo.flags;
+                    if ((applicationFlags & ApplicationInfo.FLAG_SYSTEM) != ApplicationInfo.FLAG_SYSTEM) {
+                        iterator.remove();
+                        continue;
+                    }
+                }
+            }
+            if (!isFlagSet(flags, PackageManager.MATCH_DISABLED_COMPONENTS) && resolveInfo != null && isValidComponentInfo(componentInfo)) {
+                ComponentName componentName = new ComponentName(componentInfo.applicationInfo.packageName, componentInfo.name);
+                if ((getComponentEnabledSetting(componentName) & PackageManager.COMPONENT_ENABLED_STATE_DISABLED) != 0) {
+                    iterator.remove();
+                    continue;
+                }
+            }
+            if (!isFlagSet(flags, MATCH_UNINSTALLED_PACKAGES) && resolveInfo != null && isValidComponentInfo(componentInfo) && hiddenPackages.contains(componentInfo.applicationInfo.packageName)) {
+                iterator.remove();
+                continue;
+            }
+        }
+        return resolveInfoList;
     }
-    return result;
-  }
 
-  /** Behaves as {@link #queryIntentActivities(Intent, int)} and currently ignores userId. */
-  @Implementation(minSdk = JELLY_BEAN_MR1)
-  protected List<ResolveInfo> queryIntentActivitiesAsUser(Intent intent, int flags, int userId) {
-    return queryIntentActivities(intent, flags);
-  }
-
-  /** Returns true if intent has specified a specific component. */
-  private static boolean isExplicitIntent(Intent intent) {
-    return getComponentForIntent(intent) != null;
-  }
-
-  private ResolveInfo resolveActivityForExplicitIntent(Intent intent) {
-    ComponentName component = getComponentForIntent(intent);
-    for (Package appPackage : packages.values()) {
-      Activity activity = findMatchingComponent(component, appPackage.activities);
-      if (activity != null) {
-        return buildResolveInfo(activity);
-      }
+    private static boolean isFlagSet(int flags, int matchFlag) {
+        return (flags & matchFlag) == matchFlag;
     }
-    return null;
-  }
 
-  private ResolveInfo resolveServiceForExplicitIntent(Intent intent) {
-    ComponentName component = getComponentForIntent(intent);
-    for (Package appPackage : packages.values()) {
-      Service service = findMatchingComponent(component, appPackage.services);
-      if (service != null) {
-        return buildResolveInfo(service);
-      }
+    private static boolean isValidComponentInfo(ComponentInfo componentInfo) {
+        return componentInfo != null && componentInfo.applicationInfo != null && componentInfo.applicationInfo.packageName != null && componentInfo.name != null;
     }
-    return null;
-  }
 
-  private ResolveInfo resolveReceiverForExplicitIntent(Intent intent) {
-    ComponentName component = getComponentForIntent(intent);
-    for (Package appPackage : packages.values()) {
-      Activity receiver = findMatchingComponent(component, appPackage.receivers);
-      if (receiver != null) {
-        return buildResolveInfo(receiver);
-      }
+    /**
+     * Behaves as {@link #queryIntentServices(Intent, int)} and currently ignores userId.
+     */
+    @Implementation(minSdk = JELLY_BEAN_MR1)
+    protected List<ResolveInfo> queryIntentServicesAsUser(Intent intent, int flags, int userId) {
+        System.out.println("ShadowApplicationPackageManager#queryIntentServicesAsUser");
+        return queryIntentServices(intent, flags);
     }
-    return null;
-  }
 
-  private ResolveInfo resolveContentProviderForExplicitIntent(Intent intent) {
-    ComponentName component = getComponentForIntent(intent);
-    for (Package appPackage : packages.values()) {
-      Provider provider = findMatchingComponent(component, appPackage.providers);
-      if (provider != null) {
-        return buildResolveInfo(provider);
-      }
+    @Implementation
+    protected List<ResolveInfo> queryIntentActivities(Intent intent, int flags) {
+        System.out.println("ShadowApplicationPackageManager#queryIntentActivities");
+        List<ResolveInfo> result = new ArrayList<>();
+        List<ResolveInfo> resolveInfoList = queryOverriddenIntents(intent, flags);
+        if (!resolveInfoList.isEmpty()) {
+            result.addAll(filterResolvedComponent(resolveInfoList, flags, (resolveInfo) -> resolveInfo.activityInfo));
+        }
+        if (isExplicitIntent(intent)) {
+            ResolveInfo resolvedActivity = resolveActivityForExplicitIntent(intent);
+            if (resolvedActivity != null) {
+                result.addAll(filterResolvedComponent(Arrays.asList(resolvedActivity), flags, (resolveInfo) -> resolveInfo.activityInfo));
+            }
+        } else {
+            result.addAll(filterResolvedComponent(queryImplicitIntentActivities(intent, flags), flags, (resolveInfo) -> resolveInfo.activityInfo));
+        }
+        return result;
     }
-    return null;
-  }
 
-  private static <T extends Component> T findMatchingComponent(
-      ComponentName componentName, List<T> components) {
-    for (T component : components) {
-      if (componentName.equals(component.getComponentName())) {
+    /**
+     * Behaves as {@link #queryIntentActivities(Intent, int)} and currently ignores userId.
+     */
+    @Implementation(minSdk = JELLY_BEAN_MR1)
+    protected List<ResolveInfo> queryIntentActivitiesAsUser(Intent intent, int flags, int userId) {
+        System.out.println("ShadowApplicationPackageManager#queryIntentActivitiesAsUser");
+        return queryIntentActivities(intent, flags);
+    }
+
+    /**
+     * Returns true if intent has specified a specific component.
+     */
+    private static boolean isExplicitIntent(Intent intent) {
+        return getComponentForIntent(intent) != null;
+    }
+
+    private ResolveInfo resolveActivityForExplicitIntent(Intent intent) {
+        ComponentName component = getComponentForIntent(intent);
+        for (Package appPackage : packages.values()) {
+            Activity activity = findMatchingComponent(component, appPackage.activities);
+            if (activity != null) {
+                return buildResolveInfo(activity);
+            }
+        }
+        return null;
+    }
+
+    private ResolveInfo resolveServiceForExplicitIntent(Intent intent) {
+        ComponentName component = getComponentForIntent(intent);
+        for (Package appPackage : packages.values()) {
+            Service service = findMatchingComponent(component, appPackage.services);
+            if (service != null) {
+                return buildResolveInfo(service);
+            }
+        }
+        return null;
+    }
+
+    private ResolveInfo resolveReceiverForExplicitIntent(Intent intent) {
+        ComponentName component = getComponentForIntent(intent);
+        for (Package appPackage : packages.values()) {
+            Activity receiver = findMatchingComponent(component, appPackage.receivers);
+            if (receiver != null) {
+                return buildResolveInfo(receiver);
+            }
+        }
+        return null;
+    }
+
+    private ResolveInfo resolveContentProviderForExplicitIntent(Intent intent) {
+        ComponentName component = getComponentForIntent(intent);
+        for (Package appPackage : packages.values()) {
+            Provider provider = findMatchingComponent(component, appPackage.providers);
+            if (provider != null) {
+                return buildResolveInfo(provider);
+            }
+        }
+        return null;
+    }
+
+    private static <T extends Component> T findMatchingComponent(ComponentName componentName, List<T> components) {
+        for (T component : components) {
+            if (componentName.equals(component.getComponentName())) {
+                return component;
+            }
+        }
+        return null;
+    }
+
+    private static ComponentName getComponentForIntent(Intent intent) {
+        ComponentName component = intent.getComponent();
+        if (component == null) {
+            if (intent.getSelector() != null) {
+                intent = intent.getSelector();
+                component = intent.getComponent();
+            }
+        }
         return component;
-      }
     }
-    return null;
-  }
 
-  private static ComponentName getComponentForIntent(Intent intent) {
-    ComponentName component = intent.getComponent();
-    if (component == null) {
-      if (intent.getSelector() != null) {
-        intent = intent.getSelector();
-        component = intent.getComponent();
-      }
-    }
-    return component;
-  }
-
-  private List<ResolveInfo> queryImplicitIntentContentProviders(Intent intent, int flags) {
-    List<ResolveInfo> resolveInfoList = new ArrayList<>();
-
-    for (Package appPackage : packages.values()) {
-      if (intent.getPackage() == null || intent.getPackage().equals(appPackage.packageName)) {
-        for (Provider provider : appPackage.providers) {
-          IntentFilter intentFilter = matchIntentFilter(intent, provider.intents, flags);
-          if (intentFilter != null) {
-            resolveInfoList.add(buildResolveInfo(provider));
-          }
+    private List<ResolveInfo> queryImplicitIntentContentProviders(Intent intent, int flags) {
+        List<ResolveInfo> resolveInfoList = new ArrayList<>();
+        for (Package appPackage : packages.values()) {
+            if (intent.getPackage() == null || intent.getPackage().equals(appPackage.packageName)) {
+                for (Provider provider : appPackage.providers) {
+                    IntentFilter intentFilter = matchIntentFilter(intent, provider.intents, flags);
+                    if (intentFilter != null) {
+                        resolveInfoList.add(buildResolveInfo(provider));
+                    }
+                }
+            }
         }
-      }
+        return resolveInfoList;
     }
 
-    return resolveInfoList;
-  }
-
-  private List<ResolveInfo> queryImplicitIntentActivities(Intent intent, int flags) {
-    List<ResolveInfo> resolveInfoList = new ArrayList<>();
-
-    for (Package appPackage : packages.values()) {
-      if (intent.getPackage() == null || intent.getPackage().equals(appPackage.packageName)) {
-        for (Activity activity : appPackage.activities) {
-          IntentFilter intentFilter = matchIntentFilter(intent, activity.intents, flags);
-          if (intentFilter != null) {
-            resolveInfoList.add(buildResolveInfo(activity, intentFilter));
-          }
+    private List<ResolveInfo> queryImplicitIntentActivities(Intent intent, int flags) {
+        List<ResolveInfo> resolveInfoList = new ArrayList<>();
+        for (Package appPackage : packages.values()) {
+            if (intent.getPackage() == null || intent.getPackage().equals(appPackage.packageName)) {
+                for (Activity activity : appPackage.activities) {
+                    IntentFilter intentFilter = matchIntentFilter(intent, activity.intents, flags);
+                    if (intentFilter != null) {
+                        resolveInfoList.add(buildResolveInfo(activity, intentFilter));
+                    }
+                }
+            }
         }
-      }
+        return resolveInfoList;
     }
 
-    return resolveInfoList;
-  }
-
-  private List<ResolveInfo> queryImplicitIntentServices(Intent intent, int flags) {
-    List<ResolveInfo> resolveInfoList = new ArrayList<>();
-
-    for (Package appPackage : packages.values()) {
-      if (intent.getPackage() == null || intent.getPackage().equals(appPackage.packageName)) {
-        for (Service service : appPackage.services) {
-          IntentFilter intentFilter = matchIntentFilter(intent, service.intents, flags);
-          if (intentFilter != null) {
-            resolveInfoList.add(buildResolveInfo(service, intentFilter));
-          }
+    private List<ResolveInfo> queryImplicitIntentServices(Intent intent, int flags) {
+        List<ResolveInfo> resolveInfoList = new ArrayList<>();
+        for (Package appPackage : packages.values()) {
+            if (intent.getPackage() == null || intent.getPackage().equals(appPackage.packageName)) {
+                for (Service service : appPackage.services) {
+                    IntentFilter intentFilter = matchIntentFilter(intent, service.intents, flags);
+                    if (intentFilter != null) {
+                        resolveInfoList.add(buildResolveInfo(service, intentFilter));
+                    }
+                }
+            }
         }
-      }
+        return resolveInfoList;
     }
 
-    return resolveInfoList;
-  }
-
-  private List<ResolveInfo> queryImplicitIntentReceivers(Intent intent, int flags) {
-    List<ResolveInfo> resolveInfoList = new ArrayList<>();
-
-    for (Package appPackage : packages.values()) {
-      if (intent.getPackage() == null || intent.getPackage().equals(appPackage.packageName)) {
-        for (Activity activity : appPackage.receivers) {
-          IntentFilter intentFilter = matchIntentFilter(intent, activity.intents, flags);
-          if (intentFilter != null) {
-            resolveInfoList.add(buildResolveInfo(activity, intentFilter));
-          }
+    private List<ResolveInfo> queryImplicitIntentReceivers(Intent intent, int flags) {
+        List<ResolveInfo> resolveInfoList = new ArrayList<>();
+        for (Package appPackage : packages.values()) {
+            if (intent.getPackage() == null || intent.getPackage().equals(appPackage.packageName)) {
+                for (Activity activity : appPackage.receivers) {
+                    IntentFilter intentFilter = matchIntentFilter(intent, activity.intents, flags);
+                    if (intentFilter != null) {
+                        resolveInfoList.add(buildResolveInfo(activity, intentFilter));
+                    }
+                }
+            }
         }
-      }
+        return resolveInfoList;
     }
 
-    return resolveInfoList;
-  }
-
-  static ResolveInfo buildResolveInfo(Activity activity) {
-    ResolveInfo resolveInfo = buildResolveInfo(activity.info);
-    resolveInfo.activityInfo = activity.info;
-    return resolveInfo;
-  }
-
-  static ResolveInfo buildResolveInfo(Service service) {
-    ResolveInfo resolveInfo = buildResolveInfo(service.info);
-    resolveInfo.serviceInfo = service.info;
-    return resolveInfo;
-  }
-
-  static ResolveInfo buildResolveInfo(Provider provider) {
-    ResolveInfo resolveInfo = buildResolveInfo(provider.info);
-    resolveInfo.providerInfo = provider.info;
-    return resolveInfo;
-  }
-
-  private static ResolveInfo buildResolveInfo(ComponentInfo componentInfo) {
-    ResolveInfo resolveInfo = new ResolveInfo();
-    resolveInfo.resolvePackageName = componentInfo.applicationInfo.packageName;
-    return resolveInfo;
-  }
-
-  static ResolveInfo buildResolveInfo(Activity activity, IntentFilter intentFilter) {
-    ResolveInfo info = buildResolveInfo(activity);
-    info.isDefault = intentFilter.hasCategory("Intent.CATEGORY_DEFAULT");
-    info.filter = new IntentFilter(intentFilter);
-    return info;
-  }
-
-  static ResolveInfo buildResolveInfo(Service service, IntentFilter intentFilter) {
-    ResolveInfo info = buildResolveInfo(service);
-    info.isDefault = intentFilter.hasCategory("Intent.CATEGORY_DEFAULT");
-    info.serviceInfo = service.info;
-    info.filter = new IntentFilter(intentFilter);
-    return info;
-  }
-
-  @Implementation
-  protected int checkPermission(String permName, String pkgName) {
-    PackageInfo permissionsInfo = packageInfos.get(pkgName);
-    if (permissionsInfo == null || permissionsInfo.requestedPermissions == null) {
-      return PackageManager.PERMISSION_DENIED;
+    static ResolveInfo buildResolveInfo(Activity activity) {
+        ResolveInfo resolveInfo = buildResolveInfo(activity.info);
+        resolveInfo.activityInfo = activity.info;
+        return resolveInfo;
     }
 
-    String permission;
-    for (int i = 0; i < permissionsInfo.requestedPermissions.length; i++) {
-      permission = permissionsInfo.requestedPermissions[i];
-      if (permission != null && permission.equals(permName)) {
-        // The package requests this permission. Now check if it's been granted to the package.
-        if (isGrantedForBackwardsCompatibility(pkgName, permissionsInfo)) {
-          return PackageManager.PERMISSION_GRANTED;
+    static ResolveInfo buildResolveInfo(Service service) {
+        ResolveInfo resolveInfo = buildResolveInfo(service.info);
+        resolveInfo.serviceInfo = service.info;
+        return resolveInfo;
+    }
+
+    static ResolveInfo buildResolveInfo(Provider provider) {
+        ResolveInfo resolveInfo = buildResolveInfo(provider.info);
+        resolveInfo.providerInfo = provider.info;
+        return resolveInfo;
+    }
+
+    private static ResolveInfo buildResolveInfo(ComponentInfo componentInfo) {
+        ResolveInfo resolveInfo = new ResolveInfo();
+        resolveInfo.resolvePackageName = componentInfo.applicationInfo.packageName;
+        return resolveInfo;
+    }
+
+    static ResolveInfo buildResolveInfo(Activity activity, IntentFilter intentFilter) {
+        ResolveInfo info = buildResolveInfo(activity);
+        info.isDefault = intentFilter.hasCategory("Intent.CATEGORY_DEFAULT");
+        info.filter = new IntentFilter(intentFilter);
+        return info;
+    }
+
+    static ResolveInfo buildResolveInfo(Service service, IntentFilter intentFilter) {
+        ResolveInfo info = buildResolveInfo(service);
+        info.isDefault = intentFilter.hasCategory("Intent.CATEGORY_DEFAULT");
+        info.serviceInfo = service.info;
+        info.filter = new IntentFilter(intentFilter);
+        return info;
+    }
+
+    @Implementation
+    protected int checkPermission(String permName, String pkgName) {
+        System.out.println("ShadowApplicationPackageManager#checkPermission");
+        PackageInfo permissionsInfo = packageInfos.get(pkgName);
+        if (permissionsInfo == null || permissionsInfo.requestedPermissions == null) {
+            return PackageManager.PERMISSION_DENIED;
         }
-
-        if ((permissionsInfo.requestedPermissionsFlags[i] & REQUESTED_PERMISSION_GRANTED)
-            == REQUESTED_PERMISSION_GRANTED) {
-          return PackageManager.PERMISSION_GRANTED;
+        String permission;
+        for (int i = 0; i < permissionsInfo.requestedPermissions.length; i++) {
+            permission = permissionsInfo.requestedPermissions[i];
+            if (permission != null && permission.equals(permName)) {
+                // The package requests this permission. Now check if it's been granted to the package.
+                if (isGrantedForBackwardsCompatibility(pkgName, permissionsInfo)) {
+                    return PackageManager.PERMISSION_GRANTED;
+                }
+                if ((permissionsInfo.requestedPermissionsFlags[i] & REQUESTED_PERMISSION_GRANTED) == REQUESTED_PERMISSION_GRANTED) {
+                    return PackageManager.PERMISSION_GRANTED;
+                }
+            }
         }
-      }
+        return PackageManager.PERMISSION_DENIED;
     }
 
-    return PackageManager.PERMISSION_DENIED;
-  }
-
-  /**
-   * Returns whether a permission should be treated as granted to the package for backward
-   * compatibility reasons.
-   *
-   * <p>Before Robolectric 4.0 the ShadowPackageManager treated every requested permission as
-   * automatically granted. 4.0 changes this behavior, and only treats a permission as granted if
-   * PackageInfo.requestedPermissionFlags[permissionIndex] & REQUESTED_PERMISSION_GRANTED ==
-   * REQUESTED_PERMISSION_GRANTED which matches the real PackageManager's behavior.
-   *
-   * <p>Since many existing tests didn't set the requestedPermissionFlags on their {@code
-   * PackageInfo} objects, but assumed that all permissions are granted, we auto-grant all
-   * permissions if the requestedPermissionFlags is not set. If the requestedPermissionFlags is set,
-   * we assume that the test is configuring the permission grant state, and we don't override this
-   * setting.
-   */
-  private boolean isGrantedForBackwardsCompatibility(String pkgName, PackageInfo permissionsInfo) {
-    // Note: it might be cleaner to auto-grant these permissions when the package is added to the
-    // PackageManager. But many existing tests modify the requested permissions _after_ adding the
-    // package to the PackageManager, without updating the requestedPermissionsFlags.
-    return permissionsInfo.requestedPermissionsFlags == null
-        // Robolectric uses the PackageParser to create the current test package's PackageInfo from
+    /**
+     * Returns whether a permission should be treated as granted to the package for backward
+     * compatibility reasons.
+     *
+     * <p>Before Robolectric 4.0 the ShadowPackageManager treated every requested permission as
+     * automatically granted. 4.0 changes this behavior, and only treats a permission as granted if
+     * PackageInfo.requestedPermissionFlags[permissionIndex] & REQUESTED_PERMISSION_GRANTED ==
+     * REQUESTED_PERMISSION_GRANTED which matches the real PackageManager's behavior.
+     *
+     * <p>Since many existing tests didn't set the requestedPermissionFlags on their {@code
+     * PackageInfo} objects, but assumed that all permissions are granted, we auto-grant all
+     * permissions if the requestedPermissionFlags is not set. If the requestedPermissionFlags is set,
+     * we assume that the test is configuring the permission grant state, and we don't override this
+     * setting.
+     */
+    private boolean isGrantedForBackwardsCompatibility(String pkgName, PackageInfo permissionsInfo) {
+        // Note: it might be cleaner to auto-grant these permissions when the package is added to the
+        // PackageManager. But many existing tests modify the requested permissions _after_ adding the
+        // package to the PackageManager, without updating the requestedPermissionsFlags.
+        return permissionsInfo.requestedPermissionsFlags == null || // Robolectric uses the PackageParser to create the current test package's PackageInfo from
         // the manifest XML. The parser populates the requestedPermissionsFlags, but doesn't grant
         // the permissions. Several tests rely on the test package being granted all permissions, so
         // we treat this as a special case.
-        || pkgName.equals(RuntimeEnvironment.application.getPackageName());
-  }
-
-  @Implementation
-  protected ActivityInfo getReceiverInfo(ComponentName className, int flags)
-      throws NameNotFoundException {
-    String packageName = className.getPackageName();
-
-    PackageInfo packageInfo = packageInfos.get(packageName);
-    if (packageInfo != null && packageInfo.receivers != null) {
-      for (ActivityInfo receiver : packageInfo.receivers) {
-        if (resolvePackageName(packageName, className).equals(receiver.name)) {
-          ActivityInfo result = new ActivityInfo();
-          result.packageName = receiver.packageName;
-          result.name = receiver.name;
-          if ((flags & GET_META_DATA) != 0) {
-            result.metaData = receiver.metaData;
-          }
-          return result;
-        }
-      }
+        pkgName.equals(RuntimeEnvironment.application.getPackageName());
     }
 
-    return null;
-  }
-
-  @Implementation
-  protected List<ResolveInfo> queryBroadcastReceivers(Intent intent, int flags) {
-    List<ResolveInfo> result = new ArrayList<>();
-    List<ResolveInfo> resolveInfoList = queryOverriddenIntents(intent, flags);
-    if (!resolveInfoList.isEmpty()) {
-      result.addAll(
-          filterResolvedComponent(
-              resolveInfoList, flags, (resolveInfo) -> resolveInfo.activityInfo));
-    }
-
-    if (isExplicitIntent(intent)) {
-      ResolveInfo resolvedReceiver = resolveReceiverForExplicitIntent(intent);
-      if (resolvedReceiver != null) {
-        result.addAll(
-            filterResolvedComponent(
-                Arrays.asList(resolvedReceiver), flags, (resolveInfo) -> resolveInfo.activityInfo));
-      }
-    } else {
-      result.addAll(
-          filterResolvedComponent(
-              queryImplicitIntentReceivers(intent, flags),
-              flags,
-              (resolveInfo) -> resolveInfo.activityInfo));
-    }
-    return result;
-  }
-
-  private static IntentFilter matchIntentFilter(
-      Intent intent, ArrayList<? extends PackageParser.IntentInfo> intentFilters, int flags) {
-    for (PackageParser.IntentInfo intentInfo : intentFilters) {
-      if (intentInfo.match(
-              intent.getAction(),
-              intent.getType(),
-              intent.getScheme(),
-              intent.getData(),
-              intent.getCategories(),
-              "ShadowPackageManager")
-          >= 0) {
-        return intentInfo;
-      }
-    }
-    return null;
-  }
-
-  @Implementation
-  protected ResolveInfo resolveService(Intent intent, int flags) {
-    List<ResolveInfo> candidates = queryIntentServices(intent, flags);
-    return candidates.isEmpty() ? null : candidates.get(0);
-  }
-
-  @Implementation
-  protected ServiceInfo getServiceInfo(ComponentName className, int flags)
-      throws NameNotFoundException {
-    String packageName = className.getPackageName();
-    PackageInfo packageInfo = packageInfos.get(packageName);
-
-    if (packageInfo != null) {
-      String serviceName = className.getClassName();
-      if (packageInfo.services != null) {
-        for (ServiceInfo service : packageInfo.services) {
-          if (serviceName.equals(service.name)) {
-            ServiceInfo result = new ServiceInfo(service);
-            result.applicationInfo = new ApplicationInfo(service.applicationInfo);
-            if ((flags & GET_META_DATA) == 0) {
-              result.metaData = null;
+    @Implementation
+    protected ActivityInfo getReceiverInfo(ComponentName className, int flags) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getReceiverInfo");
+        String packageName = className.getPackageName();
+        PackageInfo packageInfo = packageInfos.get(packageName);
+        if (packageInfo != null && packageInfo.receivers != null) {
+            for (ActivityInfo receiver : packageInfo.receivers) {
+                if (resolvePackageName(packageName, className).equals(receiver.name)) {
+                    ActivityInfo result = new ActivityInfo();
+                    result.packageName = receiver.packageName;
+                    result.name = receiver.name;
+                    if ((flags & GET_META_DATA) != 0) {
+                        result.metaData = receiver.metaData;
+                    }
+                    return result;
+                }
             }
-            if (result.processName == null) {
-              result.processName = result.applicationInfo.processName;
+        }
+        return null;
+    }
+
+    @Implementation
+    protected List<ResolveInfo> queryBroadcastReceivers(Intent intent, int flags) {
+        System.out.println("ShadowApplicationPackageManager#queryBroadcastReceivers");
+        List<ResolveInfo> result = new ArrayList<>();
+        List<ResolveInfo> resolveInfoList = queryOverriddenIntents(intent, flags);
+        if (!resolveInfoList.isEmpty()) {
+            result.addAll(filterResolvedComponent(resolveInfoList, flags, (resolveInfo) -> resolveInfo.activityInfo));
+        }
+        if (isExplicitIntent(intent)) {
+            ResolveInfo resolvedReceiver = resolveReceiverForExplicitIntent(intent);
+            if (resolvedReceiver != null) {
+                result.addAll(filterResolvedComponent(Arrays.asList(resolvedReceiver), flags, (resolveInfo) -> resolveInfo.activityInfo));
             }
-            return result;
-          }
+        } else {
+            result.addAll(filterResolvedComponent(queryImplicitIntentReceivers(intent, flags), flags, (resolveInfo) -> resolveInfo.activityInfo));
         }
-      }
-      throw new NameNotFoundException(serviceName);
-    }
-    return null;
-  }
-
-  @Implementation
-  protected Resources getResourcesForApplication(@NonNull ApplicationInfo applicationInfo)
-      throws PackageManager.NameNotFoundException {
-    return getResourcesForApplication(applicationInfo.packageName);
-  }
-
-  @Implementation
-  protected List<ApplicationInfo> getInstalledApplications(int flags) {
-    List<ApplicationInfo> result = new ArrayList<>();
-
-    for (PackageInfo packageInfo : packageInfos.values()) {
-      result.add(packageInfo.applicationInfo);
-    }
-    return result;
-  }
-
-  @Implementation
-  protected String getInstallerPackageName(String packageName) {
-    return packageInstallerMap.get(packageName);
-  }
-
-  @Implementation
-  protected PermissionInfo getPermissionInfo(String name, int flags) throws NameNotFoundException {
-    PermissionInfo permissionInfo = extraPermissions.get(name);
-    if (permissionInfo != null) {
-      return permissionInfo;
+        return result;
     }
 
-    for (PackageInfo packageInfo : packageInfos.values()) {
-      if (packageInfo.permissions != null) {
-        for (PermissionInfo permission : packageInfo.permissions) {
-          if (name.equals(permission.name)) {
-            return createCopyPermissionInfo(permission, flags);
-          }
+    private static IntentFilter matchIntentFilter(Intent intent, ArrayList<? extends PackageParser.IntentInfo> intentFilters, int flags) {
+        for (PackageParser.IntentInfo intentInfo : intentFilters) {
+            if (intentInfo.match(intent.getAction(), intent.getType(), intent.getScheme(), intent.getData(), intent.getCategories(), "ShadowPackageManager") >= 0) {
+                return intentInfo;
+            }
         }
-      }
+        return null;
     }
 
-    throw new NameNotFoundException(name);
-  }
-
-  @Implementation(minSdk = M)
-  protected boolean shouldShowRequestPermissionRationale(String permission) {
-    return permissionRationaleMap.containsKey(permission)
-        ? permissionRationaleMap.get(permission)
-        : false;
-  }
-
-  @Implementation
-  protected FeatureInfo[] getSystemAvailableFeatures() {
-    return systemAvailableFeatures.isEmpty()
-        ? null
-        : systemAvailableFeatures.toArray(new FeatureInfo[systemAvailableFeatures.size()]);
-  }
-
-  @Implementation
-  protected void verifyPendingInstall(int id, int verificationCode) {
-    if (verificationResults.containsKey(id)) {
-      throw new IllegalStateException("Multiple verifications for id=" + id);
-    }
-    verificationResults.put(id, verificationCode);
-  }
-
-  @Implementation(minSdk = JELLY_BEAN_MR1)
-  protected void extendVerificationTimeout(
-      int id, int verificationCodeAtTimeout, long millisecondsToDelay) {
-    verificationTimeoutExtension.put(id, millisecondsToDelay);
-  }
-
-  @Override
-  @Implementation(maxSdk = LOLLIPOP_MR1)
-  protected void freeStorageAndNotify(long freeStorageSize, IPackageDataObserver observer) {}
-
-  @Implementation(minSdk = M)
-  protected void freeStorageAndNotify(
-      String volumeUuid, long freeStorageSize, IPackageDataObserver observer) {}
-
-  @Implementation
-  protected void setInstallerPackageName(String targetPackage, String installerPackageName) {
-    packageInstallerMap.put(targetPackage, installerPackageName);
-  }
-
-  @Implementation(minSdk = KITKAT)
-  protected List<ResolveInfo> queryIntentContentProviders(Intent intent, int flags) {
-    List<ResolveInfo> result = new ArrayList<>();
-    List<ResolveInfo> resolveInfoList = queryOverriddenIntents(intent, flags);
-    if (!resolveInfoList.isEmpty()) {
-      result.addAll(
-          filterResolvedComponent(
-              resolveInfoList, flags, (resolveInfo) -> resolveInfo.providerInfo));
+    @Implementation
+    protected ResolveInfo resolveService(Intent intent, int flags) {
+        System.out.println("ShadowApplicationPackageManager#resolveService");
+        List<ResolveInfo> candidates = queryIntentServices(intent, flags);
+        return candidates.isEmpty() ? null : candidates.get(0);
     }
 
-    if (isExplicitIntent(intent)) {
-      ResolveInfo resolvedProvider = resolveContentProviderForExplicitIntent(intent);
-      if (resolvedProvider != null) {
-        result.addAll(
-            filterResolvedComponent(
-                Arrays.asList(resolvedProvider), flags, (resolveInfo) -> resolveInfo.providerInfo));
-      }
-    } else {
-      result.addAll(
-          filterResolvedComponent(
-              queryImplicitIntentContentProviders(intent, flags),
-              flags,
-              (resolveInfo) -> resolveInfo.providerInfo));
+    @Implementation
+    protected ServiceInfo getServiceInfo(ComponentName className, int flags) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getServiceInfo");
+        String packageName = className.getPackageName();
+        PackageInfo packageInfo = packageInfos.get(packageName);
+        if (packageInfo != null) {
+            String serviceName = className.getClassName();
+            if (packageInfo.services != null) {
+                for (ServiceInfo service : packageInfo.services) {
+                    if (serviceName.equals(service.name)) {
+                        ServiceInfo result = new ServiceInfo(service);
+                        result.applicationInfo = new ApplicationInfo(service.applicationInfo);
+                        if ((flags & GET_META_DATA) == 0) {
+                            result.metaData = null;
+                        }
+                        if (result.processName == null) {
+                            result.processName = result.applicationInfo.processName;
+                        }
+                        return result;
+                    }
+                }
+            }
+            throw new NameNotFoundException(serviceName);
+        }
+        return null;
     }
-    return result;
-  }
 
-  @Implementation(minSdk = KITKAT)
-  protected List<ResolveInfo> queryIntentContentProvidersAsUser(
-      Intent intent, int flags, int userId) {
-    return Collections.emptyList();
-  }
+    @Implementation
+    protected Resources getResourcesForApplication(@NonNull ApplicationInfo applicationInfo) throws PackageManager.NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getResourcesForApplication");
+        return getResourcesForApplication(applicationInfo.packageName);
+    }
 
-  @Implementation(minSdk = M)
-  protected String getPermissionControllerPackageName() {
-    return null;
-  }
+    @Implementation
+    protected List<ApplicationInfo> getInstalledApplications(int flags) {
+        System.out.println("ShadowApplicationPackageManager#getInstalledApplications");
+        List<ApplicationInfo> result = new ArrayList<>();
+        for (PackageInfo packageInfo : packageInfos.values()) {
+            result.add(packageInfo.applicationInfo);
+        }
+        return result;
+    }
 
-  @Implementation(maxSdk = JELLY_BEAN)
-  protected void getPackageSizeInfo(Object pkgName, Object observer) {
-    final PackageStats packageStats = packageStatsMap.get((String) pkgName);
-    new Handler(Looper.getMainLooper())
-        .post(
-            () -> {
-              try {
-                ((IPackageStatsObserver) observer)
-                    .onGetStatsCompleted(packageStats, packageStats != null);
-              } catch (RemoteException remoteException) {
+    @Implementation
+    protected String getInstallerPackageName(String packageName) {
+        System.out.println("ShadowApplicationPackageManager#getInstallerPackageName");
+        return packageInstallerMap.get(packageName);
+    }
+
+    @Implementation
+    protected PermissionInfo getPermissionInfo(String name, int flags) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getPermissionInfo");
+        PermissionInfo permissionInfo = extraPermissions.get(name);
+        if (permissionInfo != null) {
+            return permissionInfo;
+        }
+        for (PackageInfo packageInfo : packageInfos.values()) {
+            if (packageInfo.permissions != null) {
+                for (PermissionInfo permission : packageInfo.permissions) {
+                    if (name.equals(permission.name)) {
+                        return createCopyPermissionInfo(permission, flags);
+                    }
+                }
+            }
+        }
+        throw new NameNotFoundException(name);
+    }
+
+    @Implementation(minSdk = M)
+    protected boolean shouldShowRequestPermissionRationale(String permission) {
+        System.out.println("ShadowApplicationPackageManager#shouldShowRequestPermissionRationale");
+        return permissionRationaleMap.containsKey(permission) ? permissionRationaleMap.get(permission) : false;
+    }
+
+    @Implementation
+    protected FeatureInfo[] getSystemAvailableFeatures() {
+        System.out.println("ShadowApplicationPackageManager#getSystemAvailableFeatures");
+        return systemAvailableFeatures.isEmpty() ? null : systemAvailableFeatures.toArray(new FeatureInfo[systemAvailableFeatures.size()]);
+    }
+
+    @Implementation
+    protected void verifyPendingInstall(int id, int verificationCode) {
+        System.out.println("ShadowApplicationPackageManager#verifyPendingInstall");
+        if (verificationResults.containsKey(id)) {
+            throw new IllegalStateException("Multiple verifications for id=" + id);
+        }
+        verificationResults.put(id, verificationCode);
+    }
+
+    @Implementation(minSdk = JELLY_BEAN_MR1)
+    protected void extendVerificationTimeout(int id, int verificationCodeAtTimeout, long millisecondsToDelay) {
+        System.out.println("ShadowApplicationPackageManager#extendVerificationTimeout");
+        verificationTimeoutExtension.put(id, millisecondsToDelay);
+    }
+
+    @Override
+    @Implementation(maxSdk = LOLLIPOP_MR1)
+    protected void freeStorageAndNotify(long freeStorageSize, IPackageDataObserver observer) {
+    }
+
+    @Implementation(minSdk = M)
+    protected void freeStorageAndNotify(String volumeUuid, long freeStorageSize, IPackageDataObserver observer) {
+    }
+
+    @Implementation
+    protected void setInstallerPackageName(String targetPackage, String installerPackageName) {
+        System.out.println("ShadowApplicationPackageManager#setInstallerPackageName");
+        packageInstallerMap.put(targetPackage, installerPackageName);
+    }
+
+    @Implementation(minSdk = KITKAT)
+    protected List<ResolveInfo> queryIntentContentProviders(Intent intent, int flags) {
+        System.out.println("ShadowApplicationPackageManager#queryIntentContentProviders");
+        List<ResolveInfo> result = new ArrayList<>();
+        List<ResolveInfo> resolveInfoList = queryOverriddenIntents(intent, flags);
+        if (!resolveInfoList.isEmpty()) {
+            result.addAll(filterResolvedComponent(resolveInfoList, flags, (resolveInfo) -> resolveInfo.providerInfo));
+        }
+        if (isExplicitIntent(intent)) {
+            ResolveInfo resolvedProvider = resolveContentProviderForExplicitIntent(intent);
+            if (resolvedProvider != null) {
+                result.addAll(filterResolvedComponent(Arrays.asList(resolvedProvider), flags, (resolveInfo) -> resolveInfo.providerInfo));
+            }
+        } else {
+            result.addAll(filterResolvedComponent(queryImplicitIntentContentProviders(intent, flags), flags, (resolveInfo) -> resolveInfo.providerInfo));
+        }
+        return result;
+    }
+
+    @Implementation(minSdk = KITKAT)
+    protected List<ResolveInfo> queryIntentContentProvidersAsUser(Intent intent, int flags, int userId) {
+        System.out.println("ShadowApplicationPackageManager#queryIntentContentProvidersAsUser");
+        return Collections.emptyList();
+    }
+
+    @Implementation(minSdk = M)
+    protected String getPermissionControllerPackageName() {
+        System.out.println("ShadowApplicationPackageManager#getPermissionControllerPackageName");
+        return null;
+    }
+
+    @Implementation(maxSdk = JELLY_BEAN)
+    protected void getPackageSizeInfo(Object pkgName, Object observer) {
+        System.out.println("ShadowApplicationPackageManager#getPackageSizeInfo");
+        final PackageStats packageStats = packageStatsMap.get((String) pkgName);
+        new Handler(Looper.getMainLooper()).post(() -> {
+            try {
+                ((IPackageStatsObserver) observer).onGetStatsCompleted(packageStats, packageStats != null);
+            } catch (RemoteException remoteException) {
                 remoteException.rethrowFromSystemServer();
-              }
-            });
-  }
+            }
+        });
+    }
 
-  @Implementation(minSdk = JELLY_BEAN_MR1, maxSdk = M)
-  protected void getPackageSizeInfo(Object pkgName, Object uid, final Object observer) {
-    final PackageStats packageStats = packageStatsMap.get((String) pkgName);
-    new Handler(Looper.getMainLooper())
-        .post(
-            () -> {
-              try {
-                ((IPackageStatsObserver) observer)
-                    .onGetStatsCompleted(packageStats, packageStats != null);
-              } catch (RemoteException remoteException) {
+    @Implementation(minSdk = JELLY_BEAN_MR1, maxSdk = M)
+    protected void getPackageSizeInfo(Object pkgName, Object uid, final Object observer) {
+        System.out.println("ShadowApplicationPackageManager#getPackageSizeInfo");
+        final PackageStats packageStats = packageStatsMap.get((String) pkgName);
+        new Handler(Looper.getMainLooper()).post(() -> {
+            try {
+                ((IPackageStatsObserver) observer).onGetStatsCompleted(packageStats, packageStats != null);
+            } catch (RemoteException remoteException) {
                 remoteException.rethrowFromSystemServer();
-              }
-            });
-  }
+            }
+        });
+    }
 
-  @Implementation(minSdk = N)
-  protected void getPackageSizeInfoAsUser(Object pkgName, Object uid, final Object observer) {
-    final PackageStats packageStats = packageStatsMap.get((String) pkgName);
-    new Handler(Looper.getMainLooper())
-        .post(
-            () -> {
-              try {
-                ((IPackageStatsObserver) observer)
-                    .onGetStatsCompleted(packageStats, packageStats != null);
-              } catch (RemoteException remoteException) {
+    @Implementation(minSdk = N)
+    protected void getPackageSizeInfoAsUser(Object pkgName, Object uid, final Object observer) {
+        System.out.println("ShadowApplicationPackageManager#getPackageSizeInfoAsUser");
+        final PackageStats packageStats = packageStatsMap.get((String) pkgName);
+        new Handler(Looper.getMainLooper()).post(() -> {
+            try {
+                ((IPackageStatsObserver) observer).onGetStatsCompleted(packageStats, packageStats != null);
+            } catch (RemoteException remoteException) {
                 remoteException.rethrowFromSystemServer();
-              }
-            });
-  }
-
-  @Implementation
-  protected void deletePackage(String packageName, IPackageDeleteObserver observer, int flags) {
-    pendingDeleteCallbacks.put(packageName, observer);
-  }
-
-  @Implementation
-  protected String[] currentToCanonicalPackageNames(String[] names) {
-    String[] out = new String[names.length];
-    for (int i = names.length - 1; i >= 0; i--) {
-      if (currentToCanonicalNames.containsKey(names[i])) {
-        out[i] = currentToCanonicalNames.get(names[i]);
-      } else {
-        out[i] = names[i];
-      }
-    }
-    return out;
-  }
-
-  @Implementation
-  protected boolean isSafeMode() {
-    return false;
-  }
-
-  @Implementation
-  protected Drawable getApplicationIcon(String packageName) throws NameNotFoundException {
-    return applicationIcons.get(packageName);
-  }
-
-  @Implementation
-  protected Drawable getApplicationIcon(ApplicationInfo info) {
-    return null;
-  }
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected Drawable getUserBadgeForDensity(UserHandle userHandle, int i) {
-    return null;
-  }
-
-  @Implementation
-  protected int checkSignatures(String pkg1, String pkg2) {
-    try {
-      PackageInfo packageInfo1 = getPackageInfo(pkg1, GET_SIGNATURES);
-      PackageInfo packageInfo2 = getPackageInfo(pkg2, GET_SIGNATURES);
-      return compareSignature(packageInfo1.signatures, packageInfo2.signatures);
-    } catch (NameNotFoundException e) {
-      return SIGNATURE_UNKNOWN_PACKAGE;
-    }
-  }
-
-  @Implementation
-  protected int checkSignatures(int uid1, int uid2) {
-    return 0;
-  }
-
-  @Implementation
-  protected List<PermissionInfo> queryPermissionsByGroup(String group, int flags)
-      throws NameNotFoundException {
-    List<PermissionInfo> result = new ArrayList<>();
-    for (PermissionInfo permissionInfo : extraPermissions.values()) {
-      if (Objects.equals(permissionInfo.group, group)) {
-        result.add(permissionInfo);
-      }
+            }
+        });
     }
 
-    for (PackageInfo packageInfo : packageInfos.values()) {
-      if (packageInfo.permissions != null) {
-        for (PermissionInfo permission : packageInfo.permissions) {
-          if (Objects.equals(group, permission.group)) {
-            result.add(createCopyPermissionInfo(permission, flags));
-          }
+    @Implementation
+    protected void deletePackage(String packageName, IPackageDeleteObserver observer, int flags) {
+        System.out.println("ShadowApplicationPackageManager#deletePackage");
+        pendingDeleteCallbacks.put(packageName, observer);
+    }
+
+    @Implementation
+    protected String[] currentToCanonicalPackageNames(String[] names) {
+        System.out.println("ShadowApplicationPackageManager#currentToCanonicalPackageNames");
+        String[] out = new String[names.length];
+        for (int i = names.length - 1; i >= 0; i--) {
+            if (currentToCanonicalNames.containsKey(names[i])) {
+                out[i] = currentToCanonicalNames.get(names[i]);
+            } else {
+                out[i] = names[i];
+            }
         }
-      }
+        return out;
     }
 
-    if (result.isEmpty()) {
-      throw new NameNotFoundException(group);
+    @Implementation
+    protected boolean isSafeMode() {
+        System.out.println("ShadowApplicationPackageManager#isSafeMode");
+        return false;
     }
 
-    return result;
-  }
-
-  private static PermissionInfo createCopyPermissionInfo(PermissionInfo src, int flags) {
-    PermissionInfo matchedPermission = new PermissionInfo(src);
-    if ((flags & GET_META_DATA) != GET_META_DATA) {
-      matchedPermission.metaData = null;
-    }
-    return matchedPermission;
-  }
-
-  @Implementation
-  protected Intent getLaunchIntentForPackage(String packageName) {
-    Intent intentToResolve = new Intent(Intent.ACTION_MAIN);
-    intentToResolve.addCategory(Intent.CATEGORY_INFO);
-    intentToResolve.setPackage(packageName);
-    List<ResolveInfo> ris = queryIntentActivities(intentToResolve, 0);
-
-    if (ris == null || ris.isEmpty()) {
-      intentToResolve.removeCategory(Intent.CATEGORY_INFO);
-      intentToResolve.addCategory(Intent.CATEGORY_LAUNCHER);
-      intentToResolve.setPackage(packageName);
-      ris = queryIntentActivities(intentToResolve, 0);
-    }
-    if (ris == null || ris.isEmpty()) {
-      return null;
-    }
-    Intent intent = new Intent(intentToResolve);
-    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-    intent.setClassName(packageName, ris.get(0).activityInfo.name);
-    return intent;
-  }
-
-  ////////////////////////////
-
-  @Implementation(minSdk = N)
-  protected PackageInfo getPackageInfoAsUser(String packageName, int flags, int userId)
-      throws NameNotFoundException {
-    return null;
-  }
-
-  @Implementation
-  protected String[] canonicalToCurrentPackageNames(String[] names) {
-    return new String[0];
-  }
-
-  @Implementation
-  protected int[] getPackageGids(String packageName) throws NameNotFoundException {
-    return new int[0];
-  }
-
-  @Implementation(minSdk = N)
-  protected int[] getPackageGids(String packageName, int flags) throws NameNotFoundException {
-    return null;
-  }
-
-  @Implementation(minSdk = JELLY_BEAN_MR2)
-  protected int getPackageUid(String packageName, int flags) throws NameNotFoundException {
-    Integer uid = uidForPackage.get(packageName);
-    if (uid == null) {
-      throw new NameNotFoundException(packageName);
-    }
-    return uid;
-  }
-
-  @Implementation(minSdk = N)
-  protected int getPackageUidAsUser(String packageName, int userId) throws NameNotFoundException {
-    return 0;
-  }
-
-  @Implementation(minSdk = N)
-  protected int getPackageUidAsUser(String packageName, int flags, int userId)
-      throws NameNotFoundException {
-    return 0;
-  }
-
-  /** @see ShadowPackageManager#addPermissionGroupInfo(android.content.pm.PermissionGroupInfo) */
-  @Implementation
-  protected PermissionGroupInfo getPermissionGroupInfo(String name, int flags)
-      throws NameNotFoundException {
-    if (extraPermissionGroups.containsKey(name)) {
-      return new PermissionGroupInfo(extraPermissionGroups.get(name));
+    @Implementation
+    protected Drawable getApplicationIcon(String packageName) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getApplicationIcon");
+        return applicationIcons.get(packageName);
     }
 
-    for (Package pkg : packages.values()) {
-      for (PermissionGroup permissionGroup : pkg.permissionGroups) {
-        if (name.equals(permissionGroup.info.name)) {
-          return PackageParser.generatePermissionGroupInfo(permissionGroup, flags);
+    @Implementation
+    protected Drawable getApplicationIcon(ApplicationInfo info) {
+        System.out.println("ShadowApplicationPackageManager#getApplicationIcon");
+        return null;
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected Drawable getUserBadgeForDensity(UserHandle userHandle, int i) {
+        System.out.println("ShadowApplicationPackageManager#getUserBadgeForDensity");
+        return null;
+    }
+
+    @Implementation
+    protected int checkSignatures(String pkg1, String pkg2) {
+        System.out.println("ShadowApplicationPackageManager#checkSignatures");
+        try {
+            PackageInfo packageInfo1 = getPackageInfo(pkg1, GET_SIGNATURES);
+            PackageInfo packageInfo2 = getPackageInfo(pkg2, GET_SIGNATURES);
+            return compareSignature(packageInfo1.signatures, packageInfo2.signatures);
+        } catch (NameNotFoundException e) {
+            return SIGNATURE_UNKNOWN_PACKAGE;
         }
-      }
     }
 
-    throw new NameNotFoundException(name);
-  }
-
-  /** @see ShadowPackageManager#addPermissionGroupInfo(android.content.pm.PermissionGroupInfo) */
-  @Implementation
-  protected List<PermissionGroupInfo> getAllPermissionGroups(int flags) {
-    ArrayList<PermissionGroupInfo> allPermissionGroups = new ArrayList<PermissionGroupInfo>();
-    // To be consistent with Android's implementation, return at most one PermissionGroupInfo object
-    // per permission group string
-    HashSet<String> handledPermissionGroups = new HashSet<>();
-
-    for (PermissionGroupInfo permissionGroupInfo : extraPermissionGroups.values()) {
-      allPermissionGroups.add(new PermissionGroupInfo(permissionGroupInfo));
-      handledPermissionGroups.add(permissionGroupInfo.name);
+    @Implementation
+    protected int checkSignatures(int uid1, int uid2) {
+        System.out.println("ShadowApplicationPackageManager#checkSignatures");
+        return 0;
     }
 
-    for (Package pkg : packages.values()) {
-      for (PermissionGroup permissionGroup : pkg.permissionGroups) {
-        if (!handledPermissionGroups.contains(permissionGroup.info.name)) {
-          PermissionGroupInfo permissionGroupInfo =
-              PackageParser.generatePermissionGroupInfo(permissionGroup, flags);
-          allPermissionGroups.add(new PermissionGroupInfo(permissionGroupInfo));
-          handledPermissionGroups.add(permissionGroup.info.name);
+    @Implementation
+    protected List<PermissionInfo> queryPermissionsByGroup(String group, int flags) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#queryPermissionsByGroup");
+        List<PermissionInfo> result = new ArrayList<>();
+        for (PermissionInfo permissionInfo : extraPermissions.values()) {
+            if (Objects.equals(permissionInfo.group, group)) {
+                result.add(permissionInfo);
+            }
         }
-      }
-    }
-
-    return allPermissionGroups;
-  }
-
-  @Implementation
-  protected ApplicationInfo getApplicationInfo(String packageName, int flags)
-      throws NameNotFoundException {
-    PackageInfo info = packageInfos.get(packageName);
-    if (info != null) {
-      try {
-        PackageInfo packageInfo = getPackageInfo(packageName, -1);
-      } catch (NameNotFoundException e) {
-        throw new IllegalArgumentException(e);
-      }
-
-      if (applicationEnabledSettingMap.get(packageName) == COMPONENT_ENABLED_STATE_DISABLED
-          && (flags & MATCH_UNINSTALLED_PACKAGES) != MATCH_UNINSTALLED_PACKAGES
-          && (flags & MATCH_DISABLED_COMPONENTS) != MATCH_DISABLED_COMPONENTS) {
-        throw new NameNotFoundException("Package is disabled, can't find");
-      }
-
-      if (hiddenPackages.contains(packageName) && !isFlagSet(flags, MATCH_UNINSTALLED_PACKAGES)) {
-        throw new NameNotFoundException("Package is hidden, can't find");
-      }
-
-      return info.applicationInfo;
-    } else {
-      throw new NameNotFoundException(packageName);
-    }
-  }
-
-  /**
-   * Returns all the values added via {@link
-   * ShadowPackageManager#addSystemSharedLibraryName(String)}.
-   */
-  @Implementation
-  protected String[] getSystemSharedLibraryNames() {
-    return systemSharedLibraryNames.toArray(new String[systemSharedLibraryNames.size()]);
-  }
-
-  @Implementation(minSdk = N)
-  protected @NonNull String getServicesSystemSharedLibraryPackageName() {
-    return null;
-  }
-
-  @Implementation(minSdk = N)
-  protected @NonNull String getSharedSystemSharedLibraryPackageName() {
-    return "";
-  }
-
-  @Implementation(minSdk = N)
-  protected boolean hasSystemFeature(String name, int version) {
-    return false;
-  }
-
-  @Implementation(minSdk = M)
-  protected boolean isPermissionRevokedByPolicy(String permName, String pkgName) {
-    return false;
-  }
-
-  @Implementation
-  protected boolean addPermission(PermissionInfo info) {
-    return false;
-  }
-
-  @Implementation
-  protected boolean addPermissionAsync(PermissionInfo info) {
-    return false;
-  }
-
-  @Implementation
-  protected void removePermission(String name) {}
-
-  @Implementation(minSdk = M)
-  protected void grantRuntimePermission(
-      String packageName, String permissionName, UserHandle user) {
-
-    if (!packageInfos.containsKey(packageName)) {
-      throw new SecurityException("Package not found: " + packageName);
-    }
-    PackageInfo packageInfo = packageInfos.get(packageName);
-    checkPermissionGrantStateInitialized(packageInfo);
-
-    int permissionIndex = getPermissionIndex(packageInfo, permissionName);
-    if (permissionIndex < 0) {
-      throw new SecurityException(
-          "Permission " + permissionName + " not requested by package " + packageName);
-    }
-
-    packageInfo.requestedPermissionsFlags[permissionIndex] |= REQUESTED_PERMISSION_GRANTED;
-  }
-
-  @Implementation(minSdk = M)
-  protected void revokeRuntimePermission(
-      String packageName, String permissionName, UserHandle user) {
-
-    if (!packageInfos.containsKey(packageName)) {
-      throw new SecurityException("Package not found: " + packageName);
-    }
-    PackageInfo packageInfo = packageInfos.get(packageName);
-    checkPermissionGrantStateInitialized(packageInfo);
-
-    int permissionIndex = getPermissionIndex(packageInfo, permissionName);
-    if (permissionIndex < 0) {
-      throw new SecurityException(
-          "Permission " + permissionName + " not requested by package " + packageName);
-    }
-
-    packageInfo.requestedPermissionsFlags[permissionIndex] &= ~REQUESTED_PERMISSION_GRANTED;
-  }
-
-  private void checkPermissionGrantStateInitialized(PackageInfo packageInfo) {
-    if (packageInfo.requestedPermissionsFlags == null) {
-      // In the real OS this would never be null, but tests don't necessarily initialize this
-      // structure.
-      throw new SecurityException(
-          "Permission grant state (PackageInfo.requestedPermissionFlags) "
-              + "is null. This operation requires this variable to be initialized.");
-    }
-  }
-
-  /**
-   * Returns the index of the given permission in the PackageInfo.requestedPermissions array, or -1
-   * if it's not found.
-   */
-  private int getPermissionIndex(PackageInfo packageInfo, String permissionName) {
-    if (packageInfo.requestedPermissions != null) {
-      for (int i = 0; i < packageInfo.requestedPermissions.length; i++) {
-        if (permissionName.equals(packageInfo.requestedPermissions[i])) {
-          return i;
+        for (PackageInfo packageInfo : packageInfos.values()) {
+            if (packageInfo.permissions != null) {
+                for (PermissionInfo permission : packageInfo.permissions) {
+                    if (Objects.equals(group, permission.group)) {
+                        result.add(createCopyPermissionInfo(permission, flags));
+                    }
+                }
+            }
         }
-      }
-    }
-
-    return -1;
-  }
-
-  @Implementation(minSdk = M)
-  protected int getPermissionFlags(String permissionName, String packageName, UserHandle user) {
-    return 0;
-  }
-
-  @Implementation(minSdk = M)
-  protected void updatePermissionFlags(
-      String permissionName, String packageName, int flagMask, int flagValues, UserHandle user) {}
-
-  @Implementation
-  protected int getUidForSharedUser(String sharedUserName) throws NameNotFoundException {
-    return 0;
-  }
-
-  @Implementation(minSdk = N)
-  protected List<PackageInfo> getInstalledPackagesAsUser(int flags, int userId) {
-    return null;
-  }
-
-  @Implementation(minSdk = JELLY_BEAN_MR2)
-  protected List<PackageInfo> getPackagesHoldingPermissions(String[] permissions, int flags) {
-    return null;
-  }
-
-  @Implementation(minSdk = JELLY_BEAN_MR1)
-  protected ResolveInfo resolveActivityAsUser(Intent intent, int flags, int userId) {
-    return null;
-  }
-
-  @Implementation
-  protected List<ResolveInfo> queryIntentActivityOptions(
-      ComponentName caller, Intent[] specifics, Intent intent, int flags) {
-    return null;
-  }
-
-  @Implementation(minSdk = N)
-  protected List<ResolveInfo> queryBroadcastReceiversAsUser(Intent intent, int flags, int userId) {
-    return null;
-  }
-
-  @Implementation
-  protected List<ProviderInfo> queryContentProviders(String processName, int uid, int flags) {
-    return null;
-  }
-
-  @Implementation
-  protected InstrumentationInfo getInstrumentationInfo(ComponentName className, int flags)
-      throws NameNotFoundException {
-    return null;
-  }
-
-  @Implementation
-  protected List<InstrumentationInfo> queryInstrumentation(String targetPackage, int flags) {
-    return null;
-  }
-
-  @Nullable
-  @Implementation
-  protected Drawable getDrawable(
-      String packageName, @DrawableRes int resId, @Nullable ApplicationInfo appInfo) {
-    return drawables.get(new Pair<>(packageName, resId));
-  }
-
-  @Implementation
-  protected Drawable getActivityIcon(ComponentName activityName) throws NameNotFoundException {
-    return drawableList.get(activityName);
-  }
-
-  @Implementation
-  protected Drawable getDefaultActivityIcon() {
-    return Resources.getSystem().getDrawable(com.android.internal.R.drawable.sym_def_app_icon);
-  }
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected Drawable getActivityBanner(ComponentName activityName) throws NameNotFoundException {
-    return null;
-  }
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected Drawable getActivityBanner(Intent intent) throws NameNotFoundException {
-    return null;
-  }
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected Drawable getApplicationBanner(ApplicationInfo info) {
-    return null;
-  }
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected Drawable getApplicationBanner(String packageName) throws NameNotFoundException {
-    return null;
-  }
-
-  @Implementation
-  protected Drawable getActivityLogo(ComponentName activityName) throws NameNotFoundException {
-    return null;
-  }
-
-  @Implementation
-  protected Drawable getActivityLogo(Intent intent) throws NameNotFoundException {
-    return null;
-  }
-
-  @Implementation
-  protected Drawable getApplicationLogo(ApplicationInfo info) {
-    return null;
-  }
-
-  @Implementation
-  protected Drawable getApplicationLogo(String packageName) throws NameNotFoundException {
-    return null;
-  }
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected Drawable getUserBadgedIcon(Drawable icon, UserHandle user) {
-    return null;
-  }
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected Drawable getUserBadgedDrawableForDensity(
-      Drawable drawable, UserHandle user, Rect badgeLocation, int badgeDensity) {
-    return null;
-  }
-
-  @Implementation(minSdk = N)
-  protected Drawable getUserBadgeForDensityNoBackground(UserHandle user, int density) {
-    return null;
-  }
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected CharSequence getUserBadgedLabel(CharSequence label, UserHandle user) {
-    return null;
-  }
-
-  @Implementation
-  protected Resources getResourcesForActivity(ComponentName activityName)
-      throws NameNotFoundException {
-    return null;
-  }
-
-  @Implementation
-  protected Resources getResourcesForApplication(String appPackageName)
-      throws NameNotFoundException {
-    if (context.getPackageName().equals(appPackageName)) {
-      return context.getResources();
-    } else if (packageInfos.containsKey(appPackageName)) {
-      Resources appResources = resources.get(appPackageName);
-      if (appResources == null) {
-        appResources = new Resources(new AssetManager(), null, null);
-        resources.put(appPackageName, appResources);
-      }
-      return appResources;
-    }
-    throw new NameNotFoundException(appPackageName);
-  }
-
-  @Implementation(minSdk = JELLY_BEAN_MR1)
-  protected Resources getResourcesForApplicationAsUser(String appPackageName, int userId)
-      throws NameNotFoundException {
-    return null;
-  }
-
-  @Implementation(minSdk = M)
-  protected void addOnPermissionsChangeListener(Object listener) {}
-
-  @Implementation(minSdk = M)
-  protected void removeOnPermissionsChangeListener(Object listener) {}
-
-  @Implementation(maxSdk = O_MR1)
-  protected void installPackage(
-      Object packageURI, Object observer, Object flags, Object installerPackageName) {}
-
-  @Implementation(minSdk = JELLY_BEAN_MR1)
-  protected int installExistingPackage(String packageName) throws NameNotFoundException {
-    return 0;
-  }
-
-  @Implementation(minSdk = N)
-  protected int installExistingPackageAsUser(String packageName, int userId)
-      throws NameNotFoundException {
-    return 0;
-  }
-
-  @Implementation(minSdk = M)
-  protected void verifyIntentFilter(int id, int verificationCode, List<String> failedDomains) {}
-
-  @Implementation(minSdk = N)
-  protected int getIntentVerificationStatusAsUser(String packageName, int userId) {
-    return 0;
-  }
-
-  @Implementation(minSdk = N)
-  protected boolean updateIntentVerificationStatusAsUser(
-      String packageName, int status, int userId) {
-    return false;
-  }
-
-  @Implementation(minSdk = M)
-  protected List<IntentFilterVerificationInfo> getIntentFilterVerifications(String packageName) {
-    return null;
-  }
-
-  @Implementation(minSdk = M)
-  protected List<IntentFilter> getAllIntentFilters(String packageName) {
-    return null;
-  }
-
-  @Implementation(minSdk = N)
-  protected String getDefaultBrowserPackageNameAsUser(int userId) {
-    return null;
-  }
-
-  @Implementation(minSdk = N)
-  protected boolean setDefaultBrowserPackageNameAsUser(String packageName, int userId) {
-    return false;
-  }
-
-  @Implementation(minSdk = M)
-  protected int getMoveStatus(int moveId) {
-    return 0;
-  }
-
-  @Implementation(minSdk = M)
-  protected void registerMoveCallback(Object callback, Object handler) {}
-
-  @Implementation(minSdk = M)
-  protected void unregisterMoveCallback(Object callback) {}
-
-  @Implementation(minSdk = M)
-  protected Object movePackage(Object packageName, Object vol) {
-    return 0;
-  }
-
-  @Implementation(minSdk = M)
-  protected Object getPackageCurrentVolume(Object app) {
-    return null;
-  }
-
-  @Implementation(minSdk = M)
-  protected List<VolumeInfo> getPackageCandidateVolumes(ApplicationInfo app) {
-    return null;
-  }
-
-  @Implementation(minSdk = M)
-  protected Object movePrimaryStorage(Object vol) {
-    return 0;
-  }
-
-  @Implementation(minSdk = M)
-  protected @Nullable Object getPrimaryStorageCurrentVolume() {
-    return null;
-  }
-
-  @Implementation(minSdk = M)
-  protected @NonNull List<VolumeInfo> getPrimaryStorageCandidateVolumes() {
-    return null;
-  }
-
-  @Implementation(minSdk = N)
-  protected void deletePackageAsUser(
-      String packageName, IPackageDeleteObserver observer, int flags, int userId) {}
-
-  @Implementation
-  protected void clearApplicationUserData(String packageName, IPackageDataObserver observer) {}
-
-  @Implementation
-  protected void deleteApplicationCacheFiles(String packageName, IPackageDataObserver observer) {}
-
-  @Implementation(minSdk = N)
-  protected void deleteApplicationCacheFilesAsUser(
-      String packageName, int userId, IPackageDataObserver observer) {}
-
-  @Implementation(minSdk = M)
-  protected void freeStorage(String volumeUuid, long freeStorageSize, IntentSender pi) {}
-
-  @Implementation(minSdk = N, maxSdk = O_MR1)
-  protected String[] setPackagesSuspendedAsUser(
-      String[] packageNames, boolean suspended, int userId) {
-    return null;
-  }
-
-  @Implementation(minSdk = N)
-  protected boolean isPackageSuspendedForUser(String packageName, int userId) {
-    return false;
-  }
-
-  @Implementation
-  protected void addPackageToPreferred(String packageName) {}
-
-  @Implementation
-  protected void removePackageFromPreferred(String packageName) {}
-
-  @Implementation
-  protected List<PackageInfo> getPreferredPackages(int flags) {
-    return null;
-  }
-
-  @Implementation
-  public void addPreferredActivity(
-      IntentFilter filter, int match, ComponentName[] set, ComponentName activity) {
-    preferredActivities.put(new IntentFilterWrapper(filter), activity);
-  }
-
-  @Implementation
-  protected void replacePreferredActivity(
-      IntentFilter filter, int match, ComponentName[] set, ComponentName activity) {
-    addPreferredActivity(filter, match, set, activity);
-  }
-
-  @Implementation
-  public int getPreferredActivities(
-      List<IntentFilter> outFilters, List<ComponentName> outActivities, String packageName) {
-    if (outFilters == null) {
-      return 0;
-    }
-
-    Set<IntentFilterWrapper> filters = preferredActivities.keySet();
-    for (IntentFilter filter : outFilters) {
-      step:
-      for (IntentFilterWrapper testFilterWrapper : filters) {
-        ComponentName name = preferredActivities.get(testFilterWrapper);
-        IntentFilter testFilter = testFilterWrapper.getFilter();
-        // filter out based on the given packageName;
-        if (packageName != null && !name.getPackageName().equals(packageName)) {
-          continue step;
+        if (result.isEmpty()) {
+            throw new NameNotFoundException(group);
         }
+        return result;
+    }
 
-        // Check actions
-        Iterator<String> iterator = filter.actionsIterator();
-        while (iterator.hasNext()) {
-          if (!testFilter.matchAction(iterator.next())) {
-            continue step;
-          }
+    private static PermissionInfo createCopyPermissionInfo(PermissionInfo src, int flags) {
+        PermissionInfo matchedPermission = new PermissionInfo(src);
+        if ((flags & GET_META_DATA) != GET_META_DATA) {
+            matchedPermission.metaData = null;
         }
+        return matchedPermission;
+    }
 
-        iterator = filter.categoriesIterator();
-        while (iterator.hasNext()) {
-          if (!filter.hasCategory(iterator.next())) {
-            continue step;
-          }
+    @Implementation
+    protected Intent getLaunchIntentForPackage(String packageName) {
+        System.out.println("ShadowApplicationPackageManager#getLaunchIntentForPackage");
+        Intent intentToResolve = new Intent(Intent.ACTION_MAIN);
+        intentToResolve.addCategory(Intent.CATEGORY_INFO);
+        intentToResolve.setPackage(packageName);
+        List<ResolveInfo> ris = queryIntentActivities(intentToResolve, 0);
+        if (ris == null || ris.isEmpty()) {
+            intentToResolve.removeCategory(Intent.CATEGORY_INFO);
+            intentToResolve.addCategory(Intent.CATEGORY_LAUNCHER);
+            intentToResolve.setPackage(packageName);
+            ris = queryIntentActivities(intentToResolve, 0);
         }
-
-        if (outActivities == null) {
-          outActivities = new ArrayList<>();
+        if (ris == null || ris.isEmpty()) {
+            return null;
         }
-
-        outActivities.add(name);
-      }
+        Intent intent = new Intent(intentToResolve);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setClassName(packageName, ris.get(0).activityInfo.name);
+        return intent;
     }
 
-    return 0;
-  }
-
-  @Implementation
-  protected void clearPackagePreferredActivities(String packageName) {
-    Iterator<ComponentName> entryIterator = preferredActivities.values().iterator();
-    while (entryIterator.hasNext()) {
-      ComponentName next = entryIterator.next();
-      if (next.getPackageName().equals(packageName)) {
-        entryIterator.remove();
-      }
+    // //////////////////////////
+    @Implementation(minSdk = N)
+    protected PackageInfo getPackageInfoAsUser(String packageName, int flags, int userId) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getPackageInfoAsUser");
+        return null;
     }
-  }
 
-  @Implementation(minSdk = KITKAT)
-  protected ComponentName getHomeActivities(List<ResolveInfo> outActivities) {
-    return null;
-  }
-
-  @Implementation(minSdk = N)
-  protected void flushPackageRestrictionsAsUser(int userId) {}
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected boolean setApplicationHiddenSettingAsUser(
-      String packageName, boolean hidden, UserHandle user) {
-    // Note that this ignores the UserHandle parameter
-    if (!packageInfos.containsKey(packageName)) {
-      // Package doesn't exist
-      return false;
+    @Implementation
+    protected String[] canonicalToCurrentPackageNames(String[] names) {
+        System.out.println("ShadowApplicationPackageManager#canonicalToCurrentPackageNames");
+        return new String[0];
     }
-    if (hidden) {
-      hiddenPackages.add(packageName);
-    } else {
-      hiddenPackages.remove(packageName);
+
+    @Implementation
+    protected int[] getPackageGids(String packageName) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getPackageGids");
+        return new int[0];
     }
-    return true;
-  }
 
-  @Implementation(minSdk = LOLLIPOP)
-  protected boolean getApplicationHiddenSettingAsUser(String packageName, UserHandle user) {
-    // Note that this ignores the UserHandle parameter
-    if (!packageInfos.containsKey(packageName)) {
-      // Match Android behaviour of returning true if package isn't found
-      return true;
+    @Implementation(minSdk = N)
+    protected int[] getPackageGids(String packageName, int flags) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getPackageGids");
+        return null;
     }
-    return hiddenPackages.contains(packageName);
-  }
 
-  @Implementation(minSdk = LOLLIPOP)
-  protected Object getKeySetByAlias(String packageName, String alias) {
-    return null;
-  }
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected Object getSigningKeySet(String packageName) {
-    return null;
-  }
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected boolean isSignedBy(String packageName, Object ks) {
-    return false;
-  }
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected boolean isSignedByExactly(String packageName, Object ks) {
-    return false;
-  }
-
-  @Implementation
-  protected VerifierDeviceIdentity getVerifierDeviceIdentity() {
-    return null;
-  }
-
-  @Implementation(minSdk = LOLLIPOP_MR1)
-  protected boolean isUpgrade() {
-    return false;
-  }
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected boolean isPackageAvailable(String packageName) {
-    return false;
-  }
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected void addCrossProfileIntentFilter(
-      IntentFilter filter, int sourceUserId, int targetUserId, int flags) {}
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected void clearCrossProfileIntentFilters(int sourceUserId) {}
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected Drawable loadItemIcon(PackageItemInfo itemInfo, ApplicationInfo appInfo) {
-    return null;
-  }
-
-  /**
-   * Gets the unbadged icon based on the values set by {@link
-   * ShadowPackageManager#setUnbadgedApplicationIcon} or returns null if nothing has been set.
-   */
-  @Implementation(minSdk = LOLLIPOP_MR1)
-  protected Drawable loadUnbadgedItemIcon(PackageItemInfo itemInfo, ApplicationInfo appInfo) {
-    return unbadgedApplicationIcons.get(itemInfo.packageName);
-  }
-
-  @Implementation(minSdk = O)
-  protected boolean canRequestPackageInstalls() {
-    return canRequestPackageInstalls;
-  }
-
-  @Implementation(minSdk = O)
-  protected Object getChangedPackages(int sequenceNumber) {
-    if (sequenceNumber < 0 || sequenceNumberChangedPackagesMap.get(sequenceNumber).isEmpty()) {
-      return null;
-    }
-    return new ChangedPackages(
-        sequenceNumber + 1, new ArrayList<>(sequenceNumberChangedPackagesMap.get(sequenceNumber)));
-  }
-
-  @Implementation(minSdk = P)
-  public String getSystemTextClassifierPackageName() {
-    return "";
-  }
-
-  @Implementation(minSdk = P)
-  @HiddenApi
-  protected String[] setPackagesSuspended(
-      String[] packageNames,
-      boolean suspended,
-      PersistableBundle appExtras,
-      PersistableBundle launcherExtras,
-      String dialogMessage) {
-    if (hasProfileOwnerOrDeviceOwnerOnCurrentUser()) {
-      throw new UnsupportedOperationException();
-    }
-    ArrayList<String> unupdatedPackages = new ArrayList<>();
-    for (String packageName : packageNames) {
-      if (!canSuspendPackage(packageName)) {
-        unupdatedPackages.add(packageName);
-        continue;
-      }
-      PackageSetting setting = packageSettings.get(packageName);
-      if (setting == null) {
-        unupdatedPackages.add(packageName);
-        continue;
-      }
-      setting.setSuspended(suspended, dialogMessage, appExtras, launcherExtras);
-    }
-    return unupdatedPackages.toArray(new String[0]);
-  }
-
-  /** Returns whether the current user profile has a profile owner or a device owner. */
-  private boolean hasProfileOwnerOrDeviceOwnerOnCurrentUser() {
-    DevicePolicyManager devicePolicyManager =
-        (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
-    return devicePolicyManager.getProfileOwner() != null
-        || (UserHandle.of(UserHandle.myUserId()).isSystem()
-            && devicePolicyManager.getDeviceOwner() != null);
-  }
-
-  private boolean canSuspendPackage(String packageName) {
-    // This code approximately mirrors PackageManagerService#canSuspendPackageForUserLocked.
-    return !packageName.equals(context.getPackageName())
-        && !isPackageDeviceAdmin(packageName)
-        && !isPackageActiveLauncher(packageName)
-        && !isPackageRequiredInstaller(packageName)
-        && !isPackageRequiredUninstaller(packageName)
-        && !isPackageRequiredVerifier(packageName)
-        && !isPackageDefaultDialer(packageName)
-        && !packageName.equals(PLATFORM_PACKAGE_NAME);
-  }
-
-  private boolean isPackageDeviceAdmin(String packageName) {
-    DevicePolicyManager devicePolicyManager =
-        (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
-    // Strictly speaking, this should be devicePolicyManager.getDeviceOwnerComponentOnAnyUser(),
-    // but that method is currently not shadowed.
-    return packageName.equals(devicePolicyManager.getDeviceOwner());
-  }
-
-  private boolean isPackageActiveLauncher(String packageName) {
-    Intent intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
-    ResolveInfo info = resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
-    return info != null && packageName.equals(info.activityInfo.packageName);
-  }
-
-  private boolean isPackageRequiredInstaller(String packageName) {
-    Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
-    intent.addCategory(Intent.CATEGORY_DEFAULT);
-    intent.setDataAndType(Uri.fromFile(new File("foo.apk")), PACKAGE_MIME_TYPE);
-    ResolveInfo info =
-        resolveActivity(
-            intent,
-            PackageManager.MATCH_SYSTEM_ONLY
-                | PackageManager.MATCH_DIRECT_BOOT_AWARE
-                | PackageManager.MATCH_DIRECT_BOOT_UNAWARE);
-    return info != null && packageName.equals(info.activityInfo.packageName);
-  }
-
-  private boolean isPackageRequiredUninstaller(String packageName) {
-    final Intent intent = new Intent(Intent.ACTION_UNINSTALL_PACKAGE);
-    intent.addCategory(Intent.CATEGORY_DEFAULT);
-    intent.setData(Uri.fromParts(PACKAGE_SCHEME, "foo.bar", null));
-    ResolveInfo info =
-        resolveActivity(
-            intent,
-            PackageManager.MATCH_SYSTEM_ONLY
-                | PackageManager.MATCH_DIRECT_BOOT_AWARE
-                | PackageManager.MATCH_DIRECT_BOOT_UNAWARE);
-    return info != null && packageName.equals(info.activityInfo.packageName);
-  }
-
-  private boolean isPackageRequiredVerifier(String packageName) {
-    final Intent intent = new Intent(Intent.ACTION_PACKAGE_NEEDS_VERIFICATION);
-    List<ResolveInfo> infos =
-        queryBroadcastReceivers(
-            intent,
-            PackageManager.MATCH_SYSTEM_ONLY
-                | PackageManager.MATCH_DIRECT_BOOT_AWARE
-                | PackageManager.MATCH_DIRECT_BOOT_UNAWARE);
-    if (infos != null) {
-      for (ResolveInfo info : infos) {
-        if (packageName.equals(info.activityInfo.packageName)) {
-          return true;
+    @Implementation(minSdk = JELLY_BEAN_MR2)
+    protected int getPackageUid(String packageName, int flags) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getPackageUid");
+        Integer uid = uidForPackage.get(packageName);
+        if (uid == null) {
+            throw new NameNotFoundException(packageName);
         }
-      }
+        return uid;
     }
-    return false;
-  }
 
-  private boolean isPackageDefaultDialer(String packageName) {
-    TelecomManager telecomManager =
-        (TelecomManager) context.getSystemService(Context.TELECOM_SERVICE);
-    return packageName.equals(telecomManager.getDefaultDialerPackage());
-  }
-
-  @HiddenApi
-  @Implementation(minSdk = P)
-  protected boolean isPackageSuspended(String packageName) throws NameNotFoundException {
-    PackageSetting setting = packageSettings.get(packageName);
-    if (setting == null) {
-      throw new NameNotFoundException(packageName);
+    @Implementation(minSdk = N)
+    protected int getPackageUidAsUser(String packageName, int userId) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getPackageUidAsUser");
+        return 0;
     }
-    return setting.isSuspended();
-  }
+
+    @Implementation(minSdk = N)
+    protected int getPackageUidAsUser(String packageName, int flags, int userId) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getPackageUidAsUser");
+        return 0;
+    }
+
+    /**
+     * @see ShadowPackageManager#addPermissionGroupInfo(android.content.pm.PermissionGroupInfo)
+     */
+    @Implementation
+    protected PermissionGroupInfo getPermissionGroupInfo(String name, int flags) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getPermissionGroupInfo");
+        if (extraPermissionGroups.containsKey(name)) {
+            return new PermissionGroupInfo(extraPermissionGroups.get(name));
+        }
+        for (Package pkg : packages.values()) {
+            for (PermissionGroup permissionGroup : pkg.permissionGroups) {
+                if (name.equals(permissionGroup.info.name)) {
+                    return PackageParser.generatePermissionGroupInfo(permissionGroup, flags);
+                }
+            }
+        }
+        throw new NameNotFoundException(name);
+    }
+
+    /**
+     * @see ShadowPackageManager#addPermissionGroupInfo(android.content.pm.PermissionGroupInfo)
+     */
+    @Implementation
+    protected List<PermissionGroupInfo> getAllPermissionGroups(int flags) {
+        System.out.println("ShadowApplicationPackageManager#getAllPermissionGroups");
+        ArrayList<PermissionGroupInfo> allPermissionGroups = new ArrayList<PermissionGroupInfo>();
+        // per permission group string
+        HashSet<String> handledPermissionGroups = new HashSet<>();
+        for (PermissionGroupInfo permissionGroupInfo : extraPermissionGroups.values()) {
+            allPermissionGroups.add(new PermissionGroupInfo(permissionGroupInfo));
+            handledPermissionGroups.add(permissionGroupInfo.name);
+        }
+        for (Package pkg : packages.values()) {
+            for (PermissionGroup permissionGroup : pkg.permissionGroups) {
+                if (!handledPermissionGroups.contains(permissionGroup.info.name)) {
+                    PermissionGroupInfo permissionGroupInfo = PackageParser.generatePermissionGroupInfo(permissionGroup, flags);
+                    allPermissionGroups.add(new PermissionGroupInfo(permissionGroupInfo));
+                    handledPermissionGroups.add(permissionGroup.info.name);
+                }
+            }
+        }
+        return allPermissionGroups;
+    }
+
+    @Implementation
+    protected ApplicationInfo getApplicationInfo(String packageName, int flags) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getApplicationInfo");
+        PackageInfo info = packageInfos.get(packageName);
+        if (info != null) {
+            try {
+                PackageInfo packageInfo = getPackageInfo(packageName, -1);
+            } catch (NameNotFoundException e) {
+                throw new IllegalArgumentException(e);
+            }
+            if (applicationEnabledSettingMap.get(packageName) == COMPONENT_ENABLED_STATE_DISABLED && (flags & MATCH_UNINSTALLED_PACKAGES) != MATCH_UNINSTALLED_PACKAGES && (flags & MATCH_DISABLED_COMPONENTS) != MATCH_DISABLED_COMPONENTS) {
+                throw new NameNotFoundException("Package is disabled, can't find");
+            }
+            if (hiddenPackages.contains(packageName) && !isFlagSet(flags, MATCH_UNINSTALLED_PACKAGES)) {
+                throw new NameNotFoundException("Package is hidden, can't find");
+            }
+            return info.applicationInfo;
+        } else {
+            throw new NameNotFoundException(packageName);
+        }
+    }
+
+    /**
+     * Returns all the values added via {@link
+     * ShadowPackageManager#addSystemSharedLibraryName(String)}.
+     */
+    @Implementation
+    protected String[] getSystemSharedLibraryNames() {
+        System.out.println("ShadowApplicationPackageManager#getSystemSharedLibraryNames");
+        return systemSharedLibraryNames.toArray(new String[systemSharedLibraryNames.size()]);
+    }
+
+    @Implementation(minSdk = N)
+    @NonNull
+    protected String getServicesSystemSharedLibraryPackageName() {
+        System.out.println("ShadowApplicationPackageManager#getServicesSystemSharedLibraryPackageName");
+        return null;
+    }
+
+    @Implementation(minSdk = N)
+    @NonNull
+    protected String getSharedSystemSharedLibraryPackageName() {
+        System.out.println("ShadowApplicationPackageManager#getSharedSystemSharedLibraryPackageName");
+        return "";
+    }
+
+    @Implementation(minSdk = N)
+    protected boolean hasSystemFeature(String name, int version) {
+        System.out.println("ShadowApplicationPackageManager#hasSystemFeature");
+        return false;
+    }
+
+    @Implementation(minSdk = M)
+    protected boolean isPermissionRevokedByPolicy(String permName, String pkgName) {
+        System.out.println("ShadowApplicationPackageManager#isPermissionRevokedByPolicy");
+        return false;
+    }
+
+    @Implementation
+    protected boolean addPermission(PermissionInfo info) {
+        System.out.println("ShadowApplicationPackageManager#addPermission");
+        return false;
+    }
+
+    @Implementation
+    protected boolean addPermissionAsync(PermissionInfo info) {
+        System.out.println("ShadowApplicationPackageManager#addPermissionAsync");
+        return false;
+    }
+
+    @Implementation
+    protected void removePermission(String name) {
+    }
+
+    @Implementation(minSdk = M)
+    protected void grantRuntimePermission(String packageName, String permissionName, UserHandle user) {
+        System.out.println("ShadowApplicationPackageManager#grantRuntimePermission");
+        if (!packageInfos.containsKey(packageName)) {
+            throw new SecurityException("Package not found: " + packageName);
+        }
+        PackageInfo packageInfo = packageInfos.get(packageName);
+        checkPermissionGrantStateInitialized(packageInfo);
+        int permissionIndex = getPermissionIndex(packageInfo, permissionName);
+        if (permissionIndex < 0) {
+            throw new SecurityException("Permission " + permissionName + " not requested by package " + packageName);
+        }
+        packageInfo.requestedPermissionsFlags[permissionIndex] |= REQUESTED_PERMISSION_GRANTED;
+    }
+
+    @Implementation(minSdk = M)
+    protected void revokeRuntimePermission(String packageName, String permissionName, UserHandle user) {
+        System.out.println("ShadowApplicationPackageManager#revokeRuntimePermission");
+        if (!packageInfos.containsKey(packageName)) {
+            throw new SecurityException("Package not found: " + packageName);
+        }
+        PackageInfo packageInfo = packageInfos.get(packageName);
+        checkPermissionGrantStateInitialized(packageInfo);
+        int permissionIndex = getPermissionIndex(packageInfo, permissionName);
+        if (permissionIndex < 0) {
+            throw new SecurityException("Permission " + permissionName + " not requested by package " + packageName);
+        }
+        packageInfo.requestedPermissionsFlags[permissionIndex] &= ~REQUESTED_PERMISSION_GRANTED;
+    }
+
+    private void checkPermissionGrantStateInitialized(PackageInfo packageInfo) {
+        if (packageInfo.requestedPermissionsFlags == null) {
+            // In the real OS this would never be null, but tests don't necessarily initialize this
+            // structure.
+            throw new SecurityException("Permission grant state (PackageInfo.requestedPermissionFlags) " + "is null. This operation requires this variable to be initialized.");
+        }
+    }
+
+    /**
+     * Returns the index of the given permission in the PackageInfo.requestedPermissions array, or -1
+     * if it's not found.
+     */
+    private int getPermissionIndex(PackageInfo packageInfo, String permissionName) {
+        if (packageInfo.requestedPermissions != null) {
+            for (int i = 0; i < packageInfo.requestedPermissions.length; i++) {
+                if (permissionName.equals(packageInfo.requestedPermissions[i])) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    @Implementation(minSdk = M)
+    protected int getPermissionFlags(String permissionName, String packageName, UserHandle user) {
+        System.out.println("ShadowApplicationPackageManager#getPermissionFlags");
+        return 0;
+    }
+
+    @Implementation(minSdk = M)
+    protected void updatePermissionFlags(String permissionName, String packageName, int flagMask, int flagValues, UserHandle user) {
+    }
+
+    @Implementation
+    protected int getUidForSharedUser(String sharedUserName) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getUidForSharedUser");
+        return 0;
+    }
+
+    @Implementation(minSdk = N)
+    protected List<PackageInfo> getInstalledPackagesAsUser(int flags, int userId) {
+        System.out.println("ShadowApplicationPackageManager#getInstalledPackagesAsUser");
+        return null;
+    }
+
+    @Implementation(minSdk = JELLY_BEAN_MR2)
+    protected List<PackageInfo> getPackagesHoldingPermissions(String[] permissions, int flags) {
+        System.out.println("ShadowApplicationPackageManager#getPackagesHoldingPermissions");
+        return null;
+    }
+
+    @Implementation(minSdk = JELLY_BEAN_MR1)
+    protected ResolveInfo resolveActivityAsUser(Intent intent, int flags, int userId) {
+        System.out.println("ShadowApplicationPackageManager#resolveActivityAsUser");
+        return null;
+    }
+
+    @Implementation
+    protected List<ResolveInfo> queryIntentActivityOptions(ComponentName caller, Intent[] specifics, Intent intent, int flags) {
+        System.out.println("ShadowApplicationPackageManager#queryIntentActivityOptions");
+        return null;
+    }
+
+    @Implementation(minSdk = N)
+    protected List<ResolveInfo> queryBroadcastReceiversAsUser(Intent intent, int flags, int userId) {
+        System.out.println("ShadowApplicationPackageManager#queryBroadcastReceiversAsUser");
+        return null;
+    }
+
+    @Implementation
+    protected List<ProviderInfo> queryContentProviders(String processName, int uid, int flags) {
+        System.out.println("ShadowApplicationPackageManager#queryContentProviders");
+        return null;
+    }
+
+    @Implementation
+    protected InstrumentationInfo getInstrumentationInfo(ComponentName className, int flags) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getInstrumentationInfo");
+        return null;
+    }
+
+    @Implementation
+    protected List<InstrumentationInfo> queryInstrumentation(String targetPackage, int flags) {
+        System.out.println("ShadowApplicationPackageManager#queryInstrumentation");
+        return null;
+    }
+
+    @Nullable
+    @Implementation
+    protected Drawable getDrawable(String packageName, @DrawableRes int resId, @Nullable ApplicationInfo appInfo) {
+        System.out.println("ShadowApplicationPackageManager#getDrawable");
+        return drawables.get(new Pair<>(packageName, resId));
+    }
+
+    @Implementation
+    protected Drawable getActivityIcon(ComponentName activityName) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getActivityIcon");
+        return drawableList.get(activityName);
+    }
+
+    @Implementation
+    protected Drawable getDefaultActivityIcon() {
+        System.out.println("ShadowApplicationPackageManager#getDefaultActivityIcon");
+        return Resources.getSystem().getDrawable(com.android.internal.R.drawable.sym_def_app_icon);
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected Drawable getActivityBanner(ComponentName activityName) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getActivityBanner");
+        return null;
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected Drawable getActivityBanner(Intent intent) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getActivityBanner");
+        return null;
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected Drawable getApplicationBanner(ApplicationInfo info) {
+        System.out.println("ShadowApplicationPackageManager#getApplicationBanner");
+        return null;
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected Drawable getApplicationBanner(String packageName) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getApplicationBanner");
+        return null;
+    }
+
+    @Implementation
+    protected Drawable getActivityLogo(ComponentName activityName) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getActivityLogo");
+        return null;
+    }
+
+    @Implementation
+    protected Drawable getActivityLogo(Intent intent) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getActivityLogo");
+        return null;
+    }
+
+    @Implementation
+    protected Drawable getApplicationLogo(ApplicationInfo info) {
+        System.out.println("ShadowApplicationPackageManager#getApplicationLogo");
+        return null;
+    }
+
+    @Implementation
+    protected Drawable getApplicationLogo(String packageName) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getApplicationLogo");
+        return null;
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected Drawable getUserBadgedIcon(Drawable icon, UserHandle user) {
+        System.out.println("ShadowApplicationPackageManager#getUserBadgedIcon");
+        return null;
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected Drawable getUserBadgedDrawableForDensity(Drawable drawable, UserHandle user, Rect badgeLocation, int badgeDensity) {
+        System.out.println("ShadowApplicationPackageManager#getUserBadgedDrawableForDensity");
+        return null;
+    }
+
+    @Implementation(minSdk = N)
+    protected Drawable getUserBadgeForDensityNoBackground(UserHandle user, int density) {
+        System.out.println("ShadowApplicationPackageManager#getUserBadgeForDensityNoBackground");
+        return null;
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected CharSequence getUserBadgedLabel(CharSequence label, UserHandle user) {
+        System.out.println("ShadowApplicationPackageManager#getUserBadgedLabel");
+        return null;
+    }
+
+    @Implementation
+    protected Resources getResourcesForActivity(ComponentName activityName) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getResourcesForActivity");
+        return null;
+    }
+
+    @Implementation
+    protected Resources getResourcesForApplication(String appPackageName) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getResourcesForApplication");
+        if (context.getPackageName().equals(appPackageName)) {
+            return context.getResources();
+        } else if (packageInfos.containsKey(appPackageName)) {
+            Resources appResources = resources.get(appPackageName);
+            if (appResources == null) {
+                appResources = new Resources(new AssetManager(), null, null);
+                resources.put(appPackageName, appResources);
+            }
+            return appResources;
+        }
+        throw new NameNotFoundException(appPackageName);
+    }
+
+    @Implementation(minSdk = JELLY_BEAN_MR1)
+    protected Resources getResourcesForApplicationAsUser(String appPackageName, int userId) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#getResourcesForApplicationAsUser");
+        return null;
+    }
+
+    @Implementation(minSdk = M)
+    protected void addOnPermissionsChangeListener(Object listener) {
+    }
+
+    @Implementation(minSdk = M)
+    protected void removeOnPermissionsChangeListener(Object listener) {
+    }
+
+    @Implementation(maxSdk = O_MR1)
+    protected void installPackage(Object packageURI, Object observer, Object flags, Object installerPackageName) {
+    }
+
+    @Implementation(minSdk = JELLY_BEAN_MR1)
+    protected int installExistingPackage(String packageName) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#installExistingPackage");
+        return 0;
+    }
+
+    @Implementation(minSdk = N)
+    protected int installExistingPackageAsUser(String packageName, int userId) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#installExistingPackageAsUser");
+        return 0;
+    }
+
+    @Implementation(minSdk = M)
+    protected void verifyIntentFilter(int id, int verificationCode, List<String> failedDomains) {
+    }
+
+    @Implementation(minSdk = N)
+    protected int getIntentVerificationStatusAsUser(String packageName, int userId) {
+        System.out.println("ShadowApplicationPackageManager#getIntentVerificationStatusAsUser");
+        return 0;
+    }
+
+    @Implementation(minSdk = N)
+    protected boolean updateIntentVerificationStatusAsUser(String packageName, int status, int userId) {
+        System.out.println("ShadowApplicationPackageManager#updateIntentVerificationStatusAsUser");
+        return false;
+    }
+
+    @Implementation(minSdk = M)
+    protected List<IntentFilterVerificationInfo> getIntentFilterVerifications(String packageName) {
+        System.out.println("ShadowApplicationPackageManager#getIntentFilterVerifications");
+        return null;
+    }
+
+    @Implementation(minSdk = M)
+    protected List<IntentFilter> getAllIntentFilters(String packageName) {
+        System.out.println("ShadowApplicationPackageManager#getAllIntentFilters");
+        return null;
+    }
+
+    @Implementation(minSdk = N)
+    protected String getDefaultBrowserPackageNameAsUser(int userId) {
+        System.out.println("ShadowApplicationPackageManager#getDefaultBrowserPackageNameAsUser");
+        return null;
+    }
+
+    @Implementation(minSdk = N)
+    protected boolean setDefaultBrowserPackageNameAsUser(String packageName, int userId) {
+        System.out.println("ShadowApplicationPackageManager#setDefaultBrowserPackageNameAsUser");
+        return false;
+    }
+
+    @Implementation(minSdk = M)
+    protected int getMoveStatus(int moveId) {
+        System.out.println("ShadowApplicationPackageManager#getMoveStatus");
+        return 0;
+    }
+
+    @Implementation(minSdk = M)
+    protected void registerMoveCallback(Object callback, Object handler) {
+    }
+
+    @Implementation(minSdk = M)
+    protected void unregisterMoveCallback(Object callback) {
+    }
+
+    @Implementation(minSdk = M)
+    protected Object movePackage(Object packageName, Object vol) {
+        System.out.println("ShadowApplicationPackageManager#movePackage");
+        return 0;
+    }
+
+    @Implementation(minSdk = M)
+    protected Object getPackageCurrentVolume(Object app) {
+        System.out.println("ShadowApplicationPackageManager#getPackageCurrentVolume");
+        return null;
+    }
+
+    @Implementation(minSdk = M)
+    protected List<VolumeInfo> getPackageCandidateVolumes(ApplicationInfo app) {
+        System.out.println("ShadowApplicationPackageManager#getPackageCandidateVolumes");
+        return null;
+    }
+
+    @Implementation(minSdk = M)
+    protected Object movePrimaryStorage(Object vol) {
+        System.out.println("ShadowApplicationPackageManager#movePrimaryStorage");
+        return 0;
+    }
+
+    @Implementation(minSdk = M)
+    @Nullable
+    protected Object getPrimaryStorageCurrentVolume() {
+        System.out.println("ShadowApplicationPackageManager#getPrimaryStorageCurrentVolume");
+        return null;
+    }
+
+    @Implementation(minSdk = M)
+    @NonNull
+    protected List<VolumeInfo> getPrimaryStorageCandidateVolumes() {
+        System.out.println("ShadowApplicationPackageManager#getPrimaryStorageCandidateVolumes");
+        return null;
+    }
+
+    @Implementation(minSdk = N)
+    protected void deletePackageAsUser(String packageName, IPackageDeleteObserver observer, int flags, int userId) {
+    }
+
+    @Implementation
+    protected void clearApplicationUserData(String packageName, IPackageDataObserver observer) {
+    }
+
+    @Implementation
+    protected void deleteApplicationCacheFiles(String packageName, IPackageDataObserver observer) {
+    }
+
+    @Implementation(minSdk = N)
+    protected void deleteApplicationCacheFilesAsUser(String packageName, int userId, IPackageDataObserver observer) {
+    }
+
+    @Implementation(minSdk = M)
+    protected void freeStorage(String volumeUuid, long freeStorageSize, IntentSender pi) {
+    }
+
+    @Implementation(minSdk = N, maxSdk = O_MR1)
+    protected String[] setPackagesSuspendedAsUser(String[] packageNames, boolean suspended, int userId) {
+        System.out.println("ShadowApplicationPackageManager#setPackagesSuspendedAsUser");
+        return null;
+    }
+
+    @Implementation(minSdk = N)
+    protected boolean isPackageSuspendedForUser(String packageName, int userId) {
+        System.out.println("ShadowApplicationPackageManager#isPackageSuspendedForUser");
+        return false;
+    }
+
+    @Implementation
+    protected void addPackageToPreferred(String packageName) {
+    }
+
+    @Implementation
+    protected void removePackageFromPreferred(String packageName) {
+    }
+
+    @Implementation
+    protected List<PackageInfo> getPreferredPackages(int flags) {
+        System.out.println("ShadowApplicationPackageManager#getPreferredPackages");
+        return null;
+    }
+
+    @Implementation
+    public void addPreferredActivity(IntentFilter filter, int match, ComponentName[] set, ComponentName activity) {
+        System.out.println("ShadowApplicationPackageManager#addPreferredActivity");
+        preferredActivities.put(new IntentFilterWrapper(filter), activity);
+    }
+
+    @Implementation
+    protected void replacePreferredActivity(IntentFilter filter, int match, ComponentName[] set, ComponentName activity) {
+        System.out.println("ShadowApplicationPackageManager#replacePreferredActivity");
+        addPreferredActivity(filter, match, set, activity);
+    }
+
+    @Implementation
+    public int getPreferredActivities(List<IntentFilter> outFilters, List<ComponentName> outActivities, String packageName) {
+        System.out.println("ShadowApplicationPackageManager#getPreferredActivities");
+        if (outFilters == null) {
+            return 0;
+        }
+        Set<IntentFilterWrapper> filters = preferredActivities.keySet();
+        for (IntentFilter filter : outFilters) {
+            step: for (IntentFilterWrapper testFilterWrapper : filters) {
+                ComponentName name = preferredActivities.get(testFilterWrapper);
+                IntentFilter testFilter = testFilterWrapper.getFilter();
+                // filter out based on the given packageName;
+                if (packageName != null && !name.getPackageName().equals(packageName)) {
+                    continue step;
+                }
+                // Check actions
+                Iterator<String> iterator = filter.actionsIterator();
+                while (iterator.hasNext()) {
+                    if (!testFilter.matchAction(iterator.next())) {
+                        continue step;
+                    }
+                }
+                iterator = filter.categoriesIterator();
+                while (iterator.hasNext()) {
+                    if (!filter.hasCategory(iterator.next())) {
+                        continue step;
+                    }
+                }
+                if (outActivities == null) {
+                    outActivities = new ArrayList<>();
+                }
+                outActivities.add(name);
+            }
+        }
+        return 0;
+    }
+
+    @Implementation
+    protected void clearPackagePreferredActivities(String packageName) {
+        System.out.println("ShadowApplicationPackageManager#clearPackagePreferredActivities");
+        Iterator<ComponentName> entryIterator = preferredActivities.values().iterator();
+        while (entryIterator.hasNext()) {
+            ComponentName next = entryIterator.next();
+            if (next.getPackageName().equals(packageName)) {
+                entryIterator.remove();
+            }
+        }
+    }
+
+    @Implementation(minSdk = KITKAT)
+    protected ComponentName getHomeActivities(List<ResolveInfo> outActivities) {
+        System.out.println("ShadowApplicationPackageManager#getHomeActivities");
+        return null;
+    }
+
+    @Implementation(minSdk = N)
+    protected void flushPackageRestrictionsAsUser(int userId) {
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected boolean setApplicationHiddenSettingAsUser(String packageName, boolean hidden, UserHandle user) {
+        System.out.println("ShadowApplicationPackageManager#setApplicationHiddenSettingAsUser");
+        // Note that this ignores the UserHandle parameter
+        if (!packageInfos.containsKey(packageName)) {
+            // Package doesn't exist
+            return false;
+        }
+        if (hidden) {
+            hiddenPackages.add(packageName);
+        } else {
+            hiddenPackages.remove(packageName);
+        }
+        return true;
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected boolean getApplicationHiddenSettingAsUser(String packageName, UserHandle user) {
+        System.out.println("ShadowApplicationPackageManager#getApplicationHiddenSettingAsUser");
+        // Note that this ignores the UserHandle parameter
+        if (!packageInfos.containsKey(packageName)) {
+            // Match Android behaviour of returning true if package isn't found
+            return true;
+        }
+        return hiddenPackages.contains(packageName);
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected Object getKeySetByAlias(String packageName, String alias) {
+        System.out.println("ShadowApplicationPackageManager#getKeySetByAlias");
+        return null;
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected Object getSigningKeySet(String packageName) {
+        System.out.println("ShadowApplicationPackageManager#getSigningKeySet");
+        return null;
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected boolean isSignedBy(String packageName, Object ks) {
+        System.out.println("ShadowApplicationPackageManager#isSignedBy");
+        return false;
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected boolean isSignedByExactly(String packageName, Object ks) {
+        System.out.println("ShadowApplicationPackageManager#isSignedByExactly");
+        return false;
+    }
+
+    @Implementation
+    protected VerifierDeviceIdentity getVerifierDeviceIdentity() {
+        System.out.println("ShadowApplicationPackageManager#getVerifierDeviceIdentity");
+        return null;
+    }
+
+    @Implementation(minSdk = LOLLIPOP_MR1)
+    protected boolean isUpgrade() {
+        System.out.println("ShadowApplicationPackageManager#isUpgrade");
+        return false;
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected boolean isPackageAvailable(String packageName) {
+        System.out.println("ShadowApplicationPackageManager#isPackageAvailable");
+        return false;
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected void addCrossProfileIntentFilter(IntentFilter filter, int sourceUserId, int targetUserId, int flags) {
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected void clearCrossProfileIntentFilters(int sourceUserId) {
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected Drawable loadItemIcon(PackageItemInfo itemInfo, ApplicationInfo appInfo) {
+        System.out.println("ShadowApplicationPackageManager#loadItemIcon");
+        return null;
+    }
+
+    /**
+     * Gets the unbadged icon based on the values set by {@link
+     * ShadowPackageManager#setUnbadgedApplicationIcon} or returns null if nothing has been set.
+     */
+    @Implementation(minSdk = LOLLIPOP_MR1)
+    protected Drawable loadUnbadgedItemIcon(PackageItemInfo itemInfo, ApplicationInfo appInfo) {
+        System.out.println("ShadowApplicationPackageManager#loadUnbadgedItemIcon");
+        return unbadgedApplicationIcons.get(itemInfo.packageName);
+    }
+
+    @Implementation(minSdk = O)
+    protected boolean canRequestPackageInstalls() {
+        System.out.println("ShadowApplicationPackageManager#canRequestPackageInstalls");
+        return canRequestPackageInstalls;
+    }
+
+    @Implementation(minSdk = O)
+    protected Object getChangedPackages(int sequenceNumber) {
+        System.out.println("ShadowApplicationPackageManager#getChangedPackages");
+        if (sequenceNumber < 0 || sequenceNumberChangedPackagesMap.get(sequenceNumber).isEmpty()) {
+            return null;
+        }
+        return new ChangedPackages(sequenceNumber + 1, new ArrayList<>(sequenceNumberChangedPackagesMap.get(sequenceNumber)));
+    }
+
+    @Implementation(minSdk = P)
+    public String getSystemTextClassifierPackageName() {
+        System.out.println("ShadowApplicationPackageManager#getSystemTextClassifierPackageName");
+        return "";
+    }
+
+    @Implementation(minSdk = P)
+    @HiddenApi
+    protected String[] setPackagesSuspended(String[] packageNames, boolean suspended, PersistableBundle appExtras, PersistableBundle launcherExtras, String dialogMessage) {
+        System.out.println("ShadowApplicationPackageManager#setPackagesSuspended");
+        if (hasProfileOwnerOrDeviceOwnerOnCurrentUser()) {
+            throw new UnsupportedOperationException();
+        }
+        ArrayList<String> unupdatedPackages = new ArrayList<>();
+        for (String packageName : packageNames) {
+            if (!canSuspendPackage(packageName)) {
+                unupdatedPackages.add(packageName);
+                continue;
+            }
+            PackageSetting setting = packageSettings.get(packageName);
+            if (setting == null) {
+                unupdatedPackages.add(packageName);
+                continue;
+            }
+            setting.setSuspended(suspended, dialogMessage, appExtras, launcherExtras);
+        }
+        return unupdatedPackages.toArray(new String[0]);
+    }
+
+    /**
+     * Returns whether the current user profile has a profile owner or a device owner.
+     */
+    private boolean hasProfileOwnerOrDeviceOwnerOnCurrentUser() {
+        DevicePolicyManager devicePolicyManager = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        return devicePolicyManager.getProfileOwner() != null || (UserHandle.of(UserHandle.myUserId()).isSystem() && devicePolicyManager.getDeviceOwner() != null);
+    }
+
+    private boolean canSuspendPackage(String packageName) {
+        // This code approximately mirrors PackageManagerService#canSuspendPackageForUserLocked.
+        return !packageName.equals(context.getPackageName()) && !isPackageDeviceAdmin(packageName) && !isPackageActiveLauncher(packageName) && !isPackageRequiredInstaller(packageName) && !isPackageRequiredUninstaller(packageName) && !isPackageRequiredVerifier(packageName) && !isPackageDefaultDialer(packageName) && !packageName.equals(PLATFORM_PACKAGE_NAME);
+    }
+
+    private boolean isPackageDeviceAdmin(String packageName) {
+        DevicePolicyManager devicePolicyManager = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        // Strictly speaking, this should be devicePolicyManager.getDeviceOwnerComponentOnAnyUser(),
+        // but that method is currently not shadowed.
+        return packageName.equals(devicePolicyManager.getDeviceOwner());
+    }
+
+    private boolean isPackageActiveLauncher(String packageName) {
+        Intent intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
+        ResolveInfo info = resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
+        return info != null && packageName.equals(info.activityInfo.packageName);
+    }
+
+    private boolean isPackageRequiredInstaller(String packageName) {
+        Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.setDataAndType(Uri.fromFile(new File("foo.apk")), PACKAGE_MIME_TYPE);
+        ResolveInfo info = resolveActivity(intent, PackageManager.MATCH_SYSTEM_ONLY | PackageManager.MATCH_DIRECT_BOOT_AWARE | PackageManager.MATCH_DIRECT_BOOT_UNAWARE);
+        return info != null && packageName.equals(info.activityInfo.packageName);
+    }
+
+    private boolean isPackageRequiredUninstaller(String packageName) {
+        final Intent intent = new Intent(Intent.ACTION_UNINSTALL_PACKAGE);
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.setData(Uri.fromParts(PACKAGE_SCHEME, "foo.bar", null));
+        ResolveInfo info = resolveActivity(intent, PackageManager.MATCH_SYSTEM_ONLY | PackageManager.MATCH_DIRECT_BOOT_AWARE | PackageManager.MATCH_DIRECT_BOOT_UNAWARE);
+        return info != null && packageName.equals(info.activityInfo.packageName);
+    }
+
+    private boolean isPackageRequiredVerifier(String packageName) {
+        final Intent intent = new Intent(Intent.ACTION_PACKAGE_NEEDS_VERIFICATION);
+        List<ResolveInfo> infos = queryBroadcastReceivers(intent, PackageManager.MATCH_SYSTEM_ONLY | PackageManager.MATCH_DIRECT_BOOT_AWARE | PackageManager.MATCH_DIRECT_BOOT_UNAWARE);
+        if (infos != null) {
+            for (ResolveInfo info : infos) {
+                if (packageName.equals(info.activityInfo.packageName)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isPackageDefaultDialer(String packageName) {
+        TelecomManager telecomManager = (TelecomManager) context.getSystemService(Context.TELECOM_SERVICE);
+        return packageName.equals(telecomManager.getDefaultDialerPackage());
+    }
+
+    @HiddenApi
+    @Implementation(minSdk = P)
+    protected boolean isPackageSuspended(String packageName) throws NameNotFoundException {
+        System.out.println("ShadowApplicationPackageManager#isPackageSuspended");
+        PackageSetting setting = packageSettings.get(packageName);
+        if (setting == null) {
+            throw new NameNotFoundException(packageName);
+        }
+        return setting.isSuspended();
+    }
 }
+

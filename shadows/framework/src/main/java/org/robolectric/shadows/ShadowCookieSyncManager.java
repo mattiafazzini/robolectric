@@ -9,21 +9,24 @@ import org.robolectric.shadow.api.Shadow;
 @Implements(CookieSyncManager.class)
 public class ShadowCookieSyncManager extends ShadowWebSyncManager {
 
-  private static CookieSyncManager sRef;
+    private static CookieSyncManager sRef;
 
-  @Implementation
-  protected static synchronized CookieSyncManager createInstance(Context ctx) {
-    if (sRef == null) {
-      sRef = Shadow.newInstanceOf(CookieSyncManager.class);
+    @Implementation
+    protected static synchronized CookieSyncManager createInstance(Context ctx) {
+        System.out.println("ShadowCookieSyncManager#createInstance");
+        if (sRef == null) {
+            sRef = Shadow.newInstanceOf(CookieSyncManager.class);
+        }
+        return sRef;
     }
-    return sRef;
-  }
 
-  @Implementation
-  protected static CookieSyncManager getInstance() {
-    if (sRef == null) {
-      throw new IllegalStateException("createInstance must be called first");
+    @Implementation
+    protected static CookieSyncManager getInstance() {
+        System.out.println("ShadowCookieSyncManager#getInstance");
+        if (sRef == null) {
+            throw new IllegalStateException("createInstance must be called first");
+        }
+        return sRef;
     }
-    return sRef;
-  }
 }
+

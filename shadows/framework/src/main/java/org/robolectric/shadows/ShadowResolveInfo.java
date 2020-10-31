@@ -10,52 +10,54 @@ import org.robolectric.shadow.api.Shadow;
 
 @Implements(ResolveInfo.class)
 public class ShadowResolveInfo {
-  private String label;
 
-  /**
-   * Creates a {@link ResolveInfo}.
-   *
-   * @param displayName Display name.
-   * @param packageName Package name.
-   * @return Resolve info instance.
-   */
-  public static ResolveInfo newResolveInfo(String displayName, String packageName) {
-    return newResolveInfo(displayName, packageName, null);
-  }
+    private String label;
 
-  /**
-   * Creates a {@link ResolveInfo}.
-   *
-   * @param displayName Display name.
-   * @param packageName Package name.
-   * @param activityName Activity name.
-   * @return Resolve info instance.
-   */
-  public static ResolveInfo newResolveInfo(String displayName, String packageName, String activityName) {
-    ResolveInfo resInfo = new ResolveInfo();
-    ActivityInfo actInfo = new ActivityInfo();
-    actInfo.applicationInfo = new ApplicationInfo();
-    actInfo.packageName = packageName;
-    actInfo.applicationInfo.packageName = packageName;
-    actInfo.name = activityName;
-    resInfo.activityInfo = actInfo;
+    /**
+     * Creates a {@link ResolveInfo}.
+     *
+     * @param displayName Display name.
+     * @param packageName Package name.
+     * @return Resolve info instance.
+     */
+    public static ResolveInfo newResolveInfo(String displayName, String packageName) {
+        return newResolveInfo(displayName, packageName, null);
+    }
 
-    ShadowResolveInfo shResolve = Shadow.extract(resInfo);
-    shResolve.setLabel(displayName);
-    return resInfo;
-  }
+    /**
+     * Creates a {@link ResolveInfo}.
+     *
+     * @param displayName Display name.
+     * @param packageName Package name.
+     * @param activityName Activity name.
+     * @return Resolve info instance.
+     */
+    public static ResolveInfo newResolveInfo(String displayName, String packageName, String activityName) {
+        ResolveInfo resInfo = new ResolveInfo();
+        ActivityInfo actInfo = new ActivityInfo();
+        actInfo.applicationInfo = new ApplicationInfo();
+        actInfo.packageName = packageName;
+        actInfo.applicationInfo.packageName = packageName;
+        actInfo.name = activityName;
+        resInfo.activityInfo = actInfo;
+        ShadowResolveInfo shResolve = Shadow.extract(resInfo);
+        shResolve.setLabel(displayName);
+        return resInfo;
+    }
 
-  @Implementation
-  protected CharSequence loadLabel(PackageManager mgr) {
-    return label;
-  }
+    @Implementation
+    protected CharSequence loadLabel(PackageManager mgr) {
+        System.out.println("ShadowResolveInfo#loadLabel");
+        return label;
+    }
 
-  /**
-   * Sets the value returned by {@link #loadLabel}.
-   *
-   * @param l Label.
-   */
-  public void setLabel(String l) {
-    label = l;
-  }
+    /**
+     * Sets the value returned by {@link #loadLabel}.
+     *
+     * @param l Label.
+     */
+    public void setLabel(String l) {
+        label = l;
+    }
 }
+

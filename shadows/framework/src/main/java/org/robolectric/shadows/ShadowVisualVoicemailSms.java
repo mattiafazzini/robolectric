@@ -14,90 +14,96 @@ import org.robolectric.util.ReflectionHelpers;
 
 @Implements(value = VisualVoicemailSms.class, minSdk = VERSION_CODES.O)
 public class ShadowVisualVoicemailSms {
-  private PhoneAccountHandle phoneAccountHandle;
 
-  @Nullable private String prefix;
+    private PhoneAccountHandle phoneAccountHandle;
 
-  @Nullable private Bundle fields;
+    @Nullable
+    private String prefix;
 
-  private String messageBody;
+    @Nullable
+    private Bundle fields;
 
-  @Implementation
-  protected static void __staticInitializer__() {
-    ReflectionHelpers.setStaticField(
-        VisualVoicemailSms.class, "CREATOR", ShadowVisualVoicemailSms.CREATOR);
-  }
+    private String messageBody;
 
-  @Implementation
-  protected PhoneAccountHandle getPhoneAccountHandle() {
-    return phoneAccountHandle;
-  }
+    @Implementation
+    protected static void __staticInitializer__() {
+        System.out.println("ShadowVisualVoicemailSms#__staticInitializer__");
+        ReflectionHelpers.setStaticField(VisualVoicemailSms.class, "CREATOR", ShadowVisualVoicemailSms.CREATOR);
+    }
 
-  public ShadowVisualVoicemailSms setPhoneAccountHandle(PhoneAccountHandle phoneAccountHandle) {
-    this.phoneAccountHandle = phoneAccountHandle;
-    return this;
-  }
+    @Implementation
+    protected PhoneAccountHandle getPhoneAccountHandle() {
+        System.out.println("ShadowVisualVoicemailSms#getPhoneAccountHandle");
+        return phoneAccountHandle;
+    }
 
-  @Implementation
-  protected String getPrefix() {
-    return prefix;
-  }
+    public ShadowVisualVoicemailSms setPhoneAccountHandle(PhoneAccountHandle phoneAccountHandle) {
+        this.phoneAccountHandle = phoneAccountHandle;
+        return this;
+    }
 
-  public ShadowVisualVoicemailSms setPrefix(String prefix) {
-    this.prefix = prefix;
-    return this;
-  }
+    @Implementation
+    protected String getPrefix() {
+        System.out.println("ShadowVisualVoicemailSms#getPrefix");
+        return prefix;
+    }
 
-  @Implementation
-  protected Bundle getFields() {
-    return fields;
-  }
+    public ShadowVisualVoicemailSms setPrefix(String prefix) {
+        this.prefix = prefix;
+        return this;
+    }
 
-  public ShadowVisualVoicemailSms setFields(Bundle fields) {
-    this.fields = fields;
-    return this;
-  }
+    @Implementation
+    protected Bundle getFields() {
+        System.out.println("ShadowVisualVoicemailSms#getFields");
+        return fields;
+    }
 
-  @Implementation
-  protected String getMessageBody() {
-    return messageBody;
-  }
+    public ShadowVisualVoicemailSms setFields(Bundle fields) {
+        this.fields = fields;
+        return this;
+    }
 
-  public ShadowVisualVoicemailSms setMessageBody(String messageBody) {
-    this.messageBody = messageBody;
-    return this;
-  }
+    @Implementation
+    protected String getMessageBody() {
+        System.out.println("ShadowVisualVoicemailSms#getMessageBody");
+        return messageBody;
+    }
 
-  public static final Creator<VisualVoicemailSms> CREATOR =
-      new Creator<VisualVoicemailSms>() {
+    public ShadowVisualVoicemailSms setMessageBody(String messageBody) {
+        this.messageBody = messageBody;
+        return this;
+    }
+
+    public static final Creator<VisualVoicemailSms> CREATOR = new Creator<VisualVoicemailSms>() {
+
         @Override
         public VisualVoicemailSms createFromParcel(Parcel in) {
-          VisualVoicemailSms sms = Shadow.newInstanceOf(VisualVoicemailSms.class);
-          ShadowVisualVoicemailSms shadowSms = Shadow.extract(sms);
-          shadowSms
-              .setPhoneAccountHandle(in.readParcelable(PhoneAccountHandle.class.getClassLoader()))
-              .setPrefix(in.readString())
-              .setFields(in.readBundle())
-              .setMessageBody(in.readString());
-          return sms;
+            VisualVoicemailSms sms = Shadow.newInstanceOf(VisualVoicemailSms.class);
+            ShadowVisualVoicemailSms shadowSms = Shadow.extract(sms);
+            shadowSms.setPhoneAccountHandle(in.readParcelable(PhoneAccountHandle.class.getClassLoader())).setPrefix(in.readString()).setFields(in.readBundle()).setMessageBody(in.readString());
+            return sms;
         }
 
         @Override
         public VisualVoicemailSms[] newArray(int size) {
-          return new VisualVoicemailSms[size];
+            return new VisualVoicemailSms[size];
         }
-      };
+    };
 
-  @Implementation
-  protected int describeContents() {
-    return 0;
-  }
+    @Implementation
+    protected int describeContents() {
+        System.out.println("ShadowVisualVoicemailSms#describeContents");
+        return 0;
+    }
 
-  @Implementation
-  protected void writeToParcel(Parcel dest, int flags) {
-    dest.writeParcelable(getPhoneAccountHandle(), flags);
-    dest.writeString(getPrefix());
-    dest.writeBundle(getFields());
-    dest.writeString(getMessageBody());
-  }
+    @Implementation
+    protected void writeToParcel(Parcel dest, int flags) {
+        System.out.println("ShadowVisualVoicemailSms#writeToParcel");
+        dest.writeParcelable(getPhoneAccountHandle(), flags);
+        dest.writeString(getPrefix());
+        dest.writeBundle(getFields());
+        dest.writeString(getMessageBody());
+    }
 }
+

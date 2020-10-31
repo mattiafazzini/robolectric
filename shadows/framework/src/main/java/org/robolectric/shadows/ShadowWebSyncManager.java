@@ -5,18 +5,21 @@ import org.robolectric.annotation.Implements;
 
 @Implements(className = "android.webkit.WebSyncManager")
 public class ShadowWebSyncManager {
-  protected boolean synced = false;
 
-  @Implementation
-  protected void sync() {
-    synced = true;
-  }
+    protected boolean synced = false;
 
-  public boolean synced() {
-    return synced;
-  }
+    @Implementation
+    protected void sync() {
+        System.out.println("ShadowWebSyncManager#sync");
+        synced = true;
+    }
 
-  public void reset() {
-    synced = false;
-  }
+    public boolean synced() {
+        return synced;
+    }
+
+    public void reset() {
+        synced = false;
+    }
 }
+

@@ -9,16 +9,19 @@ import org.robolectric.annotation.RealObject;
 @Implements(ContentObserver.class)
 public class ShadowContentObserver {
 
-  @RealObject
-  private ContentObserver realObserver;
+    @RealObject
+    private ContentObserver realObserver;
 
-  @Implementation
-  protected void dispatchChange(boolean selfChange, Uri uri) {
-    realObserver.onChange(selfChange, uri);
-  }
+    @Implementation
+    protected void dispatchChange(boolean selfChange, Uri uri) {
+        System.out.println("ShadowContentObserver#dispatchChange");
+        realObserver.onChange(selfChange, uri);
+    }
 
-  @Implementation
-  protected void dispatchChange(boolean selfChange) {
-    realObserver.onChange(selfChange);
-  }
+    @Implementation
+    protected void dispatchChange(boolean selfChange) {
+        System.out.println("ShadowContentObserver#dispatchChange");
+        realObserver.onChange(selfChange);
+    }
 }
+

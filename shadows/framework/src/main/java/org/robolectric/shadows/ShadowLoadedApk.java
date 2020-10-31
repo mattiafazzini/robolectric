@@ -9,13 +9,16 @@ import org.robolectric.annotation.Implements;
 @Implements(value = LoadedApk.class, isInAndroidSdk = false)
 public class ShadowLoadedApk {
 
-  @Implementation
-  public ClassLoader getClassLoader() {
-    return this.getClass().getClassLoader();
-  }
+    @Implementation
+    public ClassLoader getClassLoader() {
+        System.out.println("ShadowLoadedApk#getClassLoader");
+        return this.getClass().getClassLoader();
+    }
 
-  @Implementation(minSdk = VERSION_CODES.O)
-  public ClassLoader getSplitClassLoader(String splitName) throws NameNotFoundException {
-    return this.getClass().getClassLoader();
-  }
+    @Implementation(minSdk = VERSION_CODES.O)
+    public ClassLoader getSplitClassLoader(String splitName) throws NameNotFoundException {
+        System.out.println("ShadowLoadedApk#getSplitClassLoader");
+        return this.getClass().getClassLoader();
+    }
 }
+

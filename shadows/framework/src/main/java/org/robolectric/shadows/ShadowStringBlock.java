@@ -3,7 +3,6 @@ package org.robolectric.shadows;
 import static android.os.Build.VERSION_CODES.KITKAT_WATCH;
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
 import static org.robolectric.res.android.Util.SIZEOF_INT;
-
 import java.nio.ByteBuffer;
 import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
@@ -15,103 +14,107 @@ import org.robolectric.res.android.ResourceTypes.ResStringPool_span;
 @Implements(className = "android.content.res.StringBlock", isInAndroidSdk = false)
 public class ShadowStringBlock {
 
-  @RealObject
-  Object realObject;
+    @RealObject
+    Object realObject;
 
-  @Implementation
-  protected static Number nativeCreate(byte[] data, int offset, int size) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Implementation(maxSdk = KITKAT_WATCH)
-  protected static int nativeGetSize(int nativeId) {
-    return nativeGetSize((long) nativeId);
-  }
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected static int nativeGetSize(long nativeId) {
-    return ResStringPool.getNativeObject(nativeId).size();
-  }
-
-  @Implementation(maxSdk = KITKAT_WATCH)
-  protected static String nativeGetString(int nativeId, int index) {
-    return nativeGetString((long) nativeId, index);
-  }
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected static String nativeGetString(long nativeId, int index) {
-    return ResStringPool.getNativeObject(nativeId).stringAt(index);
-  }
-
-  @Implementation(maxSdk = KITKAT_WATCH)
-  protected static int[] nativeGetStyle(int obj, int idx) {
-    return nativeGetStyle((long) obj, idx);
-  }
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected static int[] nativeGetStyle(long obj, int idx) {
-    ResStringPool osb = ResStringPool.getNativeObject(obj);
-
-    ResStringPool_span spans = osb.styleAt(idx);
-    if (spans == null) {
-      return null;
+    @Implementation
+    protected static Number nativeCreate(byte[] data, int offset, int size) {
+        System.out.println("ShadowStringBlock#nativeCreate");
+        throw new UnsupportedOperationException();
     }
 
-    ResStringPool_span pos = spans;
-    int num = 0;
-    while (pos.name.index != ResStringPool_span.END) {
-      num++;
-      // pos++;
-      pos = new ResStringPool_span(pos.myBuf(), pos.myOffset() + ResStringPool_span.SIZEOF);
+    @Implementation(maxSdk = KITKAT_WATCH)
+    protected static int nativeGetSize(int nativeId) {
+        System.out.println("ShadowStringBlock#nativeGetSize");
+        return nativeGetSize((long) nativeId);
     }
 
-    if (num == 0) {
-      return null;
+    @Implementation(minSdk = LOLLIPOP)
+    protected static int nativeGetSize(long nativeId) {
+        System.out.println("ShadowStringBlock#nativeGetSize");
+        return ResStringPool.getNativeObject(nativeId).size();
     }
 
-    // jintArray array = env->NewIntArray((num*sizeof(ResStringPool_span))/sizeof(jint));
-    int[] array = new int[num * ResStringPool_span.SIZEOF / SIZEOF_INT];
-    if (array == null) { // NewIntArray already threw OutOfMemoryError.
-      return null;
+    @Implementation(maxSdk = KITKAT_WATCH)
+    protected static String nativeGetString(int nativeId, int index) {
+        System.out.println("ShadowStringBlock#nativeGetString");
+        return nativeGetString((long) nativeId, index);
     }
 
-    num = 0;
-    final int numInts = ResStringPool_span.SIZEOF / SIZEOF_INT;
-    while (spans.name.index != ResStringPool_span.END) {
-      // env->SetIntArrayRegion(array,
-      //     num*numInts, numInts,
-      //     (jint*)spans);
-      setIntArrayRegion(array, num, numInts, spans);
-      // spans++;
-      spans = new ResStringPool_span(spans.myBuf(), spans.myOffset() + ResStringPool_span.SIZEOF);
-      num++;
+    @Implementation(minSdk = LOLLIPOP)
+    protected static String nativeGetString(long nativeId, int index) {
+        System.out.println("ShadowStringBlock#nativeGetString");
+        return ResStringPool.getNativeObject(nativeId).stringAt(index);
     }
 
-    return array;
-  }
-
-  private static void setIntArrayRegion(int[] array, int num, int numInts, ResStringPool_span spans) {
-    ByteBuffer buf = spans.myBuf();
-    int startOffset = spans.myOffset();
-
-    int start = num * numInts;
-    for (int i = 0; i < numInts; i++) {
-      array[start + i] = buf.getInt(startOffset + i * SIZEOF_INT);
+    @Implementation(maxSdk = KITKAT_WATCH)
+    protected static int[] nativeGetStyle(int obj, int idx) {
+        System.out.println("ShadowStringBlock#nativeGetStyle");
+        return nativeGetStyle((long) obj, idx);
     }
-  }
 
-  @Implementation(maxSdk = KITKAT_WATCH)
-  protected static void nativeDestroy(int obj) {
-    nativeDestroy((long) obj);
-  }
+    @Implementation(minSdk = LOLLIPOP)
+    protected static int[] nativeGetStyle(long obj, int idx) {
+        System.out.println("ShadowStringBlock#nativeGetStyle");
+        ResStringPool osb = ResStringPool.getNativeObject(obj);
+        ResStringPool_span spans = osb.styleAt(idx);
+        if (spans == null) {
+            return null;
+        }
+        ResStringPool_span pos = spans;
+        int num = 0;
+        while (pos.name.index != ResStringPool_span.END) {
+            num++;
+            // pos++;
+            pos = new ResStringPool_span(pos.myBuf(), pos.myOffset() + ResStringPool_span.SIZEOF);
+        }
+        if (num == 0) {
+            return null;
+        }
+        // jintArray array = env->NewIntArray((num*sizeof(ResStringPool_span))/sizeof(jint));
+        int[] array = new int[num * ResStringPool_span.SIZEOF / SIZEOF_INT];
+        if (array == null) {
+            // NewIntArray already threw OutOfMemoryError.
+            return null;
+        }
+        num = 0;
+        final int numInts = ResStringPool_span.SIZEOF / SIZEOF_INT;
+        while (spans.name.index != ResStringPool_span.END) {
+            // env->SetIntArrayRegion(array,
+            // num*numInts, numInts,
+            // (jint*)spans);
+            setIntArrayRegion(array, num, numInts, spans);
+            // spans++;
+            spans = new ResStringPool_span(spans.myBuf(), spans.myOffset() + ResStringPool_span.SIZEOF);
+            num++;
+        }
+        return array;
+    }
 
-  @Implementation(minSdk = LOLLIPOP)
-  protected static void nativeDestroy(long obj) {
-    throw new UnsupportedOperationException();
-  }
+    private static void setIntArrayRegion(int[] array, int num, int numInts, ResStringPool_span spans) {
+        ByteBuffer buf = spans.myBuf();
+        int startOffset = spans.myOffset();
+        int start = num * numInts;
+        for (int i = 0; i < numInts; i++) {
+            array[start + i] = buf.getInt(startOffset + i * SIZEOF_INT);
+        }
+    }
 
-  @Resetter
-  public static void reset() {
+    @Implementation(maxSdk = KITKAT_WATCH)
+    protected static void nativeDestroy(int obj) {
+        System.out.println("ShadowStringBlock#nativeDestroy");
+        nativeDestroy((long) obj);
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected static void nativeDestroy(long obj) {
+        System.out.println("ShadowStringBlock#nativeDestroy");
+        throw new UnsupportedOperationException();
+    }
+
+    @Resetter
+    public static void reset() {
     // NATIVE_STRING_POOLS.clear(); // nope!
-  }
+    }
 }
+

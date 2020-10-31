@@ -5,11 +5,14 @@ import android.text.method.MovementMethod;
 import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings({ "UnusedDeclaration" })
 @Implements(LinkMovementMethod.class)
 public class ShadowLinkMovementMethod {
-  @Implementation
-  protected static MovementMethod getInstance() {
-    return new LinkMovementMethod();
-  }
+
+    @Implementation
+    protected static MovementMethod getInstance() {
+        System.out.println("ShadowLinkMovementMethod#getInstance");
+        return new LinkMovementMethod();
+    }
 }
+
