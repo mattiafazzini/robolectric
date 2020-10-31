@@ -2,7 +2,6 @@ package org.robolectric.shadows;
 
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
 import static org.robolectric.RuntimeEnvironment.getApiLevel;
-
 import android.system.ErrnoException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,18 +21,22 @@ import org.robolectric.shadow.api.Shadow;
  */
 @Implements(value = MemoryMappedFile.class, isInAndroidSdk = false)
 public class ShadowMemoryMappedFile {
+
     private byte[] bytes;
+
     private static final String TZ_DATA_1 = "/misc/zoneinfo/tzdata";
+
     private static final String TZ_DATA_2 = "/usr/share/zoneinfo/tzdata";
+
     private static final String TZ_DATA_3 = "/misc/zoneinfo/current/tzdata";
 
     @Implementation
     public static MemoryMappedFile mmapRO(String path) throws Throwable {
+        System.out.println("ShadowMemoryMappedFile#mmapRO");
         if (path.endsWith(TZ_DATA_1) || path.endsWith(TZ_DATA_2) || path.endsWith(TZ_DATA_3)) {
             InputStream is = MemoryMappedFile.class.getResourceAsStream(TZ_DATA_2);
             if (is == null) {
-                throw (Throwable) exceptionClass().getConstructor(String.class, int.class)
-                    .newInstance("open", -1);
+                throw (Throwable) exceptionClass().getConstructor(String.class, int.class).newInstance("open", -1);
             }
             try {
                 MemoryMappedFile memoryMappedFile = new MemoryMappedFile(0L, 0L);
@@ -41,8 +44,7 @@ public class ShadowMemoryMappedFile {
                 shadowMemoryMappedFile.bytes = Streams.readFully(is);
                 return memoryMappedFile;
             } catch (IOException e) {
-                throw (Throwable) exceptionClass().getConstructor(String.class, int.class, Throwable.class)
-                    .newInstance("mmap", -1, e);
+                throw (Throwable) exceptionClass().getConstructor(String.class, int.class, Throwable.class).newInstance("mmap", -1, e);
             }
         } else {
             throw new IllegalArgumentException("Unknown file for mmap: '" + path);
@@ -63,16 +65,19 @@ public class ShadowMemoryMappedFile {
 
     @Implementation
     public synchronized void close() throws Exception {
+        System.out.println("ShadowMemoryMappedFile#close");
         bytes = null;
     }
 
     @Implementation
     public BufferIterator bigEndianIterator() {
+        System.out.println("ShadowMemoryMappedFile#bigEndianIterator");
         return getHeapBufferIterator(ByteOrder.BIG_ENDIAN);
     }
 
     @Implementation
     public BufferIterator littleEndianIterator() {
+        System.out.println("ShadowMemoryMappedFile#littleEndianIterator");
         return getHeapBufferIterator(ByteOrder.LITTLE_ENDIAN);
     }
 
@@ -83,21 +88,25 @@ public class ShadowMemoryMappedFile {
     @Implementation
     @SuppressWarnings("robolectric.ShadowReturnTypeMismatch")
     public int size() {
+        System.out.println("ShadowMemoryMappedFile#size");
         return bytes.length;
     }
 
     private static class RoboBufferIterator extends BufferIterator {
+
         private final ByteBuffer buffer;
 
         public RoboBufferIterator(byte[] buffer, ByteOrder order) {
             this.buffer = ByteBuffer.wrap(buffer);
         }
 
-        @Override public void seek(int offset) {
+        @Override
+        public void seek(int offset) {
             buffer.position(offset);
         }
 
-        @Override public void skip(int byteCount) {
+        @Override
+        public void skip(int byteCount) {
             buffer.position(buffer.position() + byteCount);
         }
 
@@ -106,27 +115,33 @@ public class ShadowMemoryMappedFile {
             return 0;
         }
 
-        @Override public void readByteArray(byte[] dst, int dstOffset, int byteCount) {
+        @Override
+        public void readByteArray(byte[] dst, int dstOffset, int byteCount) {
             System.arraycopy(buffer.array(), buffer.position(), dst, dstOffset, byteCount);
             skip(byteCount);
         }
 
-        @Override public byte readByte() {
+        @Override
+        public byte readByte() {
             return buffer.get();
         }
 
-        @Override public int readInt() {
+        @Override
+        public int readInt() {
             return buffer.getInt();
         }
 
-        @Override public void readIntArray(int[] dst, int dstOffset, int intCount) {
+        @Override
+        public void readIntArray(int[] dst, int dstOffset, int intCount) {
             for (int i = 0; i < intCount; i++) {
                 dst[dstOffset + i] = buffer.getInt();
             }
         }
 
-        @Override public short readShort() {
+        @Override
+        public short readShort() {
             return buffer.getShort();
         }
     }
 }
+

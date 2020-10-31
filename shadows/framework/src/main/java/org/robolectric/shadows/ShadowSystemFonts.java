@@ -10,16 +10,13 @@ import java.util.ArrayList;
 import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 
-@Implements(
-    className = "android.graphics.fonts.SystemFonts",
-    minSdk = Build.VERSION_CODES.Q,
-    isInAndroidSdk = false)
+@Implements(className = "android.graphics.fonts.SystemFonts", minSdk = Build.VERSION_CODES.Q, isInAndroidSdk = false)
 public class ShadowSystemFonts {
 
-  @Implementation
-  protected static FontConfig.Alias[] buildSystemFallback(String xmlPath, String fontDir,
-      Result oemCustomization, ArrayMap<String, android.graphics.fonts.FontFamily[]> fallbackMap,
-      ArrayList<Font> availableFonts) {
-    return new Alias[] {new FontConfig.Alias("sans-serif", "sans-serif", 0)};
-  }
+    @Implementation
+    protected static FontConfig.Alias[] buildSystemFallback(String xmlPath, String fontDir, Result oemCustomization, ArrayMap<String, android.graphics.fonts.FontFamily[]> fallbackMap, ArrayList<Font> availableFonts) {
+        System.out.println("ShadowSystemFonts#buildSystemFallback");
+        return new Alias[] { new FontConfig.Alias("sans-serif", "sans-serif", 0) };
+    }
 }
+

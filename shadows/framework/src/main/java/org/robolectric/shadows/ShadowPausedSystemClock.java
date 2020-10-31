@@ -2,7 +2,6 @@ package org.robolectric.shadows;
 
 import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR1;
 import static android.os.Build.VERSION_CODES.P;
-
 import android.os.SystemClock;
 import java.time.DateTimeException;
 import java.util.List;
@@ -24,102 +23,115 @@ import org.robolectric.annotation.Resetter;
  *
  * <p>This class should not be referenced directly. Use ShadowSystemClock instead.
  */
-@Implements(
-    value = SystemClock.class,
-    isInAndroidSdk = false,
-    shadowPicker = ShadowSystemClock.Picker.class)
+@Implements(value = SystemClock.class, isInAndroidSdk = false, shadowPicker = ShadowSystemClock.Picker.class)
 public class ShadowPausedSystemClock extends ShadowSystemClock {
-  private static final long INITIAL_TIME = 100;
-  private static final int MILLIS_PER_NANO = 1000000;;
-  private static long currentTimeMillis = INITIAL_TIME;
-  private static List<Listener> listeners = new CopyOnWriteArrayList<>();
 
-  /**
-   * Callback for clock updates
-   */
-  interface Listener {
-    void clockUpdated(long newCurrentTimeMillis);
-  }
+    private static final long INITIAL_TIME = 100;
 
-  static void addListener(Listener listener) {
-    listeners.add(listener);
-  }
+    private static final int MILLIS_PER_NANO = 1000000;
 
-  static void removeListener(Listener listener) {
-    listeners.remove(listener);
-  }
+    private static long currentTimeMillis = INITIAL_TIME;
 
-  /** Advances the current time by given millis, without sleeping the current thread/ */
-  @Implementation
-  protected static void sleep(long millis) {
-    currentTimeMillis += millis;
-  }
+    private static List<Listener> listeners = new CopyOnWriteArrayList<>();
 
-  /**
-   * Sets the current wall time.
-   *
-   * <p>Currently does not perform any permission checks.
-   *
-   * @return false if specified time is less than current time.
-   */
-  @Implementation
-  protected static boolean setCurrentTimeMillis(long millis) {
-    if (currentTimeMillis > millis) {
-      return false;
+    /**
+     * Callback for clock updates
+     */
+    interface Listener {
+
+        void clockUpdated(long newCurrentTimeMillis);
     }
 
-    currentTimeMillis = millis;
-    for (Listener listener : listeners) {
-      listener.clockUpdated(currentTimeMillis);
+    static void addListener(Listener listener) {
+        listeners.add(listener);
     }
-    return true;
-  }
 
-  @Implementation
-  protected static long uptimeMillis() {
-    return currentTimeMillis;
-  }
-
-  @Implementation
-  protected static long elapsedRealtime() {
-    return uptimeMillis();
-  }
-
-  @Implementation(minSdk = JELLY_BEAN_MR1)
-  protected static long elapsedRealtimeNanos() {
-    return elapsedRealtime() * MILLIS_PER_NANO;
-  }
-
-  @Implementation
-  protected static long currentThreadTimeMillis() {
-    return uptimeMillis();
-  }
-
-  @HiddenApi
-  @Implementation
-  protected static long currentThreadTimeMicro() {
-    return uptimeMillis() * 1000;
-  }
-
-  @HiddenApi
-  @Implementation
-  protected static long currentTimeMicro() {
-    return currentThreadTimeMicro();
-  }
-
-  @Implementation(minSdk = P)
-  @HiddenApi
-  protected static long currentNetworkTimeMillis() {
-    if (networkTimeAvailable) {
-      return currentTimeMillis;
-    } else {
-      throw new DateTimeException("Network time not available");
+    static void removeListener(Listener listener) {
+        listeners.remove(listener);
     }
-  }
 
-  @Resetter
-  public static void reset() {
-    currentTimeMillis = INITIAL_TIME;
-    ShadowSystemClock.reset();
-  }
+    /**
+     * Advances the current time by given millis, without sleeping the current thread/
+     */
+    @Implementation
+    protected static void sleep(long millis) {
+        System.out.println("ShadowPausedSystemClock#sleep");
+        currentTimeMillis += millis;
+    }
+
+    /**
+     * Sets the current wall time.
+     *
+     * <p>Currently does not perform any permission checks.
+     *
+     * @return false if specified time is less than current time.
+     */
+    @Implementation
+    protected static boolean setCurrentTimeMillis(long millis) {
+        System.out.println("ShadowPausedSystemClock#setCurrentTimeMillis");
+        if (currentTimeMillis > millis) {
+            return false;
+        }
+        currentTimeMillis = millis;
+        for (Listener listener : listeners) {
+            listener.clockUpdated(currentTimeMillis);
+        }
+        return true;
+    }
+
+    @Implementation
+    protected static long uptimeMillis() {
+        System.out.println("ShadowPausedSystemClock#uptimeMillis");
+        return currentTimeMillis;
+    }
+
+    @Implementation
+    protected static long elapsedRealtime() {
+        System.out.println("ShadowPausedSystemClock#elapsedRealtime");
+        return uptimeMillis();
+    }
+
+    @Implementation(minSdk = JELLY_BEAN_MR1)
+    protected static long elapsedRealtimeNanos() {
+        System.out.println("ShadowPausedSystemClock#elapsedRealtimeNanos");
+        return elapsedRealtime() * MILLIS_PER_NANO;
+    }
+
+    @Implementation
+    protected static long currentThreadTimeMillis() {
+        System.out.println("ShadowPausedSystemClock#currentThreadTimeMillis");
+        return uptimeMillis();
+    }
+
+    @HiddenApi
+    @Implementation
+    protected static long currentThreadTimeMicro() {
+        System.out.println("ShadowPausedSystemClock#currentThreadTimeMicro");
+        return uptimeMillis() * 1000;
+    }
+
+    @HiddenApi
+    @Implementation
+    protected static long currentTimeMicro() {
+        System.out.println("ShadowPausedSystemClock#currentTimeMicro");
+        return currentThreadTimeMicro();
+    }
+
+    @Implementation(minSdk = P)
+    @HiddenApi
+    protected static long currentNetworkTimeMillis() {
+        System.out.println("ShadowPausedSystemClock#currentNetworkTimeMillis");
+        if (networkTimeAvailable) {
+            return currentTimeMillis;
+        } else {
+            throw new DateTimeException("Network time not available");
+        }
+    }
+
+    @Resetter
+    public static void reset() {
+        currentTimeMillis = INITIAL_TIME;
+        ShadowSystemClock.reset();
+    }
 }
+

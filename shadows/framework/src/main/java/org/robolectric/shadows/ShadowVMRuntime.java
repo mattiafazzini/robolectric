@@ -1,7 +1,6 @@
 package org.robolectric.shadows;
 
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
-
 import android.annotation.TargetApi;
 import dalvik.system.VMRuntime;
 import java.lang.reflect.Array;
@@ -14,58 +13,65 @@ import org.robolectric.res.android.NativeObjRegistry;
 @Implements(value = VMRuntime.class, isInAndroidSdk = false)
 public class ShadowVMRuntime {
 
-  private final NativeObjRegistry<Object> nativeObjRegistry =
-      new NativeObjRegistry<>("VRRuntime.nativeObjectRegistry");
-  // There actually isn't any android JNI code to call through to in Robolectric due to
-  // cross-platform compatibility issues. We default to a reasonable value that reflects the devices
-  // that would commonly run this code.
-  private static boolean is64Bit = true;
+    private final NativeObjRegistry<Object> nativeObjRegistry = new NativeObjRegistry<>("VRRuntime.nativeObjectRegistry");
 
-  @Implementation(minSdk = LOLLIPOP)
-  public Object newUnpaddedArray(Class<?> klass, int size) {
-    return Array.newInstance(klass, size);
-  }
+    // There actually isn't any android JNI code to call through to in Robolectric due to
+    // cross-platform compatibility issues. We default to a reasonable value that reflects the devices
+    // that would commonly run this code.
+    private static boolean is64Bit = true;
 
-  @Implementation
-  public Object newNonMovableArray(Class<?> type, int size) {
-    if (type.equals(int.class)) {
-      return new int[size];
+    @Implementation(minSdk = LOLLIPOP)
+    public Object newUnpaddedArray(Class<?> klass, int size) {
+        System.out.println("ShadowVMRuntime#newUnpaddedArray");
+        return Array.newInstance(klass, size);
     }
-    return null;
-  }
 
-  /**
-   * Returns a unique identifier of the object instead of a 'native' address.
-   */
-  @Implementation
-  public long addressOf(Object obj) {
-    return nativeObjRegistry.register(obj);
-  }
+    @Implementation
+    public Object newNonMovableArray(Class<?> type, int size) {
+        System.out.println("ShadowVMRuntime#newNonMovableArray");
+        if (type.equals(int.class)) {
+            return new int[size];
+        }
+        return null;
+    }
 
-  /**
-   * Returns the object previously registered with {@link #addressOf(Object)}.
-   */
-  public @Nullable
-  Object getObjectForAddress(long address) {
-    return nativeObjRegistry.getNativeObject(address);
-  }
+    /**
+     * Returns a unique identifier of the object instead of a 'native' address.
+     */
+    @Implementation
+    public long addressOf(Object obj) {
+        System.out.println("ShadowVMRuntime#addressOf");
+        return nativeObjRegistry.register(obj);
+    }
 
-  /**
-   * Returns whether the VM is running in 64-bit mode. Available in Android L+. Defaults to true.
-   */
-  @Implementation(minSdk = LOLLIPOP)
-  protected boolean is64Bit() {
-    return ShadowVMRuntime.is64Bit;
-  }
+    /**
+     * Returns the object previously registered with {@link #addressOf(Object)}.
+     */
+    @Nullable
+    public Object getObjectForAddress(long address) {
+        return nativeObjRegistry.getNativeObject(address);
+    }
 
-  /** Sets whether the VM is running in 64-bit mode. */
-  @TargetApi(LOLLIPOP)
-  public static void setIs64Bit(boolean is64Bit) {
-    ShadowVMRuntime.is64Bit = is64Bit;
-  }
+    /**
+     * Returns whether the VM is running in 64-bit mode. Available in Android L+. Defaults to true.
+     */
+    @Implementation(minSdk = LOLLIPOP)
+    protected boolean is64Bit() {
+        System.out.println("ShadowVMRuntime#is64Bit");
+        return ShadowVMRuntime.is64Bit;
+    }
 
-  @Resetter
-  public static void reset() {
-    ShadowVMRuntime.is64Bit = true;
-  }
+    /**
+     * Sets whether the VM is running in 64-bit mode.
+     */
+    @TargetApi(LOLLIPOP)
+    public static void setIs64Bit(boolean is64Bit) {
+        ShadowVMRuntime.is64Bit = is64Bit;
+    }
+
+    @Resetter
+    public static void reset() {
+        ShadowVMRuntime.is64Bit = true;
+    }
 }
+

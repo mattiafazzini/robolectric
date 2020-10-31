@@ -3,7 +3,6 @@ package org.robolectric.shadows;
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
 import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
 import static android.os.Build.VERSION_CODES.M;
-
 import android.net.Network;
 import java.io.FileDescriptor;
 import java.net.DatagramSocket;
@@ -17,45 +16,50 @@ import org.robolectric.util.ReflectionHelpers;
 @Implements(value = Network.class, minSdk = LOLLIPOP)
 public class ShadowNetwork {
 
-  @RealObject private Network realObject;
+    @RealObject
+    private Network realObject;
 
-  /**
-   * Creates new instance of {@link Network}, because its constructor is hidden.
-   *
-   * @param netId The netId.
-   * @return The Network instance.
-   */
-  public static Network newInstance(int netId) {
-    return Shadow.newInstance(Network.class, new Class[] {int.class}, new Object[] {netId});
-  }
+    /**
+     * Creates new instance of {@link Network}, because its constructor is hidden.
+     *
+     * @param netId The netId.
+     * @return The Network instance.
+     */
+    public static Network newInstance(int netId) {
+        return Shadow.newInstance(Network.class, new Class[] { int.class }, new Object[] { netId });
+    }
 
-  /**
-   * No-ops. We cannot assume that a Network represents a real network interface on the device
-   * running this test, so we have nothing to bind the socket to.
-   */
-  @Implementation(minSdk = LOLLIPOP_MR1)
-  protected void bindSocket(DatagramSocket socket) {}
+    /**
+     * No-ops. We cannot assume that a Network represents a real network interface on the device
+     * running this test, so we have nothing to bind the socket to.
+     */
+    @Implementation(minSdk = LOLLIPOP_MR1)
+    protected void bindSocket(DatagramSocket socket) {
+    }
 
-  /**
-   * No-ops. We cannot assume that a Network represents a real network interface on the device
-   * running this test, so we have nothing to bind the socket to.
-   */
-  @Implementation
-  protected void bindSocket(Socket socket) {}
+    /**
+     * No-ops. We cannot assume that a Network represents a real network interface on the device
+     * running this test, so we have nothing to bind the socket to.
+     */
+    @Implementation
+    protected void bindSocket(Socket socket) {
+    }
 
-  /**
-   * No-ops. We cannot assume that a Network represents a real network interface on the device
-   * running this test, so we have nothing to bind the socket to.
-   */
-  @Implementation(minSdk = M)
-  protected void bindSocket(FileDescriptor fd) {}
+    /**
+     * No-ops. We cannot assume that a Network represents a real network interface on the device
+     * running this test, so we have nothing to bind the socket to.
+     */
+    @Implementation(minSdk = M)
+    protected void bindSocket(FileDescriptor fd) {
+    }
 
-  /**
-   * Allows to get the stored netId.
-   *
-   * @return The netId.
-   */
-  public int getNetId() {
-    return ReflectionHelpers.getField(realObject, "netId");
-  }
+    /**
+     * Allows to get the stored netId.
+     *
+     * @return The netId.
+     */
+    public int getNetId() {
+        return ReflectionHelpers.getField(realObject, "netId");
+    }
 }
+

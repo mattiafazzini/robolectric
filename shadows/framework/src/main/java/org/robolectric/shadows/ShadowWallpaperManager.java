@@ -11,12 +11,14 @@ import org.robolectric.shadow.api.Shadow;
 @Implements(WallpaperManager.class)
 public class ShadowWallpaperManager {
 
-  @Implementation
-  protected static WallpaperManager getInstance(Context context) {
-    return Shadow.newInstanceOf(WallpaperManager.class);
-  }
+    @Implementation
+    protected static WallpaperManager getInstance(Context context) {
+        System.out.println("ShadowWallpaperManager#getInstance");
+        return Shadow.newInstanceOf(WallpaperManager.class);
+    }
 
-  @Implementation
-  protected void sendWallpaperCommand(
-      IBinder windowToken, String action, int x, int y, int z, Bundle extras) {}
+    @Implementation
+    protected void sendWallpaperCommand(IBinder windowToken, String action, int x, int y, int z, Bundle extras) {
+    }
 }
+

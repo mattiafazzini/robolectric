@@ -10,65 +10,72 @@ import org.robolectric.shadow.api.Shadow;
 
 @Implements(MimeTypeMap.class)
 public class ShadowMimeTypeMap {
-  private final Map<String, String> extensionToMimeTypeMap = new HashMap<>();
-  private final Map<String, String> mimeTypeToExtensionMap = new HashMap<>();
-  private static volatile MimeTypeMap singleton = null;
-  private static final Object singletonLock = new Object();
 
-  @Implementation
-  protected static MimeTypeMap getSingleton() {
-    if (singleton == null) {
-      synchronized (singletonLock) {
+    private final Map<String, String> extensionToMimeTypeMap = new HashMap<>();
+
+    private final Map<String, String> mimeTypeToExtensionMap = new HashMap<>();
+
+    private static volatile MimeTypeMap singleton = null;
+
+    private static final Object singletonLock = new Object();
+
+    @Implementation
+    protected static MimeTypeMap getSingleton() {
+        System.out.println("ShadowMimeTypeMap#getSingleton");
         if (singleton == null) {
-          singleton = Shadow.newInstanceOf(MimeTypeMap.class);
+            synchronized (singletonLock) {
+                if (singleton == null) {
+                    singleton = Shadow.newInstanceOf(MimeTypeMap.class);
+                }
+            }
         }
-      }
+        return singleton;
     }
 
-    return singleton;
-  }
-
-  @Resetter
-  public static void reset() {
-    if (singleton != null) {
-      ShadowMimeTypeMap shadowMimeTypeMap = Shadow.extract(getSingleton());
-      shadowMimeTypeMap.clearMappings();
+    @Resetter
+    public static void reset() {
+        if (singleton != null) {
+            ShadowMimeTypeMap shadowMimeTypeMap = Shadow.extract(getSingleton());
+            shadowMimeTypeMap.clearMappings();
+        }
     }
-  }
 
-  @Implementation
-  protected String getMimeTypeFromExtension(String extension) {
-    if (extensionToMimeTypeMap.containsKey(extension))
-      return extensionToMimeTypeMap.get(extension);
+    @Implementation
+    protected String getMimeTypeFromExtension(String extension) {
+        System.out.println("ShadowMimeTypeMap#getMimeTypeFromExtension");
+        if (extensionToMimeTypeMap.containsKey(extension))
+            return extensionToMimeTypeMap.get(extension);
+        return null;
+    }
 
-    return null;
-  }
+    @Implementation
+    protected String getExtensionFromMimeType(String mimeType) {
+        System.out.println("ShadowMimeTypeMap#getExtensionFromMimeType");
+        if (mimeTypeToExtensionMap.containsKey(mimeType))
+            return mimeTypeToExtensionMap.get(mimeType);
+        return null;
+    }
 
-  @Implementation
-  protected String getExtensionFromMimeType(String mimeType) {
-    if (mimeTypeToExtensionMap.containsKey(mimeType))
-      return mimeTypeToExtensionMap.get(mimeType);
+    public void addExtensionMimeTypMapping(String extension, String mimeType) {
+        extensionToMimeTypeMap.put(extension, mimeType);
+        mimeTypeToExtensionMap.put(mimeType, extension);
+    }
 
-    return null;
-  }
+    public void clearMappings() {
+        extensionToMimeTypeMap.clear();
+        mimeTypeToExtensionMap.clear();
+    }
 
-  public void addExtensionMimeTypMapping(String extension, String mimeType) {
-    extensionToMimeTypeMap.put(extension, mimeType);
-    mimeTypeToExtensionMap.put(mimeType, extension);
-  }
+    @Implementation
+    protected boolean hasExtension(String extension) {
+        System.out.println("ShadowMimeTypeMap#hasExtension");
+        return extensionToMimeTypeMap.containsKey(extension);
+    }
 
-  public void clearMappings() {
-    extensionToMimeTypeMap.clear();
-    mimeTypeToExtensionMap.clear();
-  }
-
-  @Implementation
-  protected boolean hasExtension(String extension) {
-    return extensionToMimeTypeMap.containsKey(extension);
-  }
-
-  @Implementation
-  protected boolean hasMimeType(String mimeType) {
-    return mimeTypeToExtensionMap.containsKey(mimeType);
-  }
+    @Implementation
+    protected boolean hasMimeType(String mimeType) {
+        System.out.println("ShadowMimeTypeMap#hasMimeType");
+        return mimeTypeToExtensionMap.containsKey(mimeType);
+    }
 }
+

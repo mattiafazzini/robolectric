@@ -1,7 +1,6 @@
 package org.robolectric.shadows;
 
 import static org.robolectric.shadow.api.Shadow.directlyOn;
-
 import android.content.Context;
 import android.graphics.Typeface;
 import android.text.InputFilter;
@@ -22,163 +21,207 @@ import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 import org.robolectric.annotation.RealObject;
 
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings({ "UnusedDeclaration" })
 @Implements(TextView.class)
 public class ShadowTextView extends ShadowView {
-  @RealObject TextView realTextView;
 
-  private CharSequence text = "";
-  private TextView.BufferType bufferType = TextView.BufferType.NORMAL;
-  private Integer textColorHexValue;
-  private Integer hintColorHexValue;
-  private float textSize = 14.0f;
-  private boolean autoLinkPhoneNumbers;
-  private int autoLinkMask;
-  private CharSequence hintText;
-  private CharSequence errorText;
-  private int compoundDrawablePadding;
-  private MovementMethod movementMethod;
-  private boolean linksClickable;
-  private int gravity;
-  private int imeOptions = EditorInfo.IME_NULL;
-  private TextView.OnEditorActionListener onEditorActionListener;
-  private int textAppearanceId;
-  private TransformationMethod transformationMethod;
-  private int inputType;
-  private int lines;
-  protected int selectionStart = -1;
-  protected int selectionEnd = -1;
-  private Typeface typeface;
-  private InputFilter[] inputFilters;
-  private TextPaint textPaint = new TextPaint();
+    @RealObject
+    TextView realTextView;
 
-  private List<TextWatcher> watchers = new ArrayList<>();
-  private List<Integer> previousKeyCodes = new ArrayList<>();
-  private List<KeyEvent> previousKeyEvents = new ArrayList<>();
-  private int paintFlags;
-  private int compoundDrawablesWithIntrinsicBoundsLeft;
-  private int compoundDrawablesWithIntrinsicBoundsTop;
-  private int compoundDrawablesWithIntrinsicBoundsRight;
-  private int compoundDrawablesWithIntrinsicBoundsBottom;
+    private CharSequence text = "";
 
-  @Implementation
-  protected void setTextAppearance(Context context, int resid) {
-    textAppearanceId = resid;
-    directlyOn(realTextView, TextView.class).setTextAppearance(context, resid);
-  }
+    private TextView.BufferType bufferType = TextView.BufferType.NORMAL;
 
-  @Implementation
-  protected boolean onKeyDown(int keyCode, KeyEvent event) {
-    previousKeyCodes.add(keyCode);
-    previousKeyEvents.add(event);
-    return directlyOn(realTextView, TextView.class).onKeyDown(keyCode, event);
-  }
+    private Integer textColorHexValue;
 
-  @Implementation
-  protected boolean onKeyUp(int keyCode, KeyEvent event) {
-    previousKeyCodes.add(keyCode);
-    previousKeyEvents.add(event);
-    return directlyOn(realTextView, TextView.class).onKeyUp(keyCode, event);
-  }
+    private Integer hintColorHexValue;
 
-  public int getPreviousKeyCode(int index) {
-    return previousKeyCodes.get(index);
-  }
+    private float textSize = 14.0f;
 
-  public KeyEvent getPreviousKeyEvent(int index) {
-    return previousKeyEvents.get(index);
-  }
+    private boolean autoLinkPhoneNumbers;
 
-  /**
-   * Returns the text string of this {@code TextView}.
-   *
-   * Robolectric extension.
-   */
-  @Override
-  public String innerText() {
-    CharSequence text = realTextView.getText();
-    return (text == null || realTextView.getVisibility() != View.VISIBLE) ? "" : text.toString();
-  }
+    private int autoLinkMask;
 
-  public int getTextAppearanceId() {
-    return textAppearanceId;
-  }
+    private CharSequence hintText;
 
-  @Implementation
-  protected void addTextChangedListener(TextWatcher watcher) {
-    this.watchers.add(watcher);
-    directlyOn(realTextView, TextView.class).addTextChangedListener(watcher);
-  }
+    private CharSequence errorText;
 
-  @Implementation
-  protected void removeTextChangedListener(TextWatcher watcher) {
-    this.watchers.remove(watcher);
-    directlyOn(realTextView, TextView.class).removeTextChangedListener(watcher);
-  }
+    private int compoundDrawablePadding;
 
-  /**
-   * @return the list of currently registered watchers/listeners
-   */
-  public List<TextWatcher> getWatchers() {
-    return watchers;
-  }
+    private MovementMethod movementMethod;
 
-  @HiddenApi @Implementation
-  public Locale getTextServicesLocale() {
-    return Locale.getDefault();
-  }
+    private boolean linksClickable;
 
-  @Override
-  protected void dumpAttributes(PrintStream out) {
-    super.dumpAttributes(out);
-    CharSequence text = realTextView.getText();
-    if (text != null && text.length() > 0) {
-      dumpAttribute(out, "text", text.toString());
+    private int gravity;
+
+    private int imeOptions = EditorInfo.IME_NULL;
+
+    private TextView.OnEditorActionListener onEditorActionListener;
+
+    private int textAppearanceId;
+
+    private TransformationMethod transformationMethod;
+
+    private int inputType;
+
+    private int lines;
+
+    protected int selectionStart = -1;
+
+    protected int selectionEnd = -1;
+
+    private Typeface typeface;
+
+    private InputFilter[] inputFilters;
+
+    private TextPaint textPaint = new TextPaint();
+
+    private List<TextWatcher> watchers = new ArrayList<>();
+
+    private List<Integer> previousKeyCodes = new ArrayList<>();
+
+    private List<KeyEvent> previousKeyEvents = new ArrayList<>();
+
+    private int paintFlags;
+
+    private int compoundDrawablesWithIntrinsicBoundsLeft;
+
+    private int compoundDrawablesWithIntrinsicBoundsTop;
+
+    private int compoundDrawablesWithIntrinsicBoundsRight;
+
+    private int compoundDrawablesWithIntrinsicBoundsBottom;
+
+    @Implementation
+    protected void setTextAppearance(Context context, int resid) {
+        System.out.println("ShadowTextView#setTextAppearance");
+        textAppearanceId = resid;
+        directlyOn(realTextView, TextView.class).setTextAppearance(context, resid);
     }
-  }
 
-  @Implementation
-  protected int getPaintFlags() {
-    return paintFlags;
-  }
+    @Implementation
+    protected boolean onKeyDown(int keyCode, KeyEvent event) {
+        System.out.println("ShadowTextView#onKeyDown");
+        previousKeyCodes.add(keyCode);
+        previousKeyEvents.add(event);
+        return directlyOn(realTextView, TextView.class).onKeyDown(keyCode, event);
+    }
 
-  @Implementation
-  protected void setPaintFlags(int paintFlags) {
-    this.paintFlags = paintFlags;
-  }
+    @Implementation
+    protected boolean onKeyUp(int keyCode, KeyEvent event) {
+        System.out.println("ShadowTextView#onKeyUp");
+        previousKeyCodes.add(keyCode);
+        previousKeyEvents.add(event);
+        return directlyOn(realTextView, TextView.class).onKeyUp(keyCode, event);
+    }
 
-  @Implementation
-  protected void setOnEditorActionListener(TextView.OnEditorActionListener l) {
-    this.onEditorActionListener = l;
-    directlyOn(realTextView, TextView.class).setOnEditorActionListener(l);
-  }
+    public int getPreviousKeyCode(int index) {
+        return previousKeyCodes.get(index);
+    }
 
-  public TextView.OnEditorActionListener getOnEditorActionListener() {
-    return onEditorActionListener;
-  }
+    public KeyEvent getPreviousKeyEvent(int index) {
+        return previousKeyEvents.get(index);
+    }
 
-  @Implementation
-  protected void setCompoundDrawablesWithIntrinsicBounds(int left, int top, int right, int bottom) {
-    this.compoundDrawablesWithIntrinsicBoundsLeft = left;
-    this.compoundDrawablesWithIntrinsicBoundsTop = top;
-    this.compoundDrawablesWithIntrinsicBoundsRight = right;
-    this.compoundDrawablesWithIntrinsicBoundsBottom = bottom;
-    directlyOn(realTextView, TextView.class).setCompoundDrawablesWithIntrinsicBounds(left, top, right, bottom);
-  }
+    /**
+     * Returns the text string of this {@code TextView}.
+     *
+     * Robolectric extension.
+     */
+    @Override
+    public String innerText() {
+        CharSequence text = realTextView.getText();
+        return (text == null || realTextView.getVisibility() != View.VISIBLE) ? "" : text.toString();
+    }
 
-  public int getCompoundDrawablesWithIntrinsicBoundsLeft() {
-    return compoundDrawablesWithIntrinsicBoundsLeft;
-  }
+    public int getTextAppearanceId() {
+        return textAppearanceId;
+    }
 
-  public int getCompoundDrawablesWithIntrinsicBoundsTop() {
-    return compoundDrawablesWithIntrinsicBoundsTop;
-  }
+    @Implementation
+    protected void addTextChangedListener(TextWatcher watcher) {
+        System.out.println("ShadowTextView#addTextChangedListener");
+        this.watchers.add(watcher);
+        directlyOn(realTextView, TextView.class).addTextChangedListener(watcher);
+    }
 
-  public int getCompoundDrawablesWithIntrinsicBoundsRight() {
-    return compoundDrawablesWithIntrinsicBoundsRight;
-  }
+    @Implementation
+    protected void removeTextChangedListener(TextWatcher watcher) {
+        System.out.println("ShadowTextView#removeTextChangedListener");
+        this.watchers.remove(watcher);
+        directlyOn(realTextView, TextView.class).removeTextChangedListener(watcher);
+    }
 
-  public int getCompoundDrawablesWithIntrinsicBoundsBottom() {
-    return compoundDrawablesWithIntrinsicBoundsBottom;
-  }
+    /**
+     * @return the list of currently registered watchers/listeners
+     */
+    public List<TextWatcher> getWatchers() {
+        return watchers;
+    }
+
+    @HiddenApi
+    @Implementation
+    public Locale getTextServicesLocale() {
+        System.out.println("ShadowTextView#getTextServicesLocale");
+        return Locale.getDefault();
+    }
+
+    @Override
+    protected void dumpAttributes(PrintStream out) {
+        super.dumpAttributes(out);
+        CharSequence text = realTextView.getText();
+        if (text != null && text.length() > 0) {
+            dumpAttribute(out, "text", text.toString());
+        }
+    }
+
+    @Implementation
+    protected int getPaintFlags() {
+        System.out.println("ShadowTextView#getPaintFlags");
+        return paintFlags;
+    }
+
+    @Implementation
+    protected void setPaintFlags(int paintFlags) {
+        System.out.println("ShadowTextView#setPaintFlags");
+        this.paintFlags = paintFlags;
+    }
+
+    @Implementation
+    protected void setOnEditorActionListener(TextView.OnEditorActionListener l) {
+        System.out.println("ShadowTextView#setOnEditorActionListener");
+        this.onEditorActionListener = l;
+        directlyOn(realTextView, TextView.class).setOnEditorActionListener(l);
+    }
+
+    public TextView.OnEditorActionListener getOnEditorActionListener() {
+        return onEditorActionListener;
+    }
+
+    @Implementation
+    protected void setCompoundDrawablesWithIntrinsicBounds(int left, int top, int right, int bottom) {
+        System.out.println("ShadowTextView#setCompoundDrawablesWithIntrinsicBounds");
+        this.compoundDrawablesWithIntrinsicBoundsLeft = left;
+        this.compoundDrawablesWithIntrinsicBoundsTop = top;
+        this.compoundDrawablesWithIntrinsicBoundsRight = right;
+        this.compoundDrawablesWithIntrinsicBoundsBottom = bottom;
+        directlyOn(realTextView, TextView.class).setCompoundDrawablesWithIntrinsicBounds(left, top, right, bottom);
+    }
+
+    public int getCompoundDrawablesWithIntrinsicBoundsLeft() {
+        return compoundDrawablesWithIntrinsicBoundsLeft;
+    }
+
+    public int getCompoundDrawablesWithIntrinsicBoundsTop() {
+        return compoundDrawablesWithIntrinsicBoundsTop;
+    }
+
+    public int getCompoundDrawablesWithIntrinsicBoundsRight() {
+        return compoundDrawablesWithIntrinsicBoundsRight;
+    }
+
+    public int getCompoundDrawablesWithIntrinsicBoundsBottom() {
+        return compoundDrawablesWithIntrinsicBoundsBottom;
+    }
 }
+

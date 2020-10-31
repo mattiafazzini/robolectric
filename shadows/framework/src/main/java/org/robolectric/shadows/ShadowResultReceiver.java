@@ -10,12 +10,14 @@ import org.robolectric.util.ReflectionHelpers.ClassParameter;
 
 @Implements(ResultReceiver.class)
 public class ShadowResultReceiver {
-  @RealObject private ResultReceiver realResultReceiver;
 
-  @Implementation
-  protected void send(int resultCode, android.os.Bundle resultData) {
-    ReflectionHelpers.callInstanceMethod(realResultReceiver, "onReceiveResult",
-        ClassParameter.from(Integer.TYPE, resultCode),
-        ClassParameter.from(Bundle.class, resultData));
-  }
+    @RealObject
+    private ResultReceiver realResultReceiver;
+
+    @Implementation
+    protected void send(int resultCode, android.os.Bundle resultData) {
+        System.out.println("ShadowResultReceiver#send");
+        ReflectionHelpers.callInstanceMethod(realResultReceiver, "onReceiveResult", ClassParameter.from(Integer.TYPE, resultCode), ClassParameter.from(Bundle.class, resultData));
+    }
 }
+

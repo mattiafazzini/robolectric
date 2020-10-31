@@ -9,47 +9,53 @@ import org.robolectric.annotation.Implements;
 @Implements(value = WebViewDatabase.class, callThroughByDefault = false)
 public class ShadowWebViewDatabase {
 
-  @Implementation
-  protected static WebViewDatabase getInstance(Context ignored) {
-    return new RoboWebViewDatabase();
-  }
-
-  private static final class RoboWebViewDatabase extends WebViewDatabase {
-
-    RoboWebViewDatabase() {}
-
-    @Override
-    public boolean hasUsernamePassword() {
-      return false;
+    @Implementation
+    protected static WebViewDatabase getInstance(Context ignored) {
+        System.out.println("ShadowWebViewDatabase#getInstance");
+        return new RoboWebViewDatabase();
     }
 
-    @Override
-    public void clearUsernamePassword() {}
+    private static final class RoboWebViewDatabase extends WebViewDatabase {
 
-    @Override
-    public boolean hasHttpAuthUsernamePassword() {
-      return false;
+        RoboWebViewDatabase() {
+        }
+
+        @Override
+        public boolean hasUsernamePassword() {
+            return false;
+        }
+
+        @Override
+        public void clearUsernamePassword() {
+        }
+
+        @Override
+        public boolean hasHttpAuthUsernamePassword() {
+            return false;
+        }
+
+        @Override
+        public void clearHttpAuthUsernamePassword() {
+        }
+
+        @Override
+        public void setHttpAuthUsernamePassword(String host, String realm, String username, String password) {
+        }
+
+        @Nullable
+        @Override
+        public String[] getHttpAuthUsernamePassword(String host, String realm) {
+            return null;
+        }
+
+        @Override
+        public boolean hasFormData() {
+            return false;
+        }
+
+        @Override
+        public void clearFormData() {
+        }
     }
-
-    @Override
-    public void clearHttpAuthUsernamePassword() {}
-
-    @Override
-    public void setHttpAuthUsernamePassword(
-        String host, String realm, String username, String password) {}
-
-    @Nullable
-    @Override
-    public String[] getHttpAuthUsernamePassword(String host, String realm) {
-      return null;
-    }
-
-    @Override
-    public boolean hasFormData() {
-      return false;
-    }
-
-    @Override
-    public void clearFormData() {}
-  }
 }
+

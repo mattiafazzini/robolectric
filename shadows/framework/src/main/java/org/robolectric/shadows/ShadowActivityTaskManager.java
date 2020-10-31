@@ -1,7 +1,6 @@
 package org.robolectric.shadows;
 
 import static android.os.Build.VERSION_CODES.Q;
-
 import android.app.ActivityTaskManager;
 import android.app.IActivityTaskManager;
 import org.robolectric.annotation.Implementation;
@@ -10,8 +9,11 @@ import org.robolectric.util.ReflectionHelpers;
 
 @Implements(value = ActivityTaskManager.class, minSdk = Q, isInAndroidSdk = false)
 public class ShadowActivityTaskManager {
-  @Implementation
-  protected static IActivityTaskManager getService() {
-    return (IActivityTaskManager) ReflectionHelpers.createNullProxy(IActivityTaskManager.class);
-  }
+
+    @Implementation
+    protected static IActivityTaskManager getService() {
+        System.out.println("ShadowActivityTaskManager#getService");
+        return (IActivityTaskManager) ReflectionHelpers.createNullProxy(IActivityTaskManager.class);
+    }
 }
+

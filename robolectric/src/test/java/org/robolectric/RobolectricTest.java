@@ -7,7 +7,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.robolectric.Shadows.shadowOf;
-
 import android.app.Activity;
 import android.app.Application;
 import android.content.ActivityNotFoundException;
@@ -38,130 +37,134 @@ import org.robolectric.util.ReflectionHelpers;
 @RunWith(AndroidJUnit4.class)
 public class RobolectricTest {
 
-  private PrintStream originalSystemOut;
-  private ByteArrayOutputStream buff;
-  private String defaultLineSeparator;
-  private Application context;
+    private PrintStream originalSystemOut;
 
-  @Before
-  public void setUp() {
-    originalSystemOut = System.out;
-    defaultLineSeparator = System.getProperty("line.separator");
+    private ByteArrayOutputStream buff;
 
-    System.setProperty("line.separator", "\n");
-    buff = new ByteArrayOutputStream();
-    PrintStream testOut = new PrintStream(buff);
-    System.setOut(testOut);
-    context = ApplicationProvider.getApplicationContext();
-  }
+    private String defaultLineSeparator;
 
-  @After
-  public void tearDown() throws Exception {
-    System.setProperty("line.separator", defaultLineSeparator);
-    System.setOut(originalSystemOut);
-  }
+    private Application context;
 
-  @Test(expected = RuntimeException.class)
-  public void clickOn_shouldThrowIfViewIsDisabled() throws Exception {
-    View view = new View(context);
-    view.setEnabled(false);
-    ShadowView.clickOn(view);
-  }
-
-  @Test
-  public void shouldResetBackgroundSchedulerBeforeTests() throws Exception {
-    assume().that(ShadowLooper.looperMode()).isEqualTo(LooperMode.Mode.LEGACY);
-    assertThat(Robolectric.getBackgroundThreadScheduler().isPaused()).isFalse();
-    Robolectric.getBackgroundThreadScheduler().pause();
-  }
-
-  @Test
-  public void shouldResetBackgroundSchedulerAfterTests() throws Exception {
-    assume().that(ShadowLooper.looperMode()).isEqualTo(LooperMode.Mode.LEGACY);
-    assertThat(Robolectric.getBackgroundThreadScheduler().isPaused()).isFalse();
-    Robolectric.getBackgroundThreadScheduler().pause();
-  }
-
-  @Test
-  public void idleMainLooper_executesScheduledTasks() {
-    final boolean[] wasRun = new boolean[]{false};
-    new Handler().postDelayed(new Runnable() {
-      @Override
-      public void run() {
-        wasRun[0] = true;
-      }
-    }, 2000);
-
-    assertFalse(wasRun[0]);
-    ShadowLooper.idleMainLooper(1999);
-    assertFalse(wasRun[0]);
-    ShadowLooper.idleMainLooper(1);
-    assertTrue(wasRun[0]);
-  }
-
-  @Test
-  public void clickOn_shouldCallClickListener() throws Exception {
-    View view = new View(context);
-    shadowOf(view).setMyParent(ReflectionHelpers.createNullProxy(ViewParent.class));
-    OnClickListener testOnClickListener = mock(OnClickListener.class);
-    view.setOnClickListener(testOnClickListener);
-    ShadowView.clickOn(view);
-
-    verify(testOnClickListener).onClick(view);
-  }
-
-  @Test(expected = ActivityNotFoundException.class)
-  public void checkActivities_shouldSetValueOnShadowApplication() throws Exception {
-    ShadowApplication.getInstance().checkActivities(true);
-    context.startActivity(
-        new Intent("i.dont.exist.activity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-  }
-
-  @Test @Config(sdk = 16)
-  public void setupActivity_returnsAVisibleActivity() throws Exception {
-    LifeCycleActivity activity = Robolectric.setupActivity(LifeCycleActivity.class);
-
-    assertThat(activity.isCreated()).isTrue();
-    assertThat(activity.isStarted()).isTrue();
-    assertThat(activity.isResumed()).isTrue();
-    assertThat(activity.isVisible()).isTrue();
-  }
-
-  @Implements(View.class)
-  public static class TestShadowView {
-    @Implementation
-    protected Context getContext() {
-      return null;
-    }
-  }
-
-  private static class LifeCycleActivity extends Activity {
-    private boolean created;
-    private boolean started;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-      super.onCreate(savedInstanceState);
-      created = true;
+    @Before
+    public void setUp() {
+        originalSystemOut = System.out;
+        defaultLineSeparator = System.getProperty("line.separator");
+        System.setProperty("line.separator", "\n");
+        buff = new ByteArrayOutputStream();
+        PrintStream testOut = new PrintStream(buff);
+        System.setOut(testOut);
+        context = ApplicationProvider.getApplicationContext();
     }
 
-    @Override
-    protected void onStart() {
-      super.onStart();
-      started = true;
+    @After
+    public void tearDown() throws Exception {
+        System.setProperty("line.separator", defaultLineSeparator);
+        System.setOut(originalSystemOut);
     }
 
-    public boolean isStarted() {
-      return started;
+    @Test(expected = RuntimeException.class)
+    public void clickOn_shouldThrowIfViewIsDisabled() throws Exception {
+        View view = new View(context);
+        view.setEnabled(false);
+        ShadowView.clickOn(view);
     }
 
-    public boolean isCreated() {
-      return created;
+    @Test
+    public void shouldResetBackgroundSchedulerBeforeTests() throws Exception {
+        assume().that(ShadowLooper.looperMode()).isEqualTo(LooperMode.Mode.LEGACY);
+        assertThat(Robolectric.getBackgroundThreadScheduler().isPaused()).isFalse();
+        Robolectric.getBackgroundThreadScheduler().pause();
     }
 
-    public boolean isVisible() {
-      return getWindow().getDecorView().getWindowToken() != null;
+    @Test
+    public void shouldResetBackgroundSchedulerAfterTests() throws Exception {
+        assume().that(ShadowLooper.looperMode()).isEqualTo(LooperMode.Mode.LEGACY);
+        assertThat(Robolectric.getBackgroundThreadScheduler().isPaused()).isFalse();
+        Robolectric.getBackgroundThreadScheduler().pause();
     }
-  }
 
+    @Test
+    public void idleMainLooper_executesScheduledTasks() {
+        final boolean[] wasRun = new boolean[] { false };
+        new Handler().postDelayed(new Runnable() {
+
+            @Override
+            public void run() {
+                wasRun[0] = true;
+            }
+        }, 2000);
+        assertFalse(wasRun[0]);
+        ShadowLooper.idleMainLooper(1999);
+        assertFalse(wasRun[0]);
+        ShadowLooper.idleMainLooper(1);
+        assertTrue(wasRun[0]);
+    }
+
+    @Test
+    public void clickOn_shouldCallClickListener() throws Exception {
+        View view = new View(context);
+        shadowOf(view).setMyParent(ReflectionHelpers.createNullProxy(ViewParent.class));
+        OnClickListener testOnClickListener = mock(OnClickListener.class);
+        view.setOnClickListener(testOnClickListener);
+        ShadowView.clickOn(view);
+        verify(testOnClickListener).onClick(view);
+    }
+
+    @Test(expected = ActivityNotFoundException.class)
+    public void checkActivities_shouldSetValueOnShadowApplication() throws Exception {
+        ShadowApplication.getInstance().checkActivities(true);
+        context.startActivity(new Intent("i.dont.exist.activity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+    }
+
+    @Test
+    @Config(sdk = 16)
+    public void setupActivity_returnsAVisibleActivity() throws Exception {
+        LifeCycleActivity activity = Robolectric.setupActivity(LifeCycleActivity.class);
+        assertThat(activity.isCreated()).isTrue();
+        assertThat(activity.isStarted()).isTrue();
+        assertThat(activity.isResumed()).isTrue();
+        assertThat(activity.isVisible()).isTrue();
+    }
+
+    @Implements(View.class)
+    public static class TestShadowView {
+
+        @Implementation
+        protected Context getContext() {
+            System.out.println("TestShadowView#getContext");
+            return null;
+        }
+    }
+
+    private static class LifeCycleActivity extends Activity {
+
+        private boolean created;
+
+        private boolean started;
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            created = true;
+        }
+
+        @Override
+        protected void onStart() {
+            super.onStart();
+            started = true;
+        }
+
+        public boolean isStarted() {
+            return started;
+        }
+
+        public boolean isCreated() {
+            return created;
+        }
+
+        public boolean isVisible() {
+            return getWindow().getDecorView().getWindowToken() != null;
+        }
+    }
 }
+

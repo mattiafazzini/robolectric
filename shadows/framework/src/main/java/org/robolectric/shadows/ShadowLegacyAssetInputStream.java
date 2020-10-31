@@ -13,76 +13,87 @@ import org.robolectric.shadows.ShadowAssetInputStream.Picker;
 @Implements(value = AssetInputStream.class, shadowPicker = Picker.class)
 public class ShadowLegacyAssetInputStream extends ShadowAssetInputStream {
 
-  @RealObject
-  private AssetInputStream realObject;
+    @RealObject
+    private AssetInputStream realObject;
 
-  private InputStream delegate;
-  private boolean ninePatch;
+    private InputStream delegate;
 
-  @Override
-  InputStream getDelegate() {
-    return delegate;
-  }
+    private boolean ninePatch;
 
-  void setDelegate(InputStream delegate) {
-    this.delegate = delegate;
-  }
+    @Override
+    InputStream getDelegate() {
+        return delegate;
+    }
 
-  @Override
-  boolean isNinePatch() {
-    return ninePatch;
-  }
+    void setDelegate(InputStream delegate) {
+        this.delegate = delegate;
+    }
 
-  void setNinePatch(boolean ninePatch) {
-    this.ninePatch = ninePatch;
-  }
+    @Override
+    boolean isNinePatch() {
+        return ninePatch;
+    }
 
-  @Implementation
-  protected int read() throws IOException {
-    return stream().read();
-  }
+    void setNinePatch(boolean ninePatch) {
+        this.ninePatch = ninePatch;
+    }
 
-  @Implementation
-  protected int read(byte[] b) throws IOException {
-    return stream().read(b);
-  }
+    @Implementation
+    protected int read() throws IOException {
+        System.out.println("ShadowLegacyAssetInputStream#read");
+        return stream().read();
+    }
 
-  @Implementation
-  protected int read(byte[] b, int off, int len) throws IOException {
-    return stream().read(b, off, len);
-  }
+    @Implementation
+    protected int read(byte[] b) throws IOException {
+        System.out.println("ShadowLegacyAssetInputStream#read");
+        return stream().read(b);
+    }
 
-  @Implementation
-  protected long skip(long n) throws IOException {
-    return stream().skip(n);
-  }
+    @Implementation
+    protected int read(byte[] b, int off, int len) throws IOException {
+        System.out.println("ShadowLegacyAssetInputStream#read");
+        return stream().read(b, off, len);
+    }
 
-  @Implementation
-  protected int available() throws IOException {
-    return stream().available();
-  }
+    @Implementation
+    protected long skip(long n) throws IOException {
+        System.out.println("ShadowLegacyAssetInputStream#skip");
+        return stream().skip(n);
+    }
 
-  @Implementation
-  protected void close() throws IOException {
-    stream().close();
-  }
+    @Implementation
+    protected int available() throws IOException {
+        System.out.println("ShadowLegacyAssetInputStream#available");
+        return stream().available();
+    }
 
-  @Implementation
-  protected void mark(int readlimit) {
-    stream().mark(readlimit);
-  }
+    @Implementation
+    protected void close() throws IOException {
+        System.out.println("ShadowLegacyAssetInputStream#close");
+        stream().close();
+    }
 
-  @Implementation
-  protected void reset() throws IOException {
-    stream().reset();
-  }
+    @Implementation
+    protected void mark(int readlimit) {
+        System.out.println("ShadowLegacyAssetInputStream#mark");
+        stream().mark(readlimit);
+    }
 
-  @Implementation
-  protected boolean markSupported() {
-    return stream().markSupported();
-  }
+    @Implementation
+    protected void reset() throws IOException {
+        System.out.println("ShadowLegacyAssetInputStream#reset");
+        stream().reset();
+    }
 
-  private InputStream stream() {
-    return delegate == null ? Shadow.directlyOn(realObject, AssetInputStream.class) : delegate;
-  }
+    @Implementation
+    protected boolean markSupported() {
+        System.out.println("ShadowLegacyAssetInputStream#markSupported");
+        return stream().markSupported();
+    }
+
+    private InputStream stream() {
+        return delegate == null ? Shadow.directlyOn(realObject, AssetInputStream.class) : delegate;
+    }
 }
+

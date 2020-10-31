@@ -1,7 +1,6 @@
 package org.robolectric.shadows;
 
 import static org.robolectric.shadow.api.Shadow.directlyOn;
-
 import android.widget.PopupMenu;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Implementation;
@@ -12,47 +11,53 @@ import org.robolectric.shadow.api.Shadow;
 @Implements(PopupMenu.class)
 public class ShadowPopupMenu {
 
-  @RealObject
-  private PopupMenu realPopupMenu;
+    @RealObject
+    private PopupMenu realPopupMenu;
 
-  private boolean isShowing;
-  private PopupMenu.OnMenuItemClickListener onMenuItemClickListener;
+    private boolean isShowing;
 
-  @Implementation
-  protected void show() {
-    this.isShowing = true;
-    setLatestPopupMenu(this);
-    directlyOn(realPopupMenu, PopupMenu.class).show();
-  }
+    private PopupMenu.OnMenuItemClickListener onMenuItemClickListener;
 
-  @Implementation
-  protected void dismiss() {
-    this.isShowing = false;
-    directlyOn(realPopupMenu, PopupMenu.class).dismiss();
-  }
+    @Implementation
+    protected void show() {
+        System.out.println("ShadowPopupMenu#show");
+        this.isShowing = true;
+        setLatestPopupMenu(this);
+        directlyOn(realPopupMenu, PopupMenu.class).show();
+    }
 
-  @Implementation
-  protected void setOnMenuItemClickListener(PopupMenu.OnMenuItemClickListener listener) {
-    this.onMenuItemClickListener = listener;
-    directlyOn(realPopupMenu, PopupMenu.class).setOnMenuItemClickListener(listener);
-  }
+    @Implementation
+    protected void dismiss() {
+        System.out.println("ShadowPopupMenu#dismiss");
+        this.isShowing = false;
+        directlyOn(realPopupMenu, PopupMenu.class).dismiss();
+    }
 
-  public boolean isShowing() {
-    return isShowing;
-  }
+    @Implementation
+    protected void setOnMenuItemClickListener(PopupMenu.OnMenuItemClickListener listener) {
+        System.out.println("ShadowPopupMenu#setOnMenuItemClickListener");
+        this.onMenuItemClickListener = listener;
+        directlyOn(realPopupMenu, PopupMenu.class).setOnMenuItemClickListener(listener);
+    }
 
-  public static PopupMenu getLatestPopupMenu() {
-    ShadowApplication shadowApplication = Shadow.extract(RuntimeEnvironment.application);
-    ShadowPopupMenu popupMenu = shadowApplication.getLatestPopupMenu();
-    return popupMenu == null ? null : popupMenu.realPopupMenu;
-  }
+    public boolean isShowing() {
+        return isShowing;
+    }
 
-  public static void setLatestPopupMenu(ShadowPopupMenu latestPopupMenu) {
-    ShadowApplication shadowApplication = Shadow.extract(RuntimeEnvironment.application);
-    if (shadowApplication != null) shadowApplication.setLatestPopupMenu(latestPopupMenu);
-  }
+    public static PopupMenu getLatestPopupMenu() {
+        ShadowApplication shadowApplication = Shadow.extract(RuntimeEnvironment.application);
+        ShadowPopupMenu popupMenu = shadowApplication.getLatestPopupMenu();
+        return popupMenu == null ? null : popupMenu.realPopupMenu;
+    }
 
-  public PopupMenu.OnMenuItemClickListener getOnMenuItemClickListener() {
-    return onMenuItemClickListener;
-  }
+    public static void setLatestPopupMenu(ShadowPopupMenu latestPopupMenu) {
+        ShadowApplication shadowApplication = Shadow.extract(RuntimeEnvironment.application);
+        if (shadowApplication != null)
+            shadowApplication.setLatestPopupMenu(latestPopupMenu);
+    }
+
+    public PopupMenu.OnMenuItemClickListener getOnMenuItemClickListener() {
+        return onMenuItemClickListener;
+    }
 }
+

@@ -3,7 +3,6 @@ package org.robolectric.shadows;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.N_MR1;
 import static android.os.Build.VERSION_CODES.P;
-
 import android.hardware.fingerprint.Fingerprint;
 import android.hardware.fingerprint.FingerprintManager;
 import android.hardware.fingerprint.FingerprintManager.AuthenticationCallback;
@@ -24,154 +23,145 @@ import org.robolectric.annotation.Implements;
 import org.robolectric.util.ReflectionHelpers;
 import org.robolectric.util.ReflectionHelpers.ClassParameter;
 
-/** Provides testing APIs for {@link FingerprintManager} */
+/**
+ * Provides testing APIs for {@link FingerprintManager}
+ */
 @SuppressWarnings("NewApi")
 @Implements(FingerprintManager.class)
 public class ShadowFingerprintManager {
 
-  private static final String TAG = "ShadowFingerprintManager";
+    private static final String TAG = "ShadowFingerprintManager";
 
-  private boolean isHardwareDetected;
-  private CryptoObject pendingCryptoObject;
-  private AuthenticationCallback pendingCallback;
-  private List<Fingerprint> fingerprints = Collections.emptyList();
+    private boolean isHardwareDetected;
 
-  /**
-   * Simulates a successful fingerprint authentication. An authentication request must have been
-   * issued with {@link FingerprintManager#authenticate(CryptoObject, CancellationSignal, int, AuthenticationCallback, Handler)} and not cancelled.
-   */
-  public void authenticationSucceeds() {
-    if (pendingCallback == null) {
-      throw new IllegalStateException("No active fingerprint authentication request.");
+    private CryptoObject pendingCryptoObject;
+
+    private AuthenticationCallback pendingCallback;
+
+    private List<Fingerprint> fingerprints = Collections.emptyList();
+
+    /**
+     * Simulates a successful fingerprint authentication. An authentication request must have been
+     * issued with {@link FingerprintManager#authenticate(CryptoObject, CancellationSignal, int, AuthenticationCallback, Handler)} and not cancelled.
+     */
+    public void authenticationSucceeds() {
+        if (pendingCallback == null) {
+            throw new IllegalStateException("No active fingerprint authentication request.");
+        }
+        AuthenticationResult result;
+        if (RuntimeEnvironment.getApiLevel() >= N_MR1) {
+            result = new AuthenticationResult(pendingCryptoObject, null, 0);
+        } else {
+            result = ReflectionHelpers.callConstructor(AuthenticationResult.class, ClassParameter.from(CryptoObject.class, pendingCryptoObject), ClassParameter.from(Fingerprint.class, null));
+        }
+        pendingCallback.onAuthenticationSucceeded(result);
     }
 
-    AuthenticationResult result;
-    if (RuntimeEnvironment.getApiLevel() >= N_MR1) {
-      result = new AuthenticationResult(pendingCryptoObject, null, 0);
-    } else {
-      result = ReflectionHelpers.callConstructor(AuthenticationResult.class,
-          ClassParameter.from(CryptoObject.class, pendingCryptoObject),
-          ClassParameter.from(Fingerprint.class, null));
+    /**
+     * Simulates a failed fingerprint authentication. An authentication request must have been
+     * issued with {@link FingerprintManager#authenticate(CryptoObject, CancellationSignal, int, AuthenticationCallback, Handler)} and not cancelled.
+     */
+    public void authenticationFails() {
+        if (pendingCallback == null) {
+            throw new IllegalStateException("No active fingerprint authentication request.");
+        }
+        pendingCallback.onAuthenticationFailed();
     }
 
-    pendingCallback.onAuthenticationSucceeded(result);
-  }
-
-  /**
-   * Simulates a failed fingerprint authentication. An authentication request must have been
-   * issued with {@link FingerprintManager#authenticate(CryptoObject, CancellationSignal, int, AuthenticationCallback, Handler)} and not cancelled.
-   */
-  public void authenticationFails() {
-    if (pendingCallback == null) {
-      throw new IllegalStateException("No active fingerprint authentication request.");
+    /**
+     * Success or failure can be simulated with a subsequent call to {@link #authenticationSucceeds()}
+     * or {@link #authenticationFails()}.
+     */
+    @Implementation(minSdk = M)
+    protected void authenticate(CryptoObject crypto, CancellationSignal cancel, int flags, AuthenticationCallback callback, Handler handler) {
+        System.out.println("ShadowFingerprintManager#authenticate");
+        if (callback == null) {
+            throw new IllegalArgumentException("Must supply an authentication callback");
+        }
+        if (cancel != null) {
+            if (cancel.isCanceled()) {
+                Log.w(TAG, "authentication already canceled");
+                return;
+            } else {
+                cancel.setOnCancelListener(() -> {
+                    this.pendingCallback = null;
+                    this.pendingCryptoObject = null;
+                });
+            }
+        }
+        this.pendingCryptoObject = crypto;
+        this.pendingCallback = callback;
     }
 
-    pendingCallback.onAuthenticationFailed();
-  }
-
-  /**
-   * Success or failure can be simulated with a subsequent call to {@link #authenticationSucceeds()}
-   * or {@link #authenticationFails()}.
-   */
-  @Implementation(minSdk = M)
-  protected void authenticate(
-      CryptoObject crypto,
-      CancellationSignal cancel,
-      int flags,
-      AuthenticationCallback callback,
-      Handler handler) {
-    if (callback == null) {
-      throw new IllegalArgumentException("Must supply an authentication callback");
+    /**
+     * Sets the return value of {@link FingerprintManager#hasEnrolledFingerprints()}.
+     *
+     * @deprecated use {@link #setDefaultFingerprints} instead.
+     */
+    @Deprecated
+    public void setHasEnrolledFingerprints(boolean hasEnrolledFingerprints) {
+        setDefaultFingerprints(hasEnrolledFingerprints ? 1 : 0);
     }
 
-    if (cancel != null) {
-      if (cancel.isCanceled()) {
-        Log.w(TAG, "authentication already canceled");
-        return;
-      } else {
-        cancel.setOnCancelListener(() -> {
-          this.pendingCallback = null;
-          this.pendingCryptoObject = null;
-        });
-      }
+    /**
+     * Returns {@code false} by default, or the value specified via
+     * {@link #setHasEnrolledFingerprints(boolean)}.
+     */
+    @Implementation(minSdk = M)
+    protected boolean hasEnrolledFingerprints() {
+        System.out.println("ShadowFingerprintManager#hasEnrolledFingerprints");
+        return !fingerprints.isEmpty();
     }
 
-    this.pendingCryptoObject = crypto;
-    this.pendingCallback = callback;
-  }
+    /**
+     * @return lists of current fingerprint items, the list be set via {@link #setDefaultFingerprints}
+     */
+    @HiddenApi
+    @Implementation(minSdk = M)
+    protected List<Fingerprint> getEnrolledFingerprints() {
+        System.out.println("ShadowFingerprintManager#getEnrolledFingerprints");
+        return new ArrayList<>(fingerprints);
+    }
 
-  /**
-   * Sets the return value of {@link FingerprintManager#hasEnrolledFingerprints()}.
-   *
-   * @deprecated use {@link #setDefaultFingerprints} instead.
-   */
-  @Deprecated
-  public void setHasEnrolledFingerprints(boolean hasEnrolledFingerprints) {
-    setDefaultFingerprints(hasEnrolledFingerprints ? 1 : 0);
-  }
+    /**
+     * @return Returns the finger ID for the given index.
+     */
+    public int getFingerprintId(int index) {
+        return ReflectionHelpers.callInstanceMethod(getEnrolledFingerprints().get(index), RuntimeEnvironment.getApiLevel() > P ? "getBiometricId" : "getFingerId");
+    }
 
-  /**
-   * Returns {@code false} by default, or the value specified via
-   * {@link #setHasEnrolledFingerprints(boolean)}.
-   */
-  @Implementation(minSdk = M)
-  protected boolean hasEnrolledFingerprints() {
-    return !fingerprints.isEmpty();
-  }
+    /**
+     * Enrolls the given number of fingerprints, which will be returned in {@link
+     * #getEnrolledFingerprints}.
+     *
+     * @param num the quantity of fingerprint item.
+     */
+    public void setDefaultFingerprints(int num) {
+        setEnrolledFingerprints(IntStream.range(0, num).mapToObj(i -> new Fingerprint(/* name= */
+        "Fingerprint " + i, /* groupId= */
+        0, /* fingerId= */
+        i, /* deviceId= */
+        0)).toArray(Fingerprint[]::new));
+    }
 
-  /**
-   * @return lists of current fingerprint items, the list be set via {@link #setDefaultFingerprints}
-   */
-  @HiddenApi
-  @Implementation(minSdk = M)
-  protected List<Fingerprint> getEnrolledFingerprints() {
-    return new ArrayList<>(fingerprints);
-  }
+    private void setEnrolledFingerprints(Fingerprint... fingerprints) {
+        this.fingerprints = Arrays.asList(fingerprints);
+    }
 
-  /**
-   * @return Returns the finger ID for the given index.
-   */
-  public int getFingerprintId(int index) {
-    return ReflectionHelpers.callInstanceMethod(
-        getEnrolledFingerprints().get(index),
-        RuntimeEnvironment.getApiLevel() > P ? "getBiometricId" : "getFingerId");
-  }
+    /**
+     * Sets the return value of {@link FingerprintManager#isHardwareDetected()}.
+     */
+    public void setIsHardwareDetected(boolean isHardwareDetected) {
+        this.isHardwareDetected = isHardwareDetected;
+    }
 
-  /**
-   * Enrolls the given number of fingerprints, which will be returned in {@link
-   * #getEnrolledFingerprints}.
-   *
-   * @param num the quantity of fingerprint item.
-   */
-  public void setDefaultFingerprints(int num) {
-    setEnrolledFingerprints(
-        IntStream.range(0, num)
-            .mapToObj(
-                i ->
-                    new Fingerprint(
-                        /* name= */ "Fingerprint " + i,
-                        /* groupId= */ 0,
-                        /* fingerId= */ i,
-                        /* deviceId= */ 0))
-            .toArray(Fingerprint[]::new));
-  }
-
-  private void setEnrolledFingerprints(Fingerprint... fingerprints) {
-    this.fingerprints = Arrays.asList(fingerprints);
-  }
-
-  /**
-   * Sets the return value of {@link FingerprintManager#isHardwareDetected()}.
-   */
-  public void setIsHardwareDetected(boolean isHardwareDetected) {
-    this.isHardwareDetected = isHardwareDetected;
-  }
-
-  /**
-   * @return `false` by default, or the value specified via {@link #setIsHardwareDetected(boolean)}
-   */
-  @Implementation(minSdk = M)
-  protected boolean isHardwareDetected() {
-    return this.isHardwareDetected;
-  }
+    /**
+     * @return `false` by default, or the value specified via {@link #setIsHardwareDetected(boolean)}
+     */
+    @Implementation(minSdk = M)
+    protected boolean isHardwareDetected() {
+        System.out.println("ShadowFingerprintManager#isHardwareDetected");
+        return this.isHardwareDetected;
+    }
 }
+

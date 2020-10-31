@@ -1,7 +1,6 @@
 package org.robolectric.shadows;
 
 import static android.os.Build.VERSION_CODES.P;
-
 import android.text.MeasuredParagraph;
 import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
@@ -9,10 +8,12 @@ import org.robolectric.annotation.Implements;
 @Implements(value = MeasuredParagraph.class, minSdk = P, isInAndroidSdk = false)
 public class ShadowMeasuredParagraph {
 
-  private static int nativeCounter = 0;
+    private static int nativeCounter = 0;
 
-  @Implementation(maxSdk = P)
-  protected static long nInitBuilder() {
-    return ++nativeCounter;
-  }
+    @Implementation(maxSdk = P)
+    protected static long nInitBuilder() {
+        System.out.println("ShadowMeasuredParagraph#nInitBuilder");
+        return ++nativeCounter;
+    }
 }
+

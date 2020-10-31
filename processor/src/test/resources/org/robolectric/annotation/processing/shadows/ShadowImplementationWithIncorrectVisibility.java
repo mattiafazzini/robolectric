@@ -6,31 +6,37 @@ import org.robolectric.annotation.Implements;
 
 @Implements(Dummy.class)
 public class ShadowImplementationWithIncorrectVisibility {
-  @Implementation
-  public void __constructor__(int i0) {
-  }
 
-  @Implementation
-  protected void __constructor__(int i0, int i1) {
-  }
+    @Implementation
+    public void __constructor__(int i0) {
+    }
 
-  @Implementation
-  void __constructor__(int i0, int i1, int i2) {
-  }
+    @Implementation
+    protected void __constructor__(int i0, int i1) {
+    }
 
-  @Implementation
-  private void __constructor__(int i0, int i1, int i2, int i3) {
-  }
+    @Implementation
+    void __constructor__(int i0, int i1, int i2) {
+    }
 
-  @Implementation
-  public static void publicMethod() {}
+    @Implementation
+    private void __constructor__(int i0, int i1, int i2, int i3) {
+    }
 
-  @Implementation
-  protected static void protectedMethod() {}
+    @Implementation
+    public static void publicMethod() {
+    }
 
-  @Implementation
-  static void packageMethod() {}
+    @Implementation
+    protected static void protectedMethod() {
+    }
 
-  @Implementation
-  private static void privateMethod() {}
+    @Implementation
+    static void packageMethod() {
+    }
+
+    @Implementation
+    private static void privateMethod() {
+    }
 }
+

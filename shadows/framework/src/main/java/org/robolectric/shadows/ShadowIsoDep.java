@@ -24,69 +24,82 @@ import org.robolectric.shadow.api.Shadow;
 @Implements(IsoDep.class)
 public class ShadowIsoDep extends ShadowBasicTagTechnology {
 
-  @SuppressLint("PrivateApi")
-  @SuppressWarnings("unchecked")
-  public static IsoDep newInstance() {
-    return Shadow.newInstance(IsoDep.class, new Class<?>[] {Tag.class}, new Object[] {null});
-  }
-
-  private byte[] transceiveResponse = null;
-  private byte[] nextTransceiveResponse = null;
-  private boolean isExtendedLengthApduSupported = true;
-  private int timeout = 300; // Default timeout in AOSP
-  private int maxTransceiveLength = 0xFEFF; // Default length in AOSP
-
-  @Implementation
-  protected void __constructor__(Tag tag) {}
-
-  @Implementation
-  protected byte[] transceive(byte[] data) throws IOException {
-    if (nextTransceiveResponse != null) {
-      try {
-        return nextTransceiveResponse;
-      } finally {
-        nextTransceiveResponse = null;
-      }
+    @SuppressLint("PrivateApi")
+    @SuppressWarnings("unchecked")
+    public static IsoDep newInstance() {
+        return Shadow.newInstance(IsoDep.class, new Class<?>[] { Tag.class }, new Object[] { null });
     }
-    if (transceiveResponse != null) {
-      return transceiveResponse;
+
+    private byte[] transceiveResponse = null;
+
+    private byte[] nextTransceiveResponse = null;
+
+    private boolean isExtendedLengthApduSupported = true;
+
+    // Default timeout in AOSP
+    private int timeout = 300;
+
+    // Default length in AOSP
+    private int maxTransceiveLength = 0xFEFF;
+
+    @Implementation
+    protected void __constructor__(Tag tag) {
     }
-    throw new IOException();
-  }
 
-  public void setTransceiveResponse(byte[] response) {
-    transceiveResponse = response;
-  }
+    @Implementation
+    protected byte[] transceive(byte[] data) throws IOException {
+        System.out.println("ShadowIsoDep#transceive");
+        if (nextTransceiveResponse != null) {
+            try {
+                return nextTransceiveResponse;
+            } finally {
+                nextTransceiveResponse = null;
+            }
+        }
+        if (transceiveResponse != null) {
+            return transceiveResponse;
+        }
+        throw new IOException();
+    }
 
-  public void setNextTransceiveResponse(byte[] response) {
-    nextTransceiveResponse = response;
-  }
+    public void setTransceiveResponse(byte[] response) {
+        transceiveResponse = response;
+    }
 
-  @Implementation
-  protected void setTimeout(int timeoutMillis) {
-    timeout = timeoutMillis;
-  }
+    public void setNextTransceiveResponse(byte[] response) {
+        nextTransceiveResponse = response;
+    }
 
-  @Implementation
-  protected int getTimeout() {
-    return timeout;
-  }
+    @Implementation
+    protected void setTimeout(int timeoutMillis) {
+        System.out.println("ShadowIsoDep#setTimeout");
+        timeout = timeoutMillis;
+    }
 
-  @Implementation
-  protected int getMaxTransceiveLength() {
-    return maxTransceiveLength;
-  }
+    @Implementation
+    protected int getTimeout() {
+        System.out.println("ShadowIsoDep#getTimeout");
+        return timeout;
+    }
 
-  public void setMaxTransceiveLength(int length) {
-    maxTransceiveLength = length;
-  }
+    @Implementation
+    protected int getMaxTransceiveLength() {
+        System.out.println("ShadowIsoDep#getMaxTransceiveLength");
+        return maxTransceiveLength;
+    }
 
-  @Implementation
-  protected boolean isExtendedLengthApduSupported() {
-    return isExtendedLengthApduSupported;
-  }
+    public void setMaxTransceiveLength(int length) {
+        maxTransceiveLength = length;
+    }
 
-  public void setExtendedLengthApduSupported(boolean supported) {
-    isExtendedLengthApduSupported = supported;
-  }
+    @Implementation
+    protected boolean isExtendedLengthApduSupported() {
+        System.out.println("ShadowIsoDep#isExtendedLengthApduSupported");
+        return isExtendedLengthApduSupported;
+    }
+
+    public void setExtendedLengthApduSupported(boolean supported) {
+        isExtendedLengthApduSupported = supported;
+    }
 }
+

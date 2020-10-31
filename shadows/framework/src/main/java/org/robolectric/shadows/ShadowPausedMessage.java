@@ -3,7 +3,6 @@ package org.robolectric.shadows;
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
 import static org.robolectric.shadow.api.Shadow.directlyOn;
 import static org.robolectric.util.reflector.Reflector.reflector;
-
 import android.os.Build;
 import android.os.Message;
 import org.robolectric.annotation.Implementation;
@@ -21,53 +20,57 @@ import org.robolectric.util.reflector.ForType;
 @Implements(value = Message.class, isInAndroidSdk = false)
 public class ShadowPausedMessage extends ShadowMessage {
 
-  private @RealObject Message realObject;
+    @RealObject
+    private Message realObject;
 
-  long getWhen() {
-    return reflector(ReflectorMessage.class, realObject).getWhen();
-  }
-
-  Message internalGetNext() {
-    return reflector(ReflectorMessage.class, realObject).getNext();
-  }
-
-  // TODO: reconsider this being exposed as a public method
-  @Override
-  @Implementation(minSdk = LOLLIPOP)
-  public void recycleUnchecked() {
-    if (Build.VERSION.SDK_INT >= LOLLIPOP) {
-      directlyOn(realObject, Message.class, "recycleUnchecked");
-    } else {
-      directlyOn(realObject, Message.class).recycle();
+    long getWhen() {
+        return reflector(ReflectorMessage.class, realObject).getWhen();
     }
-  }
 
-  @Override
-  public void setScheduledRunnable(Runnable r) {
-    throw new UnsupportedOperationException("Not supported in PAUSED LooperMode");
-  }
+    Message internalGetNext() {
+        return reflector(ReflectorMessage.class, realObject).getNext();
+    }
 
-  // we could support these methods, but intentionally do not for now as its unclear what the
-  // use case is.
+    // TODO: reconsider this being exposed as a public method
+    @Override
+    @Implementation(minSdk = LOLLIPOP)
+    public void recycleUnchecked() {
+        System.out.println("ShadowPausedMessage#recycleUnchecked");
+        if (Build.VERSION.SDK_INT >= LOLLIPOP) {
+            directlyOn(realObject, Message.class, "recycleUnchecked");
+        } else {
+            directlyOn(realObject, Message.class).recycle();
+        }
+    }
 
-  @Override
-  public Message getNext() {
-    throw new UnsupportedOperationException("Not supported in PAUSED LooperMode");
-  }
+    @Override
+    public void setScheduledRunnable(Runnable r) {
+        throw new UnsupportedOperationException("Not supported in PAUSED LooperMode");
+    }
 
-  @Override
-  public void setNext(Message next) {
-    throw new UnsupportedOperationException("Not supported in PAUSED LooperMode");
-  }
+    // we could support these methods, but intentionally do not for now as its unclear what the
+    // use case is.
+    @Override
+    public Message getNext() {
+        throw new UnsupportedOperationException("Not supported in PAUSED LooperMode");
+    }
 
-  /** Accessor interface for {@link Message}'s internals. */
-  @ForType(Message.class)
-  private interface ReflectorMessage {
+    @Override
+    public void setNext(Message next) {
+        throw new UnsupportedOperationException("Not supported in PAUSED LooperMode");
+    }
 
-    @Accessor("when")
-    long getWhen();
+    /**
+     * Accessor interface for {@link Message}'s internals.
+     */
+    @ForType(Message.class)
+    private interface ReflectorMessage {
 
-    @Accessor("next")
-    Message getNext();
-  }
+        @Accessor("when")
+        long getWhen();
+
+        @Accessor("next")
+        Message getNext();
+    }
 }
+

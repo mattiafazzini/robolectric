@@ -1,7 +1,6 @@
 package org.robolectric.shadows;
 
 import static android.os.Build.VERSION_CODES.O;
-
 import android.graphics.ColorSpace;
 import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
@@ -11,14 +10,15 @@ import org.robolectric.annotation.Implements;
  */
 public class ShadowColorSpace {
 
-  @SuppressWarnings({"UnusedDeclaration"})
-  @Implements(value = ColorSpace.Rgb.class, minSdk = O)
-  public static class ShadowRgb {
+    @SuppressWarnings({ "UnusedDeclaration" })
+    @Implements(value = ColorSpace.Rgb.class, minSdk = O)
+    public static class ShadowRgb {
 
-    @Implementation(minSdk = android.os.Build.VERSION_CODES.Q)
-    protected long getNativeInstance() {
-      return 1;
+        @Implementation(minSdk = android.os.Build.VERSION_CODES.Q)
+        protected long getNativeInstance() {
+            System.out.println("ShadowRgb#getNativeInstance");
+            return 1;
+        }
     }
-  }
 }
 

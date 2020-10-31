@@ -16,55 +16,59 @@ import org.robolectric.annotation.Implements;
 @Implements(value = CameraManager.class, minSdk = VERSION_CODES.LOLLIPOP)
 public class ShadowCameraManager {
 
-  // LinkedHashMap used to ensure getCameraIdList returns ids in the order in which they were added
-  private final Map<String, CameraCharacteristics> cameraIdToCharacteristics =
-      new LinkedHashMap<>();
-  private final Map<String, Boolean> cameraTorches = new HashMap<>();
+    // LinkedHashMap used to ensure getCameraIdList returns ids in the order in which they were added
+    private final Map<String, CameraCharacteristics> cameraIdToCharacteristics = new LinkedHashMap<>();
 
-  @Implementation
-  @NonNull
-  protected String[] getCameraIdList() throws CameraAccessException {
-    Set<String> cameraIds = cameraIdToCharacteristics.keySet();
-    return cameraIds.toArray(new String[0]);
-  }
+    private final Map<String, Boolean> cameraTorches = new HashMap<>();
 
-  @Implementation
-  @NonNull
-  protected CameraCharacteristics getCameraCharacteristics(@NonNull String cameraId) {
-    Preconditions.checkNotNull(cameraId);
-    CameraCharacteristics characteristics = cameraIdToCharacteristics.get(cameraId);
-    Preconditions.checkArgument(characteristics != null);
-    return characteristics;
-  }
+    @Implementation
+    @NonNull
+    protected String[] getCameraIdList() throws CameraAccessException {
+        System.out.println("ShadowCameraManager#getCameraIdList");
+        Set<String> cameraIds = cameraIdToCharacteristics.keySet();
+        return cameraIds.toArray(new String[0]);
+    }
 
-  @Implementation(minSdk = VERSION_CODES.M)
-  protected void setTorchMode(@NonNull String cameraId, boolean enabled) {
-    Preconditions.checkNotNull(cameraId);
-    Preconditions.checkArgument(cameraIdToCharacteristics.keySet().contains(cameraId));
-    cameraTorches.put(cameraId, enabled);
-  }
+    @Implementation
+    @NonNull
+    protected CameraCharacteristics getCameraCharacteristics(@NonNull String cameraId) {
+        System.out.println("ShadowCameraManager#getCameraCharacteristics");
+        Preconditions.checkNotNull(cameraId);
+        CameraCharacteristics characteristics = cameraIdToCharacteristics.get(cameraId);
+        Preconditions.checkArgument(characteristics != null);
+        return characteristics;
+    }
 
-  /**
-   * Adds the given cameraId and characteristics to this shadow.
-   *
-   * <p>The result from {@link #getCameraIdList()} will be in the order in which cameras were added.
-   *
-   * @throws IllegalArgumentException if there's already an existing camera with the given id.
-   */
-  public void addCamera(@NonNull String cameraId, @NonNull CameraCharacteristics characteristics) {
-    Preconditions.checkNotNull(cameraId);
-    Preconditions.checkNotNull(characteristics);
-    Preconditions.checkArgument(!cameraIdToCharacteristics.containsKey(cameraId));
+    @Implementation(minSdk = VERSION_CODES.M)
+    protected void setTorchMode(@NonNull String cameraId, boolean enabled) {
+        System.out.println("ShadowCameraManager#setTorchMode");
+        Preconditions.checkNotNull(cameraId);
+        Preconditions.checkArgument(cameraIdToCharacteristics.keySet().contains(cameraId));
+        cameraTorches.put(cameraId, enabled);
+    }
 
-    cameraIdToCharacteristics.put(cameraId, characteristics);
-  }
+    /**
+     * Adds the given cameraId and characteristics to this shadow.
+     *
+     * <p>The result from {@link #getCameraIdList()} will be in the order in which cameras were added.
+     *
+     * @throws IllegalArgumentException if there's already an existing camera with the given id.
+     */
+    public void addCamera(@NonNull String cameraId, @NonNull CameraCharacteristics characteristics) {
+        Preconditions.checkNotNull(cameraId);
+        Preconditions.checkNotNull(characteristics);
+        Preconditions.checkArgument(!cameraIdToCharacteristics.containsKey(cameraId));
+        cameraIdToCharacteristics.put(cameraId, characteristics);
+    }
 
-  /** Returns what the supplied camera's torch is set to. */
-  public boolean getTorchMode(@NonNull String cameraId) {
-    Preconditions.checkNotNull(cameraId);
-    Preconditions.checkArgument(cameraIdToCharacteristics.keySet().contains(cameraId));
-    Boolean torchState = cameraTorches.get(cameraId);
-    return torchState;
-  }
+    /**
+     * Returns what the supplied camera's torch is set to.
+     */
+    public boolean getTorchMode(@NonNull String cameraId) {
+        Preconditions.checkNotNull(cameraId);
+        Preconditions.checkArgument(cameraIdToCharacteristics.keySet().contains(cameraId));
+        Boolean torchState = cameraTorches.get(cameraId);
+        return torchState;
+    }
 }
 

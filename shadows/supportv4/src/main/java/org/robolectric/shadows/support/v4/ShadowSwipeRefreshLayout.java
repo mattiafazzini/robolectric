@@ -10,19 +10,24 @@ import org.robolectric.shadows.ShadowViewGroup;
 
 @Implements(SwipeRefreshLayout.class)
 public class ShadowSwipeRefreshLayout extends ShadowViewGroup {
-  @RealObject SwipeRefreshLayout realObject;
-  private OnRefreshListener listener;
 
-  @Implementation
-  protected void setOnRefreshListener(OnRefreshListener listener) {
-    this.listener = listener;
-    Shadow.directlyOn(realObject, SwipeRefreshLayout.class).setOnRefreshListener(listener);
-  }
+    @RealObject
+    SwipeRefreshLayout realObject;
 
-  /**
-   * @return OnRefreshListener that was previously set.
-   */
-  public OnRefreshListener getOnRefreshListener() {
-    return listener;
-  }
+    private OnRefreshListener listener;
+
+    @Implementation
+    protected void setOnRefreshListener(OnRefreshListener listener) {
+        System.out.println("ShadowSwipeRefreshLayout#setOnRefreshListener");
+        this.listener = listener;
+        Shadow.directlyOn(realObject, SwipeRefreshLayout.class).setOnRefreshListener(listener);
+    }
+
+    /**
+     * @return OnRefreshListener that was previously set.
+     */
+    public OnRefreshListener getOnRefreshListener() {
+        return listener;
+    }
 }
+

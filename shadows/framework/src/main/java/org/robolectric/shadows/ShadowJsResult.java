@@ -7,14 +7,16 @@ import org.robolectric.annotation.Implements;
 @Implements(JsResult.class)
 public class ShadowJsResult {
 
-  private boolean wasCancelled;
+    private boolean wasCancelled;
 
-  @Implementation
-  protected void cancel() {
-    wasCancelled = true;
-  }
+    @Implementation
+    protected void cancel() {
+        System.out.println("ShadowJsResult#cancel");
+        wasCancelled = true;
+    }
 
-  public boolean wasCancelled() {
-    return wasCancelled;
-  }
+    public boolean wasCancelled() {
+        return wasCancelled;
+    }
 }
+

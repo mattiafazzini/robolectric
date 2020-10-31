@@ -9,19 +9,22 @@ import org.robolectric.annotation.Implements;
 @Implements(DateFormat.class)
 public class ShadowDateFormat {
 
-  @Implementation
-  protected static java.text.DateFormat getDateFormat(Context context) {
-    return new java.text.SimpleDateFormat("MMM-dd-yyyy", Locale.ROOT);
-  }
+    @Implementation
+    protected static java.text.DateFormat getDateFormat(Context context) {
+        System.out.println("ShadowDateFormat#getDateFormat");
+        return new java.text.SimpleDateFormat("MMM-dd-yyyy", Locale.ROOT);
+    }
 
-  @Implementation
-  protected static java.text.DateFormat getLongDateFormat(Context context) {
-    return new java.text.SimpleDateFormat(
-        "MMMMM dd, yyyy", context.getResources().getConfiguration().locale);
-  }
+    @Implementation
+    protected static java.text.DateFormat getLongDateFormat(Context context) {
+        System.out.println("ShadowDateFormat#getLongDateFormat");
+        return new java.text.SimpleDateFormat("MMMMM dd, yyyy", context.getResources().getConfiguration().locale);
+    }
 
-  @Implementation
-  protected static java.text.DateFormat getTimeFormat(Context context) {
-    return new java.text.SimpleDateFormat("HH:mm:ss", Locale.ROOT);
-  }
+    @Implementation
+    protected static java.text.DateFormat getTimeFormat(Context context) {
+        System.out.println("ShadowDateFormat#getTimeFormat");
+        return new java.text.SimpleDateFormat("HH:mm:ss", Locale.ROOT);
+    }
 }
+

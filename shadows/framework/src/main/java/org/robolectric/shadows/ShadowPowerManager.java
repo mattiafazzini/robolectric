@@ -4,7 +4,6 @@ import static android.os.Build.VERSION_CODES.LOLLIPOP;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.O;
 import static org.robolectric.shadows.ShadowApplication.getInstance;
-
 import android.os.PowerManager;
 import android.os.WorkSource;
 import com.google.common.collect.ImmutableList;
@@ -21,192 +20,235 @@ import org.robolectric.shadow.api.Shadow;
 
 @Implements(PowerManager.class)
 public class ShadowPowerManager {
-  private boolean isScreenOn = true;
-  private boolean isInteractive = true;
-  private boolean isPowerSaveMode = false;
-  private boolean isDeviceIdleMode = false;
-  private List<String> rebootReasons = new ArrayList<String>();
-  private Map<String, Boolean> ignoringBatteryOptimizations = new HashMap<>();
 
-  @Implementation
-  protected PowerManager.WakeLock newWakeLock(int flags, String tag) {
-    PowerManager.WakeLock wl = Shadow.newInstanceOf(PowerManager.WakeLock.class);
-    ((ShadowWakeLock) Shadow.extract(wl)).setTag(tag);
-    getInstance().addWakeLock(wl);
-    return wl;
-  }
+    private boolean isScreenOn = true;
 
-  @Implementation
-  protected boolean isScreenOn() {
-    return isScreenOn;
-  }
+    private boolean isInteractive = true;
 
-  public void setIsScreenOn(boolean screenOn) {
-    isScreenOn = screenOn;
-  }
+    private boolean isPowerSaveMode = false;
 
-  @Implementation(minSdk = LOLLIPOP)
-  protected boolean isInteractive() {
-    return isInteractive;
-  }
+    private boolean isDeviceIdleMode = false;
 
-  public void setIsInteractive(boolean interactive) {
-    isInteractive = interactive;
-  }
+    private List<String> rebootReasons = new ArrayList<String>();
 
-  @Implementation(minSdk = LOLLIPOP)
-  protected boolean isPowerSaveMode() {
-    return isPowerSaveMode;
-  }
-
-  public void setIsPowerSaveMode(boolean powerSaveMode) {
-    isPowerSaveMode = powerSaveMode;
-  }
-
-  private Map<Integer, Boolean> supportedWakeLockLevels = new HashMap<>();
-
-  @Implementation(minSdk = LOLLIPOP)
-  protected boolean isWakeLockLevelSupported(int level) {
-    return supportedWakeLockLevels.containsKey(level) ? supportedWakeLockLevels.get(level) : false;
-  }
-
-  public void setIsWakeLockLevelSupported(int level, boolean supported) {
-    supportedWakeLockLevels.put(level, supported);
-  }
-
-  /**
-   * @return `false` by default, or the value specified via {@link #setIsDeviceIdleMode(boolean)}
-   */
-  @Implementation(minSdk = M)
-  protected boolean isDeviceIdleMode() {
-    return isDeviceIdleMode;
-  }
-
-  /** Sets the value returned by {@link #isDeviceIdleMode()}. */
-  public void setIsDeviceIdleMode(boolean isDeviceIdleMode) {
-    this.isDeviceIdleMode = isDeviceIdleMode;
-  }
-
-  /** Discards the most recent {@code PowerManager.WakeLock}s */
-  @Resetter
-  public static void reset() {
-    ShadowApplication shadowApplication = ShadowApplication.getInstance();
-    if (shadowApplication != null) {
-      shadowApplication.clearWakeLocks();
-    }
-  }
-
-  /**
-   * Retrieves the most recent wakelock registered by the application
-   *
-   * @return Most recent wake lock.
-   */
-  public static PowerManager.WakeLock getLatestWakeLock() {
-    ShadowApplication shadowApplication = Shadow.extract(RuntimeEnvironment.application);
-    return shadowApplication.getLatestWakeLock();
-  }
-
-  @Implementation(minSdk = M)
-  protected boolean isIgnoringBatteryOptimizations(String packageName) {
-    Boolean result = ignoringBatteryOptimizations.get(packageName);
-    return result == null ? false : result;
-  }
-
-  public void setIgnoringBatteryOptimizations(String packageName, boolean value) {
-    ignoringBatteryOptimizations.put(packageName, Boolean.valueOf(value));
-  }
-
-  @Implementation
-  protected void reboot(String reason) {
-    rebootReasons.add(reason);
-  }
-
-  /** Returns the number of times {@link #reboot(String)} was called. */
-  public int getTimesRebooted() {
-    return rebootReasons.size();
-  }
-
-  /** Returns the list of reasons for each reboot, in chronological order. */
-  public ImmutableList<String> getRebootReasons() {
-    return ImmutableList.copyOf(rebootReasons);
-  }
-
-  @Implements(PowerManager.WakeLock.class)
-  public static class ShadowWakeLock {
-    private boolean refCounted = true;
-    private int refCount = 0;
-    private boolean locked = false;
-    private WorkSource workSource = null;
-    private int timesHeld = 0;
-    private String tag = null;
+    private Map<String, Boolean> ignoringBatteryOptimizations = new HashMap<>();
 
     @Implementation
-    protected void acquire() {
-      acquire(0);
+    protected PowerManager.WakeLock newWakeLock(int flags, String tag) {
+        System.out.println("ShadowPowerManager#newWakeLock");
+        PowerManager.WakeLock wl = Shadow.newInstanceOf(PowerManager.WakeLock.class);
+        ((ShadowWakeLock) Shadow.extract(wl)).setTag(tag);
+        getInstance().addWakeLock(wl);
+        return wl;
     }
 
     @Implementation
-    protected synchronized void acquire(long timeout) {
-      ++timesHeld;
-      if (refCounted) {
-        refCount++;
-      } else {
-        locked = true;
-      }
+    protected boolean isScreenOn() {
+        System.out.println("ShadowPowerManager#isScreenOn");
+        return isScreenOn;
     }
 
-    @Implementation
-    protected synchronized void release() {
-      if (refCounted) {
-        if (--refCount < 0) throw new RuntimeException("WakeLock under-locked");
-      } else {
-        locked = false;
-      }
+    public void setIsScreenOn(boolean screenOn) {
+        isScreenOn = screenOn;
     }
 
-    @Implementation
-    protected synchronized boolean isHeld() {
-      return refCounted ? refCount > 0 : locked;
+    @Implementation(minSdk = LOLLIPOP)
+    protected boolean isInteractive() {
+        System.out.println("ShadowPowerManager#isInteractive");
+        return isInteractive;
+    }
+
+    public void setIsInteractive(boolean interactive) {
+        isInteractive = interactive;
+    }
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected boolean isPowerSaveMode() {
+        System.out.println("ShadowPowerManager#isPowerSaveMode");
+        return isPowerSaveMode;
+    }
+
+    public void setIsPowerSaveMode(boolean powerSaveMode) {
+        isPowerSaveMode = powerSaveMode;
+    }
+
+    private Map<Integer, Boolean> supportedWakeLockLevels = new HashMap<>();
+
+    @Implementation(minSdk = LOLLIPOP)
+    protected boolean isWakeLockLevelSupported(int level) {
+        System.out.println("ShadowPowerManager#isWakeLockLevelSupported");
+        return supportedWakeLockLevels.containsKey(level) ? supportedWakeLockLevels.get(level) : false;
+    }
+
+    public void setIsWakeLockLevelSupported(int level, boolean supported) {
+        supportedWakeLockLevels.put(level, supported);
     }
 
     /**
-     * Retrieves if the wake lock is reference counted or not
-     *
-     * @return Is the wake lock reference counted?
+     * @return `false` by default, or the value specified via {@link #setIsDeviceIdleMode(boolean)}
      */
-    public boolean isReferenceCounted() {
-      return refCounted;
+    @Implementation(minSdk = M)
+    protected boolean isDeviceIdleMode() {
+        System.out.println("ShadowPowerManager#isDeviceIdleMode");
+        return isDeviceIdleMode;
+    }
+
+    /**
+     * Sets the value returned by {@link #isDeviceIdleMode()}.
+     */
+    public void setIsDeviceIdleMode(boolean isDeviceIdleMode) {
+        this.isDeviceIdleMode = isDeviceIdleMode;
+    }
+
+    /**
+     * Discards the most recent {@code PowerManager.WakeLock}s
+     */
+    @Resetter
+    public static void reset() {
+        ShadowApplication shadowApplication = ShadowApplication.getInstance();
+        if (shadowApplication != null) {
+            shadowApplication.clearWakeLocks();
+        }
+    }
+
+    /**
+     * Retrieves the most recent wakelock registered by the application
+     *
+     * @return Most recent wake lock.
+     */
+    public static PowerManager.WakeLock getLatestWakeLock() {
+        ShadowApplication shadowApplication = Shadow.extract(RuntimeEnvironment.application);
+        return shadowApplication.getLatestWakeLock();
+    }
+
+    @Implementation(minSdk = M)
+    protected boolean isIgnoringBatteryOptimizations(String packageName) {
+        System.out.println("ShadowPowerManager#isIgnoringBatteryOptimizations");
+        Boolean result = ignoringBatteryOptimizations.get(packageName);
+        return result == null ? false : result;
+    }
+
+    public void setIgnoringBatteryOptimizations(String packageName, boolean value) {
+        ignoringBatteryOptimizations.put(packageName, Boolean.valueOf(value));
     }
 
     @Implementation
-    protected void setReferenceCounted(boolean value) {
-      refCounted = value;
+    protected void reboot(String reason) {
+        System.out.println("ShadowPowerManager#reboot");
+        rebootReasons.add(reason);
     }
 
-    @Implementation
-    protected synchronized void setWorkSource(WorkSource ws) {
-      workSource = ws;
+    /**
+     * Returns the number of times {@link #reboot(String)} was called.
+     */
+    public int getTimesRebooted() {
+        return rebootReasons.size();
     }
 
-    public synchronized WorkSource getWorkSource() {
-      return workSource;
+    /**
+     * Returns the list of reasons for each reboot, in chronological order.
+     */
+    public ImmutableList<String> getRebootReasons() {
+        return ImmutableList.copyOf(rebootReasons);
     }
 
-    /** Returns how many times the wakelock was held. */
-    public int getTimesHeld() {
-      return timesHeld;
-    }
+    @Implements(PowerManager.WakeLock.class)
+    public static class ShadowWakeLock {
 
-    /** Returns the tag. */
-    @HiddenApi
-    @Implementation(minSdk = O)
-    public String getTag() {
-      return tag;
-    }
+        private boolean refCounted = true;
 
-    /** Sets the tag. */
-    private void setTag(String tag) {
-      this.tag = tag;
+        private int refCount = 0;
+
+        private boolean locked = false;
+
+        private WorkSource workSource = null;
+
+        private int timesHeld = 0;
+
+        private String tag = null;
+
+        @Implementation
+        protected void acquire() {
+            System.out.println("ShadowWakeLock#acquire");
+            acquire(0);
+        }
+
+        @Implementation
+        protected synchronized void acquire(long timeout) {
+            System.out.println("ShadowWakeLock#acquire");
+            ++timesHeld;
+            if (refCounted) {
+                refCount++;
+            } else {
+                locked = true;
+            }
+        }
+
+        @Implementation
+        protected synchronized void release() {
+            System.out.println("ShadowWakeLock#release");
+            if (refCounted) {
+                if (--refCount < 0)
+                    throw new RuntimeException("WakeLock under-locked");
+            } else {
+                locked = false;
+            }
+        }
+
+        @Implementation
+        protected synchronized boolean isHeld() {
+            System.out.println("ShadowWakeLock#isHeld");
+            return refCounted ? refCount > 0 : locked;
+        }
+
+        /**
+         * Retrieves if the wake lock is reference counted or not
+         *
+         * @return Is the wake lock reference counted?
+         */
+        public boolean isReferenceCounted() {
+            return refCounted;
+        }
+
+        @Implementation
+        protected void setReferenceCounted(boolean value) {
+            System.out.println("ShadowWakeLock#setReferenceCounted");
+            refCounted = value;
+        }
+
+        @Implementation
+        protected synchronized void setWorkSource(WorkSource ws) {
+            System.out.println("ShadowWakeLock#setWorkSource");
+            workSource = ws;
+        }
+
+        public synchronized WorkSource getWorkSource() {
+            return workSource;
+        }
+
+        /**
+         * Returns how many times the wakelock was held.
+         */
+        public int getTimesHeld() {
+            return timesHeld;
+        }
+
+        /**
+         * Returns the tag.
+         */
+        @HiddenApi
+        @Implementation(minSdk = O)
+        public String getTag() {
+            System.out.println("ShadowWakeLock#getTag");
+            return tag;
+        }
+
+        /**
+         * Sets the tag.
+         */
+        private void setTag(String tag) {
+            this.tag = tag;
+        }
     }
-  }
 }
+

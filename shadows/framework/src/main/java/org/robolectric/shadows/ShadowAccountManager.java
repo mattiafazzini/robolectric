@@ -3,7 +3,6 @@ package org.robolectric.shadows;
 import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR2;
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
 import static android.os.Build.VERSION_CODES.LOLLIPOP_MR1;
-
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
@@ -38,662 +37,632 @@ import org.robolectric.util.Scheduler.IdleState;
 @Implements(AccountManager.class)
 public class ShadowAccountManager {
 
-  private List<Account> accounts = new ArrayList<>();
-  private Map<Account, Map<String, String>> authTokens = new HashMap<>();
-  private Map<String, AuthenticatorDescription> authenticators = new LinkedHashMap<>();
-  private List<OnAccountsUpdateListener> listeners = new ArrayList<>();
-  private Map<Account, Map<String, String>> userData = new HashMap<>();
-  private Map<Account, String> passwords = new HashMap<>();
-  private Map<Account, Set<String>> accountFeatures = new HashMap<>();
-  private Map<Account, Set<String>> packageVisibileAccounts = new HashMap<>();
+    private List<Account> accounts = new ArrayList<>();
 
-  private List<Bundle> addAccountOptionsList = new ArrayList<>();
-  private Handler mainHandler;
-  private RoboAccountManagerFuture pendingAddFuture;
-  private boolean authenticationErrorOnNextResponse = false;
-  private Intent removeAccountIntent;
+    private Map<Account, Map<String, String>> authTokens = new HashMap<>();
 
-  @Implementation
-  protected void __constructor__(Context context, IAccountManager service) {
-    mainHandler = new Handler(context.getMainLooper());
-  }
+    private Map<String, AuthenticatorDescription> authenticators = new LinkedHashMap<>();
 
-  /**
-   * @deprecated This method will be removed in Robolectric 3.4 Use {@link
-   *     AccountManager#get(Context)} instead.
-   */
-  @Deprecated
-  @Implementation
-  protected static AccountManager get(Context context) {
-    return (AccountManager) context.getSystemService(Context.ACCOUNT_SERVICE);
-  }
+    private List<OnAccountsUpdateListener> listeners = new ArrayList<>();
 
-  @Implementation
-  protected Account[] getAccounts() {
-    return accounts.toArray(new Account[accounts.size()]);
-  }
+    private Map<Account, Map<String, String>> userData = new HashMap<>();
 
-  @Implementation
-  protected Account[] getAccountsByType(String type) {
-    if (type == null) {
-      return getAccounts();
-    }
-    List<Account> accountsByType = new ArrayList<>();
+    private Map<Account, String> passwords = new HashMap<>();
 
-    for (Account a : accounts) {
-      if (type.equals(a.type)) {
-        accountsByType.add(a);
-      }
+    private Map<Account, Set<String>> accountFeatures = new HashMap<>();
+
+    private Map<Account, Set<String>> packageVisibileAccounts = new HashMap<>();
+
+    private List<Bundle> addAccountOptionsList = new ArrayList<>();
+
+    private Handler mainHandler;
+
+    private RoboAccountManagerFuture pendingAddFuture;
+
+    private boolean authenticationErrorOnNextResponse = false;
+
+    private Intent removeAccountIntent;
+
+    @Implementation
+    protected void __constructor__(Context context, IAccountManager service) {
+        System.out.println("ShadowAccountManager#__constructor__");
+        mainHandler = new Handler(context.getMainLooper());
     }
 
-    return accountsByType.toArray(new Account[accountsByType.size()]);
-  }
-
-  @Implementation
-  protected synchronized void setAuthToken(Account account, String tokenType, String authToken) {
-    if (accounts.contains(account)) {
-      Map<String, String> tokenMap = authTokens.get(account);
-      if (tokenMap == null) {
-        tokenMap = new HashMap<>();
-        authTokens.put(account, tokenMap);
-      }
-      tokenMap.put(tokenType, authToken);
-    }
-  }
-
-  @Implementation
-  protected String peekAuthToken(Account account, String tokenType) {
-    Map<String, String> tokenMap = authTokens.get(account);
-    if (tokenMap != null) {
-      return tokenMap.get(tokenType);
-    }
-    return null;
-  }
-
-  @SuppressWarnings("InconsistentCapitalization")
-  @Implementation
-  protected boolean addAccountExplicitly(Account account, String password, Bundle userdata) {
-    if (account == null) {
-      throw new IllegalArgumentException("account is null");
-    }
-    for (Account a : getAccountsByType(account.type)) {
-      if (a.name.equals(account.name)) {
-        return false;
-      }
+    /**
+     * @deprecated This method will be removed in Robolectric 3.4 Use {@link
+     *     AccountManager#get(Context)} instead.
+     */
+    @Deprecated
+    @Implementation
+    protected static AccountManager get(Context context) {
+        System.out.println("ShadowAccountManager#get");
+        return (AccountManager) context.getSystemService(Context.ACCOUNT_SERVICE);
     }
 
-    if (!accounts.add(account)) {
-      return false;
+    @Implementation
+    protected Account[] getAccounts() {
+        System.out.println("ShadowAccountManager#getAccounts");
+        return accounts.toArray(new Account[accounts.size()]);
     }
 
-    setPassword(account, password);
-
-    if (userdata != null) {
-      for (String key : userdata.keySet()) {
-        setUserData(account, key, userdata.get(key).toString());
-      }
+    @Implementation
+    protected Account[] getAccountsByType(String type) {
+        System.out.println("ShadowAccountManager#getAccountsByType");
+        if (type == null) {
+            return getAccounts();
+        }
+        List<Account> accountsByType = new ArrayList<>();
+        for (Account a : accounts) {
+            if (type.equals(a.type)) {
+                accountsByType.add(a);
+            }
+        }
+        return accountsByType.toArray(new Account[accountsByType.size()]);
     }
 
-    notifyListeners();
-
-    return true;
-  }
-
-  @Implementation
-  protected String blockingGetAuthToken(
-      Account account, String authTokenType, boolean notifyAuthFailure) {
-    if (account == null) {
-      throw new IllegalArgumentException("account is null");
-    }
-    if (authTokenType == null) {
-      throw new IllegalArgumentException("authTokenType is null");
+    @Implementation
+    protected synchronized void setAuthToken(Account account, String tokenType, String authToken) {
+        System.out.println("ShadowAccountManager#setAuthToken");
+        if (accounts.contains(account)) {
+            Map<String, String> tokenMap = authTokens.get(account);
+            if (tokenMap == null) {
+                tokenMap = new HashMap<>();
+                authTokens.put(account, tokenMap);
+            }
+            tokenMap.put(tokenType, authToken);
+        }
     }
 
-    Map<String, String> tokensForAccount = authTokens.get(account);
-    if (tokensForAccount == null) {
-      return null;
-    }
-    return tokensForAccount.get(authTokenType);
-  }
-
-  /**
-   * The remove operation is posted to the given {@code handler}, and will be executed according to
-   * the {@link IdleState} of the corresponding {@link org.robolectric.util.Scheduler}.
-   */
-  @Implementation
-  protected AccountManagerFuture<Boolean> removeAccount(
-      final Account account, AccountManagerCallback<Boolean> callback, Handler handler) {
-    if (account == null) {
-      throw new IllegalArgumentException("account is null");
+    @Implementation
+    protected String peekAuthToken(Account account, String tokenType) {
+        System.out.println("ShadowAccountManager#peekAuthToken");
+        Map<String, String> tokenMap = authTokens.get(account);
+        if (tokenMap != null) {
+            return tokenMap.get(tokenType);
+        }
+        return null;
     }
 
-    return start(
-        new BaseRoboAccountManagerFuture<Boolean>(callback, handler) {
-          @Override
-          public Boolean doWork()
-              throws OperationCanceledException, IOException, AuthenticatorException {
-            return removeAccountExplicitly(account);
-          }
+    @SuppressWarnings("InconsistentCapitalization")
+    @Implementation
+    protected boolean addAccountExplicitly(Account account, String password, Bundle userdata) {
+        System.out.println("ShadowAccountManager#addAccountExplicitly");
+        if (account == null) {
+            throw new IllegalArgumentException("account is null");
+        }
+        for (Account a : getAccountsByType(account.type)) {
+            if (a.name.equals(account.name)) {
+                return false;
+            }
+        }
+        if (!accounts.add(account)) {
+            return false;
+        }
+        setPassword(account, password);
+        if (userdata != null) {
+            for (String key : userdata.keySet()) {
+                setUserData(account, key, userdata.get(key).toString());
+            }
+        }
+        notifyListeners();
+        return true;
+    }
+
+    @Implementation
+    protected String blockingGetAuthToken(Account account, String authTokenType, boolean notifyAuthFailure) {
+        System.out.println("ShadowAccountManager#blockingGetAuthToken");
+        if (account == null) {
+            throw new IllegalArgumentException("account is null");
+        }
+        if (authTokenType == null) {
+            throw new IllegalArgumentException("authTokenType is null");
+        }
+        Map<String, String> tokensForAccount = authTokens.get(account);
+        if (tokensForAccount == null) {
+            return null;
+        }
+        return tokensForAccount.get(authTokenType);
+    }
+
+    /**
+     * The remove operation is posted to the given {@code handler}, and will be executed according to
+     * the {@link IdleState} of the corresponding {@link org.robolectric.util.Scheduler}.
+     */
+    @Implementation
+    protected AccountManagerFuture<Boolean> removeAccount(final Account account, AccountManagerCallback<Boolean> callback, Handler handler) {
+        System.out.println("ShadowAccountManager#removeAccount");
+        if (account == null) {
+            throw new IllegalArgumentException("account is null");
+        }
+        return start(new BaseRoboAccountManagerFuture<Boolean>(callback, handler) {
+
+            @Override
+            public Boolean doWork() throws OperationCanceledException, IOException, AuthenticatorException {
+                return removeAccountExplicitly(account);
+            }
         });
-  }
-
-  /**
-   * Removes the account unless {@link #setRemoveAccountIntent} has been set. If set, the future
-   * Bundle will include the Intent and {@link AccountManager#KEY_BOOLEAN_RESULT} will be false.
-   */
-  @Implementation(minSdk = LOLLIPOP_MR1)
-  protected AccountManagerFuture<Bundle> removeAccount(
-      Account account,
-      Activity activity,
-      AccountManagerCallback<Bundle> callback,
-      Handler handler) {
-    if (account == null) {
-      throw new IllegalArgumentException("account is null");
     }
-    return start(
-        new BaseRoboAccountManagerFuture<Bundle>(callback, handler) {
-          @Override
-          public Bundle doWork()
-              throws OperationCanceledException, IOException, AuthenticatorException {
-            Bundle result = new Bundle();
-            if (removeAccountIntent == null) {
-              result.putBoolean(
-                  AccountManager.KEY_BOOLEAN_RESULT, removeAccountExplicitly(account));
-            } else {
-              result.putBoolean(AccountManager.KEY_BOOLEAN_RESULT, false);
-              result.putParcelable(AccountManager.KEY_INTENT, removeAccountIntent);
+
+    /**
+     * Removes the account unless {@link #setRemoveAccountIntent} has been set. If set, the future
+     * Bundle will include the Intent and {@link AccountManager#KEY_BOOLEAN_RESULT} will be false.
+     */
+    @Implementation(minSdk = LOLLIPOP_MR1)
+    protected AccountManagerFuture<Bundle> removeAccount(Account account, Activity activity, AccountManagerCallback<Bundle> callback, Handler handler) {
+        System.out.println("ShadowAccountManager#removeAccount");
+        if (account == null) {
+            throw new IllegalArgumentException("account is null");
+        }
+        return start(new BaseRoboAccountManagerFuture<Bundle>(callback, handler) {
+
+            @Override
+            public Bundle doWork() throws OperationCanceledException, IOException, AuthenticatorException {
+                Bundle result = new Bundle();
+                if (removeAccountIntent == null) {
+                    result.putBoolean(AccountManager.KEY_BOOLEAN_RESULT, removeAccountExplicitly(account));
+                } else {
+                    result.putBoolean(AccountManager.KEY_BOOLEAN_RESULT, false);
+                    result.putParcelable(AccountManager.KEY_INTENT, removeAccountIntent);
+                }
+                return result;
+            }
+        });
+    }
+
+    @Implementation(minSdk = LOLLIPOP_MR1)
+    protected boolean removeAccountExplicitly(Account account) {
+        System.out.println("ShadowAccountManager#removeAccountExplicitly");
+        passwords.remove(account);
+        userData.remove(account);
+        if (accounts.remove(account)) {
+            notifyListeners();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Removes all accounts that have been added.
+     */
+    public void removeAllAccounts() {
+        passwords.clear();
+        userData.clear();
+        accounts.clear();
+    }
+
+    @Implementation
+    protected AuthenticatorDescription[] getAuthenticatorTypes() {
+        System.out.println("ShadowAccountManager#getAuthenticatorTypes");
+        return authenticators.values().toArray(new AuthenticatorDescription[authenticators.size()]);
+    }
+
+    @Implementation
+    protected void addOnAccountsUpdatedListener(final OnAccountsUpdateListener listener, Handler handler, boolean updateImmediately) {
+        System.out.println("ShadowAccountManager#addOnAccountsUpdatedListener");
+        if (listeners.contains(listener)) {
+            return;
+        }
+        listeners.add(listener);
+        if (updateImmediately) {
+            listener.onAccountsUpdated(getAccounts());
+        }
+    }
+
+    @Implementation
+    protected void removeOnAccountsUpdatedListener(OnAccountsUpdateListener listener) {
+        System.out.println("ShadowAccountManager#removeOnAccountsUpdatedListener");
+        listeners.remove(listener);
+    }
+
+    @Implementation
+    protected String getUserData(Account account, String key) {
+        System.out.println("ShadowAccountManager#getUserData");
+        if (account == null) {
+            throw new IllegalArgumentException("account is null");
+        }
+        if (!userData.containsKey(account)) {
+            return null;
+        }
+        Map<String, String> userDataMap = userData.get(account);
+        if (userDataMap.containsKey(key)) {
+            return userDataMap.get(key);
+        }
+        return null;
+    }
+
+    @Implementation
+    protected void setUserData(Account account, String key, String value) {
+        System.out.println("ShadowAccountManager#setUserData");
+        if (account == null) {
+            throw new IllegalArgumentException("account is null");
+        }
+        if (!userData.containsKey(account)) {
+            userData.put(account, new HashMap<String, String>());
+        }
+        Map<String, String> userDataMap = userData.get(account);
+        if (value == null) {
+            userDataMap.remove(key);
+        } else {
+            userDataMap.put(key, value);
+        }
+    }
+
+    @Implementation
+    protected void setPassword(Account account, String password) {
+        System.out.println("ShadowAccountManager#setPassword");
+        if (account == null) {
+            throw new IllegalArgumentException("account is null");
+        }
+        if (password == null) {
+            passwords.remove(account);
+        } else {
+            passwords.put(account, password);
+        }
+    }
+
+    @Implementation
+    protected String getPassword(Account account) {
+        System.out.println("ShadowAccountManager#getPassword");
+        if (account == null) {
+            throw new IllegalArgumentException("account is null");
+        }
+        if (passwords.containsKey(account)) {
+            return passwords.get(account);
+        } else {
+            return null;
+        }
+    }
+
+    @Implementation
+    protected void invalidateAuthToken(final String accountType, final String authToken) {
+        System.out.println("ShadowAccountManager#invalidateAuthToken");
+        Account[] accountsByType = getAccountsByType(accountType);
+        for (Account account : accountsByType) {
+            Map<String, String> tokenMap = authTokens.get(account);
+            if (tokenMap != null) {
+                Iterator<Entry<String, String>> it = tokenMap.entrySet().iterator();
+                while (it.hasNext()) {
+                    Map.Entry<String, String> map = it.next();
+                    if (map.getValue().equals(authToken)) {
+                        it.remove();
+                    }
+                }
+                authTokens.put(account, tokenMap);
+            }
+        }
+    }
+
+    private void notifyListeners() {
+        Account[] accounts = getAccounts();
+        Iterator<OnAccountsUpdateListener> iter = listeners.iterator();
+        OnAccountsUpdateListener listener;
+        while (iter.hasNext()) {
+            listener = iter.next();
+            listener.onAccountsUpdated(accounts);
+        }
+    }
+
+    /**
+     * @param account User account.
+     */
+    public void addAccount(Account account) {
+        accounts.add(account);
+        if (pendingAddFuture != null) {
+            pendingAddFuture.resultBundle.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
+            start(pendingAddFuture);
+            pendingAddFuture = null;
+        }
+        notifyListeners();
+    }
+
+    /**
+     * Adds an account to the AccountManager but when {@link AccountManager#getAccountsByTypeForPackage(String, String)}
+     * is called will be included if is in one of the #visibileToPackages
+     *
+     * @param account User account.
+     */
+    public void addAccount(Account account, String... visibileToPackages) {
+        addAccount(account);
+        HashSet<String> value = new HashSet<>();
+        Collections.addAll(value, visibileToPackages);
+        packageVisibileAccounts.put(account, value);
+    }
+
+    /**
+     * Consumes and returns the next {@code addAccountOptions} passed to {@link #addAccount}.
+     *
+     * @return the next {@code addAccountOptions}
+     */
+    public Bundle getNextAddAccountOptions() {
+        if (addAccountOptionsList.isEmpty()) {
+            return null;
+        } else {
+            return addAccountOptionsList.remove(0);
+        }
+    }
+
+    /**
+     * Returns the next {@code addAccountOptions} passed to {@link #addAccount} without consuming it.
+     *
+     * @return the next {@code addAccountOptions}
+     */
+    public Bundle peekNextAddAccountOptions() {
+        if (addAccountOptionsList.isEmpty()) {
+            return null;
+        } else {
+            return addAccountOptionsList.get(0);
+        }
+    }
+
+    private class RoboAccountManagerFuture extends BaseRoboAccountManagerFuture<Bundle> {
+
+        private final String accountType;
+
+        private final Activity activity;
+
+        private final Bundle resultBundle;
+
+        RoboAccountManagerFuture(AccountManagerCallback<Bundle> callback, Handler handler, String accountType, Activity activity) {
+            super(callback, handler);
+            this.accountType = accountType;
+            this.activity = activity;
+            this.resultBundle = new Bundle();
+        }
+
+        @Override
+        public Bundle doWork() throws OperationCanceledException, IOException, AuthenticatorException {
+            if (!authenticators.containsKey(accountType)) {
+                throw new AuthenticatorException("No authenticator specified for " + accountType);
+            }
+            resultBundle.putString(AccountManager.KEY_ACCOUNT_TYPE, accountType);
+            if (activity == null) {
+                Intent resultIntent = new Intent();
+                resultBundle.putParcelable(AccountManager.KEY_INTENT, resultIntent);
+            } else if (callback == null) {
+                resultBundle.putString(AccountManager.KEY_ACCOUNT_NAME, "some_user@gmail.com");
+            }
+            return resultBundle;
+        }
+    }
+
+    @Implementation
+    protected AccountManagerFuture<Bundle> addAccount(final String accountType, String authTokenType, String[] requiredFeatures, Bundle addAccountOptions, Activity activity, AccountManagerCallback<Bundle> callback, Handler handler) {
+        System.out.println("ShadowAccountManager#addAccount");
+        addAccountOptionsList.add(addAccountOptions);
+        pendingAddFuture = new RoboAccountManagerFuture(callback, handler, accountType, activity);
+        return pendingAddFuture;
+    }
+
+    public void setFeatures(Account account, String[] accountFeatures) {
+        HashSet<String> featureSet = new HashSet<>();
+        featureSet.addAll(Arrays.asList(accountFeatures));
+        this.accountFeatures.put(account, featureSet);
+    }
+
+    /**
+     * @param authenticator System authenticator.
+     */
+    public void addAuthenticator(AuthenticatorDescription authenticator) {
+        authenticators.put(authenticator.type, authenticator);
+    }
+
+    public void addAuthenticator(String type) {
+        addAuthenticator(AuthenticatorDescription.newKey(type));
+    }
+
+    private Map<Account, String> previousNames = new HashMap<Account, String>();
+
+    /**
+     * Sets the previous name for an account, which will be returned by {@link AccountManager#getPreviousName(Account)}.
+     *
+     * @param account User account.
+     * @param previousName Previous account name.
+     */
+    public void setPreviousAccountName(Account account, String previousName) {
+        previousNames.put(account, previousName);
+    }
+
+    /**
+     * @see #setPreviousAccountName(Account, String)
+     */
+    @Implementation(minSdk = LOLLIPOP)
+    protected String getPreviousName(Account account) {
+        System.out.println("ShadowAccountManager#getPreviousName");
+        return previousNames.get(account);
+    }
+
+    @Implementation
+    protected AccountManagerFuture<Bundle> getAuthToken(final Account account, final String authTokenType, final Bundle options, final Activity activity, final AccountManagerCallback<Bundle> callback, Handler handler) {
+        System.out.println("ShadowAccountManager#getAuthToken");
+        return start(new BaseRoboAccountManagerFuture<Bundle>(callback, handler) {
+
+            @Override
+            public Bundle doWork() throws OperationCanceledException, IOException, AuthenticatorException {
+                return getAuthToken(account, authTokenType);
+            }
+        });
+    }
+
+    @Implementation
+    protected AccountManagerFuture<Bundle> getAuthToken(final Account account, final String authTokenType, final Bundle options, final boolean notifyAuthFailure, final AccountManagerCallback<Bundle> callback, Handler handler) {
+        System.out.println("ShadowAccountManager#getAuthToken");
+        return start(new BaseRoboAccountManagerFuture<Bundle>(callback, handler) {
+
+            @Override
+            public Bundle doWork() throws OperationCanceledException, IOException, AuthenticatorException {
+                return getAuthToken(account, authTokenType);
+            }
+        });
+    }
+
+    private Bundle getAuthToken(Account account, String authTokenType) throws OperationCanceledException, IOException, AuthenticatorException {
+        Bundle result = new Bundle();
+        String authToken = blockingGetAuthToken(account, authTokenType, false);
+        result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
+        result.putString(AccountManager.KEY_ACCOUNT_TYPE, account.type);
+        result.putString(AccountManager.KEY_AUTHTOKEN, authToken);
+        if (authToken != null) {
+            return result;
+        }
+        if (!authenticators.containsKey(account.type)) {
+            throw new AuthenticatorException("No authenticator specified for " + account.type);
+        }
+        Intent resultIntent = new Intent();
+        result.putParcelable(AccountManager.KEY_INTENT, resultIntent);
+        return result;
+    }
+
+    @Implementation
+    protected AccountManagerFuture<Boolean> hasFeatures(final Account account, final String[] features, AccountManagerCallback<Boolean> callback, Handler handler) {
+        System.out.println("ShadowAccountManager#hasFeatures");
+        return start(new BaseRoboAccountManagerFuture<Boolean>(callback, handler) {
+
+            @Override
+            public Boolean doWork() throws OperationCanceledException, IOException, AuthenticatorException {
+                Set<String> availableFeatures = accountFeatures.get(account);
+                for (String feature : features) {
+                    if (!availableFeatures.contains(feature)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        });
+    }
+
+    @Implementation
+    protected AccountManagerFuture<Account[]> getAccountsByTypeAndFeatures(final String type, final String[] features, AccountManagerCallback<Account[]> callback, Handler handler) {
+        System.out.println("ShadowAccountManager#getAccountsByTypeAndFeatures");
+        return start(new BaseRoboAccountManagerFuture<Account[]>(callback, handler) {
+
+            @Override
+            public Account[] doWork() throws OperationCanceledException, IOException, AuthenticatorException {
+                if (authenticationErrorOnNextResponse) {
+                    setAuthenticationErrorOnNextResponse(false);
+                    throw new AuthenticatorException();
+                }
+                List<Account> result = new ArrayList<>();
+                Account[] accountsByType = getAccountsByType(type);
+                for (Account account : accountsByType) {
+                    Set<String> featureSet = accountFeatures.get(account);
+                    if (features == null || (featureSet != null && featureSet.containsAll(Arrays.asList(features)))) {
+                        result.add(account);
+                    }
+                }
+                return result.toArray(new Account[result.size()]);
+            }
+        });
+    }
+
+    private <T extends BaseRoboAccountManagerFuture> T start(T future) {
+        future.start();
+        return future;
+    }
+
+    @Implementation(minSdk = JELLY_BEAN_MR2)
+    protected Account[] getAccountsByTypeForPackage(String type, String packageName) {
+        System.out.println("ShadowAccountManager#getAccountsByTypeForPackage");
+        List<Account> result = new ArrayList<>();
+        Account[] accountsByType = getAccountsByType(type);
+        for (Account account : accountsByType) {
+            if (packageVisibileAccounts.containsKey(account) && packageVisibileAccounts.get(account).contains(packageName)) {
+                result.add(account);
+            }
+        }
+        return result.toArray(new Account[result.size()]);
+    }
+
+    /**
+     * Sets authenticator exception, which will be thrown by {@link #getAccountsByTypeAndFeatures}.
+     *
+     * @param authenticationErrorOnNextResponse to set flag that exception will be thrown on next
+     *     response.
+     */
+    public void setAuthenticationErrorOnNextResponse(boolean authenticationErrorOnNextResponse) {
+        this.authenticationErrorOnNextResponse = authenticationErrorOnNextResponse;
+    }
+
+    /**
+     * Sets the intent to include in Bundle result from {@link #removeAccount} if Activity is given.
+     *
+     * @param removeAccountIntent the intent to surface as {@link AccountManager#KEY_INTENT}.
+     */
+    public void setRemoveAccountIntent(Intent removeAccountIntent) {
+        this.removeAccountIntent = removeAccountIntent;
+    }
+
+    private abstract class BaseRoboAccountManagerFuture<T> implements AccountManagerFuture<T> {
+
+        protected final AccountManagerCallback<T> callback;
+
+        private final Handler handler;
+
+        protected T result;
+
+        private Exception exception;
+
+        private boolean started = false;
+
+        BaseRoboAccountManagerFuture(AccountManagerCallback<T> callback, Handler handler) {
+            this.callback = callback;
+            this.handler = handler == null ? mainHandler : handler;
+        }
+
+        void start() {
+            if (started)
+                return;
+            started = true;
+            try {
+                result = doWork();
+            } catch (OperationCanceledException | IOException | AuthenticatorException e) {
+                exception = e;
+            }
+            if (callback != null) {
+                handler.post(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        callback.run(BaseRoboAccountManagerFuture.this);
+                    }
+                });
+            }
+        }
+
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            return false;
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return false;
+        }
+
+        @Override
+        public boolean isDone() {
+            return result != null || exception != null || isCancelled();
+        }
+
+        @Override
+        public T getResult() throws OperationCanceledException, IOException, AuthenticatorException {
+            start();
+            if (exception instanceof OperationCanceledException) {
+                throw new OperationCanceledException(exception);
+            } else if (exception instanceof IOException) {
+                throw new IOException(exception);
+            } else if (exception instanceof AuthenticatorException) {
+                throw new AuthenticatorException(exception);
             }
             return result;
-          }
-        });
-  }
-
-  @Implementation(minSdk = LOLLIPOP_MR1)
-  protected boolean removeAccountExplicitly(Account account) {
-    passwords.remove(account);
-    userData.remove(account);
-    if (accounts.remove(account)) {
-      notifyListeners();
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Removes all accounts that have been added.
-   */
-  public void removeAllAccounts() {
-    passwords.clear();
-    userData.clear();
-    accounts.clear();
-  }
-
-  @Implementation
-  protected AuthenticatorDescription[] getAuthenticatorTypes() {
-    return authenticators.values().toArray(new AuthenticatorDescription[authenticators.size()]);
-  }
-
-  @Implementation
-  protected void addOnAccountsUpdatedListener(
-      final OnAccountsUpdateListener listener, Handler handler, boolean updateImmediately) {
-
-    if (listeners.contains(listener)) {
-      return;
-    }
-
-    listeners.add(listener);
-
-    if (updateImmediately) {
-      listener.onAccountsUpdated(getAccounts());
-    }
-  }
-
-  @Implementation
-  protected void removeOnAccountsUpdatedListener(OnAccountsUpdateListener listener) {
-    listeners.remove(listener);
-  }
-
-  @Implementation
-  protected String getUserData(Account account, String key) {
-    if (account == null) {
-      throw new IllegalArgumentException("account is null");
-    }
-
-    if (!userData.containsKey(account)) {
-      return null;
-    }
-
-    Map<String, String> userDataMap = userData.get(account);
-    if (userDataMap.containsKey(key)) {
-      return userDataMap.get(key);
-    }
-
-    return null;
-  }
-
-  @Implementation
-  protected void setUserData(Account account, String key, String value) {
-    if (account == null) {
-      throw new IllegalArgumentException("account is null");
-    }
-
-    if (!userData.containsKey(account)) {
-      userData.put(account, new HashMap<String, String>());
-    }
-
-    Map<String, String> userDataMap = userData.get(account);
-
-    if (value == null) {
-      userDataMap.remove(key);
-    } else {
-      userDataMap.put(key, value);
-    }
-  }
-
-  @Implementation
-  protected void setPassword(Account account, String password) {
-    if (account == null) {
-      throw new IllegalArgumentException("account is null");
-    }
-
-    if (password == null) {
-      passwords.remove(account);
-    } else {
-      passwords.put(account, password);
-    }
-  }
-
-  @Implementation
-  protected String getPassword(Account account) {
-    if (account == null) {
-      throw new IllegalArgumentException("account is null");
-    }
-
-    if (passwords.containsKey(account)) {
-      return passwords.get(account);
-    } else {
-      return null;
-    }
-  }
-
-  @Implementation
-  protected void invalidateAuthToken(final String accountType, final String authToken) {
-    Account[] accountsByType = getAccountsByType(accountType);
-    for (Account account : accountsByType) {
-      Map<String, String> tokenMap = authTokens.get(account);
-      if (tokenMap != null) {
-        Iterator<Entry<String, String>> it = tokenMap.entrySet().iterator();
-        while (it.hasNext()) {
-          Map.Entry<String, String> map = it.next();
-          if (map.getValue().equals(authToken)) {
-            it.remove();
-          }
         }
-        authTokens.put(account, tokenMap);
-      }
-    }
-  }
 
-  private void notifyListeners() {
-    Account[] accounts = getAccounts();
-    Iterator<OnAccountsUpdateListener> iter = listeners.iterator();
-    OnAccountsUpdateListener listener;
-    while (iter.hasNext()) {
-      listener = iter.next();
-      listener.onAccountsUpdated(accounts);
-    }
-  }
-
-  /**
-   * @param account User account.
-   */
-  public void addAccount(Account account) {
-    accounts.add(account);
-    if (pendingAddFuture != null) {
-      pendingAddFuture.resultBundle.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
-      start(pendingAddFuture);
-      pendingAddFuture = null;
-    }
-    notifyListeners();
-  }
-
-  /**
-   * Adds an account to the AccountManager but when {@link AccountManager#getAccountsByTypeForPackage(String, String)}
-   * is called will be included if is in one of the #visibileToPackages
-   *
-   * @param account User account.
-   */
-  public void addAccount(Account account, String... visibileToPackages) {
-    addAccount(account);
-    HashSet<String> value = new HashSet<>();
-    Collections.addAll(value, visibileToPackages);
-    packageVisibileAccounts.put(account, value);
-  }
-
-  /**
-   * Consumes and returns the next {@code addAccountOptions} passed to {@link #addAccount}.
-   *
-   * @return the next {@code addAccountOptions}
-   */
-  public Bundle getNextAddAccountOptions() {
-    if (addAccountOptionsList.isEmpty()) {
-      return null;
-    } else {
-      return addAccountOptionsList.remove(0);
-    }
-  }
-
-  /**
-   * Returns the next {@code addAccountOptions} passed to {@link #addAccount} without consuming it.
-   *
-   * @return the next {@code addAccountOptions}
-   */
-  public Bundle peekNextAddAccountOptions() {
-    if (addAccountOptionsList.isEmpty()) {
-      return null;
-    } else {
-      return addAccountOptionsList.get(0);
-    }
-  }
-
-  private class RoboAccountManagerFuture extends BaseRoboAccountManagerFuture<Bundle> {
-    private final String accountType;
-    private final Activity activity;
-    private final Bundle resultBundle;
-
-    RoboAccountManagerFuture(AccountManagerCallback<Bundle> callback, Handler handler, String accountType, Activity activity) {
-      super(callback, handler);
-
-      this.accountType = accountType;
-      this.activity = activity;
-      this.resultBundle = new Bundle();
-    }
-
-    @Override
-    public Bundle doWork() throws OperationCanceledException, IOException, AuthenticatorException {
-      if (!authenticators.containsKey(accountType)) {
-        throw new AuthenticatorException("No authenticator specified for " + accountType);
-      }
-
-      resultBundle.putString(AccountManager.KEY_ACCOUNT_TYPE, accountType);
-
-      if (activity == null) {
-        Intent resultIntent = new Intent();
-        resultBundle.putParcelable(AccountManager.KEY_INTENT, resultIntent);
-      } else if (callback == null) {
-        resultBundle.putString(AccountManager.KEY_ACCOUNT_NAME, "some_user@gmail.com");
-      }
-
-      return resultBundle;
-    }
-  }
-
-  @Implementation
-  protected AccountManagerFuture<Bundle> addAccount(
-      final String accountType,
-      String authTokenType,
-      String[] requiredFeatures,
-      Bundle addAccountOptions,
-      Activity activity,
-      AccountManagerCallback<Bundle> callback,
-      Handler handler) {
-    addAccountOptionsList.add(addAccountOptions);
-    pendingAddFuture = new RoboAccountManagerFuture(callback, handler, accountType, activity);
-    return pendingAddFuture;
-  }
-
-  public void setFeatures(Account account, String[] accountFeatures) {
-    HashSet<String> featureSet = new HashSet<>();
-    featureSet.addAll(Arrays.asList(accountFeatures));
-    this.accountFeatures.put(account, featureSet);
-  }
-
-  /**
-   * @param authenticator System authenticator.
-   */
-  public void addAuthenticator(AuthenticatorDescription authenticator) {
-    authenticators.put(authenticator.type, authenticator);
-  }
-
-  public void addAuthenticator(String type) {
-    addAuthenticator(AuthenticatorDescription.newKey(type));
-  }
-
-  private Map<Account, String> previousNames = new HashMap<Account, String>();
-
-  /**
-   * Sets the previous name for an account, which will be returned by {@link AccountManager#getPreviousName(Account)}.
-   *
-   * @param account User account.
-   * @param previousName Previous account name.
-   */
-  public void setPreviousAccountName(Account account, String previousName) {
-    previousNames.put(account, previousName);
-  }
-
-  /** @see #setPreviousAccountName(Account, String) */
-  @Implementation(minSdk = LOLLIPOP)
-  protected String getPreviousName(Account account) {
-    return previousNames.get(account);
-  }
-
-  @Implementation
-  protected AccountManagerFuture<Bundle> getAuthToken(
-      final Account account,
-      final String authTokenType,
-      final Bundle options,
-      final Activity activity,
-      final AccountManagerCallback<Bundle> callback,
-      Handler handler) {
-
-    return start(
-        new BaseRoboAccountManagerFuture<Bundle>(callback, handler) {
-          @Override
-          public Bundle doWork()
-              throws OperationCanceledException, IOException, AuthenticatorException {
-            return getAuthToken(account, authTokenType);
-          }
-        });
-  }
-
-  @Implementation
-  protected AccountManagerFuture<Bundle> getAuthToken(
-      final Account account,
-      final String authTokenType,
-      final Bundle options,
-      final boolean notifyAuthFailure,
-      final AccountManagerCallback<Bundle> callback,
-      Handler handler) {
-
-    return start(new BaseRoboAccountManagerFuture<Bundle>(callback, handler) {
-      @Override
-      public Bundle doWork()
-          throws OperationCanceledException, IOException, AuthenticatorException {
-        return getAuthToken(account, authTokenType);
-      }
-    });
-  }
-
-  private Bundle getAuthToken(Account account, String authTokenType)
-      throws OperationCanceledException, IOException, AuthenticatorException {
-    Bundle result = new Bundle();
-
-    String authToken = blockingGetAuthToken(account, authTokenType, false);
-    result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
-    result.putString(AccountManager.KEY_ACCOUNT_TYPE, account.type);
-    result.putString(AccountManager.KEY_AUTHTOKEN, authToken);
-
-    if (authToken != null) {
-      return result;
-    }
-
-    if (!authenticators.containsKey(account.type)) {
-      throw new AuthenticatorException("No authenticator specified for " + account.type);
-    }
-
-    Intent resultIntent = new Intent();
-    result.putParcelable(AccountManager.KEY_INTENT, resultIntent);
-
-    return result;
-  }
-
-  @Implementation
-  protected AccountManagerFuture<Boolean> hasFeatures(
-      final Account account,
-      final String[] features,
-      AccountManagerCallback<Boolean> callback,
-      Handler handler) {
-    return start(new BaseRoboAccountManagerFuture<Boolean>(callback, handler) {
-      @Override
-      public Boolean doWork() throws OperationCanceledException, IOException, AuthenticatorException {
-        Set<String> availableFeatures = accountFeatures.get(account);
-        for (String feature : features) {
-          if (!availableFeatures.contains(feature)) {
-            return false;
-          }
+        @Override
+        public T getResult(long timeout, TimeUnit unit) throws OperationCanceledException, IOException, AuthenticatorException {
+            return getResult();
         }
-        return true;
-      }
-    });
-  }
 
-  @Implementation
-  protected AccountManagerFuture<Account[]> getAccountsByTypeAndFeatures(
-      final String type,
-      final String[] features,
-      AccountManagerCallback<Account[]> callback,
-      Handler handler) {
-    return start(
-        new BaseRoboAccountManagerFuture<Account[]>(callback, handler) {
-          @Override
-          public Account[] doWork()
-              throws OperationCanceledException, IOException, AuthenticatorException {
-
-            if (authenticationErrorOnNextResponse) {
-              setAuthenticationErrorOnNextResponse(false);
-              throw new AuthenticatorException();
-            }
-
-            List<Account> result = new ArrayList<>();
-
-            Account[] accountsByType = getAccountsByType(type);
-            for (Account account : accountsByType) {
-              Set<String> featureSet = accountFeatures.get(account);
-              if (features == null
-                  || (featureSet != null && featureSet.containsAll(Arrays.asList(features)))) {
-                result.add(account);
-              }
-            }
-            return result.toArray(new Account[result.size()]);
-          }
-        });
-  }
-
-  private <T extends BaseRoboAccountManagerFuture> T start(T future) {
-    future.start();
-    return future;
-  }
-
-  @Implementation(minSdk = JELLY_BEAN_MR2)
-  protected Account[] getAccountsByTypeForPackage(String type, String packageName) {
-    List<Account> result = new ArrayList<>();
-
-    Account[] accountsByType = getAccountsByType(type);
-    for (Account account : accountsByType) {
-      if (packageVisibileAccounts.containsKey(account) && packageVisibileAccounts.get(account).contains(packageName)) {
-        result.add(account);
-      }
+        public abstract T doWork() throws OperationCanceledException, IOException, AuthenticatorException;
     }
-
-    return result.toArray(new Account[result.size()]);
-  }
-
-  /**
-   * Sets authenticator exception, which will be thrown by {@link #getAccountsByTypeAndFeatures}.
-   *
-   * @param authenticationErrorOnNextResponse to set flag that exception will be thrown on next
-   *     response.
-   */
-  public void setAuthenticationErrorOnNextResponse(boolean authenticationErrorOnNextResponse) {
-    this.authenticationErrorOnNextResponse = authenticationErrorOnNextResponse;
-  }
-
-  /**
-   * Sets the intent to include in Bundle result from {@link #removeAccount} if Activity is given.
-   *
-   * @param removeAccountIntent the intent to surface as {@link AccountManager#KEY_INTENT}.
-   */
-  public void setRemoveAccountIntent(Intent removeAccountIntent) {
-    this.removeAccountIntent = removeAccountIntent;
-  }
-
-  private abstract class BaseRoboAccountManagerFuture<T> implements AccountManagerFuture<T> {
-    protected final AccountManagerCallback<T> callback;
-    private final Handler handler;
-    protected T result;
-    private Exception exception;
-    private boolean started = false;
-
-    BaseRoboAccountManagerFuture(AccountManagerCallback<T> callback, Handler handler) {
-      this.callback = callback;
-      this.handler = handler == null ? mainHandler : handler;
-    }
-
-    void start() {
-      if (started) return;
-      started = true;
-
-      try {
-        result = doWork();
-      } catch (OperationCanceledException | IOException | AuthenticatorException e) {
-        exception = e;
-      }
-
-      if (callback != null) {
-        handler.post(
-            new Runnable() {
-              @Override
-              public void run() {
-                callback.run(BaseRoboAccountManagerFuture.this);
-              }
-            });
-      }
-    }
-
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      return false;
-    }
-
-    @Override
-    public boolean isCancelled() {
-      return false;
-    }
-
-    @Override
-    public boolean isDone() {
-      return result != null || exception != null || isCancelled();
-    }
-
-    @Override
-    public T getResult() throws OperationCanceledException, IOException, AuthenticatorException {
-      start();
-
-      if (exception instanceof OperationCanceledException) {
-        throw new OperationCanceledException(exception);
-      } else if (exception instanceof IOException) {
-        throw new IOException(exception);
-      } else if (exception instanceof AuthenticatorException) {
-        throw new AuthenticatorException(exception);
-      }
-      return result;
-    }
-
-    @Override
-    public T getResult(long timeout, TimeUnit unit) throws OperationCanceledException, IOException, AuthenticatorException {
-      return getResult();
-    }
-
-    public abstract T doWork() throws OperationCanceledException, IOException, AuthenticatorException;
-  }
 }
+

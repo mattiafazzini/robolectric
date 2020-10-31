@@ -2,7 +2,6 @@ package org.robolectric.shadows;
 
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
 import static org.robolectric.shadow.api.Shadow.directlyOn;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Adapter;
@@ -18,70 +17,82 @@ import org.robolectric.util.ReflectionHelpers;
 @Implements(value = AlertController.class, isInAndroidSdk = false)
 public class ShadowAlertController {
 
-  @RealObject AlertController realAlertController;
+    @RealObject
+    AlertController realAlertController;
 
-  private CharSequence title;
-  private CharSequence message;
-  private View view;
-  private View customTitleView;
-  private int iconId;
+    private CharSequence title;
 
-  @Implementation
-  public void setTitle(CharSequence title) throws InvocationTargetException, IllegalAccessException {
-    this.title = title;
-    directlyOn(realAlertController, AlertController.class).setTitle(title);
-  }
+    private CharSequence message;
 
-  public CharSequence getTitle() {
-    return title == null ? "" : title;
-  }
+    private View view;
 
-  @Implementation
-  public void setCustomTitle(View customTitleView) {
-    this.customTitleView = customTitleView;
-    directlyOn(realAlertController, AlertController.class).setCustomTitle(customTitleView);
-  }
+    private View customTitleView;
 
-  public View getCustomTitleView() {
-    return customTitleView;
-  }
+    private int iconId;
 
-  @Implementation
-  public void setMessage(CharSequence message) {
-    this.message = message;
-    directlyOn(realAlertController, AlertController.class).setMessage(message);
-  }
+    @Implementation
+    public void setTitle(CharSequence title) throws InvocationTargetException, IllegalAccessException {
+        System.out.println("ShadowAlertController#setTitle");
+        this.title = title;
+        directlyOn(realAlertController, AlertController.class).setTitle(title);
+    }
 
-  public CharSequence getMessage() {
-    return message == null ? "" : message;
-  }
+    public CharSequence getTitle() {
+        return title == null ? "" : title;
+    }
 
-  @Implementation
-  public void setView(View view) {
-    this.view = view;
-    directlyOn(realAlertController, AlertController.class).setView(view);
-  }
+    @Implementation
+    public void setCustomTitle(View customTitleView) {
+        System.out.println("ShadowAlertController#setCustomTitle");
+        this.customTitleView = customTitleView;
+        directlyOn(realAlertController, AlertController.class).setCustomTitle(customTitleView);
+    }
 
-  @Implementation(minSdk = LOLLIPOP)
-  public void setView(int resourceId) {
-    setView(LayoutInflater.from(RuntimeEnvironment.application).inflate(resourceId, null));
-  }
+    public View getCustomTitleView() {
+        return customTitleView;
+    }
 
-  @Implementation
-  public void setIcon(int iconId) {
-    this.iconId = iconId;
-    directlyOn(realAlertController, AlertController.class).setIcon(iconId);
-  }
+    @Implementation
+    public void setMessage(CharSequence message) {
+        System.out.println("ShadowAlertController#setMessage");
+        this.message = message;
+        directlyOn(realAlertController, AlertController.class).setMessage(message);
+    }
 
-  public int getIconId() {
-    return iconId;
-  }
+    public CharSequence getMessage() {
+        return message == null ? "" : message;
+    }
 
-  public View getView() {
-    return view;
-  }
+    @Implementation
+    public void setView(View view) {
+        System.out.println("ShadowAlertController#setView");
+        this.view = view;
+        directlyOn(realAlertController, AlertController.class).setView(view);
+    }
 
-  public Adapter getAdapter() {
-    return ReflectionHelpers.<ListView>callInstanceMethod(realAlertController, "getListView").getAdapter();
-  }
+    @Implementation(minSdk = LOLLIPOP)
+    public void setView(int resourceId) {
+        System.out.println("ShadowAlertController#setView");
+        setView(LayoutInflater.from(RuntimeEnvironment.application).inflate(resourceId, null));
+    }
+
+    @Implementation
+    public void setIcon(int iconId) {
+        System.out.println("ShadowAlertController#setIcon");
+        this.iconId = iconId;
+        directlyOn(realAlertController, AlertController.class).setIcon(iconId);
+    }
+
+    public int getIconId() {
+        return iconId;
+    }
+
+    public View getView() {
+        return view;
+    }
+
+    public Adapter getAdapter() {
+        return ReflectionHelpers.<ListView>callInstanceMethod(realAlertController, "getListView").getAdapter();
+    }
 }
+

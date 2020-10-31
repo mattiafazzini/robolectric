@@ -13,24 +13,29 @@ import org.robolectric.util.reflector.ForType;
 @Implements(value = LoadedApk.class, isInAndroidSdk = false)
 public class ShadowLoadedApk {
 
-  @Implementation
-  public ClassLoader getClassLoader() {
-    return this.getClass().getClassLoader();
-  }
+    @Implementation
+    public ClassLoader getClassLoader() {
+        System.out.println("ShadowLoadedApk#getClassLoader");
+        return this.getClass().getClassLoader();
+    }
 
-  @Implementation(minSdk = VERSION_CODES.O)
-  public ClassLoader getSplitClassLoader(String splitName) throws NameNotFoundException {
-    return this.getClass().getClassLoader();
-  }
+    @Implementation(minSdk = VERSION_CODES.O)
+    public ClassLoader getSplitClassLoader(String splitName) throws NameNotFoundException {
+        System.out.println("ShadowLoadedApk#getSplitClassLoader");
+        return this.getClass().getClassLoader();
+    }
 
-  /** Accessor interface for {@link LoadedApk}'s internals. */
-  @ForType(LoadedApk.class)
-  public interface _LoadedApk_ {
+    /**
+     * Accessor interface for {@link LoadedApk}'s internals.
+     */
+    @ForType(LoadedApk.class)
+    public interface _LoadedApk_ {
 
-    @Accessor("mApplication")
-    void setApplication(Application application);
+        @Accessor("mApplication")
+        void setApplication(Application application);
 
-    @Accessor("mResources")
-    void setResources(Resources resources);
-  }
+        @Accessor("mResources")
+        void setResources(Resources resources);
+    }
 }
+

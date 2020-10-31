@@ -11,29 +11,36 @@ import org.robolectric.annotation.Resetter;
 @Implements(VpnService.class)
 public class ShadowVpnService extends ShadowService {
 
-  private static Intent prepareIntent = new Intent();
+    private static Intent prepareIntent = new Intent();
 
-  /** @see #setPrepareResult(Intent). */
-  @Implementation
-  protected static Intent prepare(Context context) {
-    return prepareIntent;
-  }
+    /**
+     * @see #setPrepareResult(Intent).
+     */
+    @Implementation
+    protected static Intent prepare(Context context) {
+        System.out.println("ShadowVpnService#prepare");
+        return prepareIntent;
+    }
 
-  /** Sets the return value of #prepare(Context). */
-  public static void setPrepareResult(Intent intent) {
-    prepareIntent = intent;
-  }
+    /**
+     * Sets the return value of #prepare(Context).
+     */
+    public static void setPrepareResult(Intent intent) {
+        prepareIntent = intent;
+    }
 
-  /**
-   * No-ops and always return true, override to avoid call to non-existent Socket.getFileDescriptor.
-   */
-  @Implementation
-  protected boolean protect(Socket socket) {
-    return true;
-  }
+    /**
+     * No-ops and always return true, override to avoid call to non-existent Socket.getFileDescriptor.
+     */
+    @Implementation
+    protected boolean protect(Socket socket) {
+        System.out.println("ShadowVpnService#protect");
+        return true;
+    }
 
-  @Resetter
-  public static synchronized void reset() {
-    prepareIntent = new Intent();
-  }
+    @Resetter
+    public static synchronized void reset() {
+        prepareIntent = new Intent();
+    }
 }
+

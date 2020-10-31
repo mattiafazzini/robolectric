@@ -6,7 +6,6 @@ import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.P;
 import static android.os.Build.VERSION_CODES.Q;
 import static org.robolectric.shadow.api.Shadow.invokeConstructor;
-
 import android.annotation.Nullable;
 import android.annotation.RequiresPermission;
 import android.annotation.SystemApi;
@@ -46,248 +45,244 @@ import org.robolectric.util.ReflectionHelpers.ClassParameter;
 @Implements(value = AppOpsManager.class)
 public class ShadowAppOpsManager {
 
-  // OpEntry fields that the shadow doesn't currently allow the test to configure.
-  private static final long OP_TIME = 1400000000L;
-  private static final long REJECT_TIME = 0L;
-  private static final int DURATION = 10;
-  private static final int PROXY_UID = 0;
-  private static final String PROXY_PACKAGE = "";
+    // OpEntry fields that the shadow doesn't currently allow the test to configure.
+    private static final long OP_TIME = 1400000000L;
 
-  @RealObject private AppOpsManager realObject;
+    private static final long REJECT_TIME = 0L;
 
-  // Recorded operations, keyed by "uid|packageName"
-  private Multimap<String, Integer> mStoredOps = HashMultimap.create();
-  // "uid|packageName|opCode" => opMode
-  private Map<String, Integer> appModeMap = new HashMap<>();
+    private static final int DURATION = 10;
 
-  // "packageName|opCode" => listener
-  private BiMap<String, OnOpChangedListener> appOpListeners = HashBiMap.create();
+    private static final int PROXY_UID = 0;
 
-  // op | (usage << 8) => ModeAndExcpetion
-  private Map<Integer, ModeAndException> audioRestrictions = new HashMap<>();
+    private static final String PROXY_PACKAGE = "";
 
-  private Context context;
+    @RealObject
+    private AppOpsManager realObject;
 
-  @Implementation(minSdk = KITKAT)
-  protected void __constructor__(Context context, IAppOpsService service) {
-    this.context = context;
-    invokeConstructor(
-        AppOpsManager.class,
-        realObject,
-        ClassParameter.from(Context.class, context),
-        ClassParameter.from(IAppOpsService.class, service));
-  }
+    // Recorded operations, keyed by "uid|packageName"
+    private Multimap<String, Integer> mStoredOps = HashMultimap.create();
 
-  /**
-   * Change the operating mode for the given op in the given app package. You must pass in both the
-   * uid and name of the application whose mode is being modified; if these do not match, the
-   * modification will not be applied.
-   *
-   * <p>This method is public for testing {@link #checkOpNoThrow}. If {@link #checkOpNoThrow} is
-   * called afterwards with the {@code op}, {@code ui}, and {@code packageName} provided, it will
-   * return the {@code mode} set here.
-   *
-   * @param op The operation to modify. One of the OPSTR_* constants.
-   * @param uid The user id of the application whose mode will be changed.
-   * @param packageName The name of the application package name whose mode will be changed.
-   */
-  @Implementation(minSdk = P)
-  @HiddenApi
-  @SystemApi
-  @RequiresPermission(android.Manifest.permission.MANAGE_APP_OPS_MODES)
-  public void setMode(String op, int uid, String packageName, int mode) {
-    setMode(AppOpsManager.strOpToOp(op), uid, packageName, mode);
-  }
+    // "uid|packageName|opCode" => opMode
+    private Map<String, Integer> appModeMap = new HashMap<>();
 
-  /**
-   * Int version of {@link #setMode(String, int, String, int)}.
-   *
-   * <p>This method is public for testing {@link #checkOpNoThrow}. If {@link #checkOpNoThrow} is *
-   * called afterwards with the {@code op}, {@code ui}, and {@code packageName} provided, it will *
-   * return the {@code mode} set here.
-   */
-  @Implementation(minSdk = KITKAT)
-  @HiddenApi
-  @RequiresPermission(android.Manifest.permission.MANAGE_APP_OPS_MODES)
-  public void setMode(int op, int uid, String packageName, int mode) {
-    Integer oldMode = appModeMap.put(getOpMapKey(uid, packageName, op), mode);
-    OnOpChangedListener listener = appOpListeners.get(getListenerKey(op, packageName));
-    if (listener != null && !Objects.equals(oldMode, mode)) {
-      String[] sOpToString = ReflectionHelpers.getStaticField(AppOpsManager.class, "sOpToString");
-      listener.onOpChanged(sOpToString[op], packageName);
-    }
-  }
+    // "packageName|opCode" => listener
+    private BiMap<String, OnOpChangedListener> appOpListeners = HashBiMap.create();
 
-  @Implementation(minSdk = Q)
-  public int unsafeCheckOpNoThrow(String op, int uid, String packageName) {
-    return checkOpNoThrow(AppOpsManager.strOpToOp(op), uid, packageName);
-  }
+    // op | (usage << 8) => ModeAndExcpetion
+    private Map<Integer, ModeAndException> audioRestrictions = new HashMap<>();
 
-  @Implementation(minSdk = P)
-  @Deprecated // renamed to unsafeCheckOpNoThrow
-  protected int checkOpNoThrow(String op, int uid, String packageName) {
-    return checkOpNoThrow(AppOpsManager.strOpToOp(op), uid, packageName);
-  }
+    private Context context;
 
-  /**
-   * Like {@link AppOpsManager#checkOp} but instead of throwing a {@link SecurityException} it
-   * returns {@link AppOpsManager#MODE_ERRORED}.
-   *
-   * <p>Made public for testing {@link #setMode} as the method is {@coe @hide}.
-   */
-  @Implementation(minSdk = KITKAT)
-  @HiddenApi
-  public int checkOpNoThrow(int op, int uid, String packageName) {
-    Integer mode = appModeMap.get(getOpMapKey(uid, packageName, op));
-    if (mode == null) {
-      return AppOpsManager.MODE_ALLOWED;
-    }
-    return mode;
-  }
-
-  @Implementation(minSdk = KITKAT)
-  public int noteOp(int op, int uid, String packageName) {
-    mStoredOps.put(getInternalKey(uid, packageName), op);
-
-    // Permission check not currently implemented in this shadow.
-    return AppOpsManager.MODE_ALLOWED;
-  }
-
-  @Implementation(minSdk = KITKAT)
-  protected int noteOpNoThrow(int op, int uid, String packageName) {
-    mStoredOps.put(getInternalKey(uid, packageName), op);
-    return checkOpNoThrow(op, uid, packageName);
-  }
-
-  @Implementation(minSdk = M)
-  @HiddenApi
-  protected int noteProxyOpNoThrow(int op, String proxiedPackageName) {
-    mStoredOps.put(getInternalKey(Binder.getCallingUid(), proxiedPackageName), op);
-    return checkOpNoThrow(op, Binder.getCallingUid(), proxiedPackageName);
-  }
-
-  @Implementation(minSdk = KITKAT)
-  @HiddenApi
-  public List<PackageOps> getOpsForPackage(int uid, String packageName, int[] ops) {
-    Set<Integer> opFilter = new HashSet<>();
-    if (ops != null) {
-      for (int op : ops) {
-        opFilter.add(op);
-      }
+    @Implementation(minSdk = KITKAT)
+    protected void __constructor__(Context context, IAppOpsService service) {
+        System.out.println("ShadowAppOpsManager#__constructor__");
+        this.context = context;
+        invokeConstructor(AppOpsManager.class, realObject, ClassParameter.from(Context.class, context), ClassParameter.from(IAppOpsService.class, service));
     }
 
-    List<OpEntry> opEntries = new ArrayList<>();
-    for (Integer op : mStoredOps.get(getInternalKey(uid, packageName))) {
-      if (opFilter.isEmpty() || opFilter.contains(op)) {
-        opEntries.add(toOpEntry(op));
-      }
+    /**
+     * Change the operating mode for the given op in the given app package. You must pass in both the
+     * uid and name of the application whose mode is being modified; if these do not match, the
+     * modification will not be applied.
+     *
+     * <p>This method is public for testing {@link #checkOpNoThrow}. If {@link #checkOpNoThrow} is
+     * called afterwards with the {@code op}, {@code ui}, and {@code packageName} provided, it will
+     * return the {@code mode} set here.
+     *
+     * @param op The operation to modify. One of the OPSTR_* constants.
+     * @param uid The user id of the application whose mode will be changed.
+     * @param packageName The name of the application package name whose mode will be changed.
+     */
+    @Implementation(minSdk = P)
+    @HiddenApi
+    @SystemApi
+    @RequiresPermission(android.Manifest.permission.MANAGE_APP_OPS_MODES)
+    public void setMode(String op, int uid, String packageName, int mode) {
+        System.out.println("ShadowAppOpsManager#setMode");
+        setMode(AppOpsManager.strOpToOp(op), uid, packageName, mode);
     }
 
-    return ImmutableList.of(new PackageOps(packageName, uid, opEntries));
-  }
-
-  @Implementation(minSdk = KITKAT)
-  protected void checkPackage(int uid, String packageName) {
-    try {
-      // getPackageUid was introduced in API 24, so we call it on the shadow class
-      ShadowApplicationPackageManager shadowApplicationPackageManager =
-          Shadow.extract(context.getPackageManager());
-      int packageUid = shadowApplicationPackageManager.getPackageUid(packageName, 0);
-      if (packageUid == uid) {
-        return;
-      }
-      throw new SecurityException("Package " + packageName + " belongs to " + packageUid);
-    } catch (NameNotFoundException e) {
-      throw new SecurityException("Package " + packageName + " doesn't belong to " + uid, e);
+    /**
+     * Int version of {@link #setMode(String, int, String, int)}.
+     *
+     * <p>This method is public for testing {@link #checkOpNoThrow}. If {@link #checkOpNoThrow} is *
+     * called afterwards with the {@code op}, {@code ui}, and {@code packageName} provided, it will *
+     * return the {@code mode} set here.
+     */
+    @Implementation(minSdk = KITKAT)
+    @HiddenApi
+    @RequiresPermission(android.Manifest.permission.MANAGE_APP_OPS_MODES)
+    public void setMode(int op, int uid, String packageName, int mode) {
+        System.out.println("ShadowAppOpsManager#setMode");
+        Integer oldMode = appModeMap.put(getOpMapKey(uid, packageName, op), mode);
+        OnOpChangedListener listener = appOpListeners.get(getListenerKey(op, packageName));
+        if (listener != null && !Objects.equals(oldMode, mode)) {
+            String[] sOpToString = ReflectionHelpers.getStaticField(AppOpsManager.class, "sOpToString");
+            listener.onOpChanged(sOpToString[op], packageName);
+        }
     }
-  }
 
-  /**
-   * Sets audio restrictions.
-   *
-   * <p>This method is public for testing, as the original method is {@code @hide}.
-   */
-  @Implementation(minSdk = LOLLIPOP)
-  @HiddenApi
-  public void setRestriction(
-      int code, @AttributeUsage int usage, int mode, String[] exceptionPackages) {
-    audioRestrictions.put(
-        getAudioRestrictionKey(code, usage), new ModeAndException(mode, exceptionPackages));
-  }
-
-  @Nullable
-  public ModeAndException getRestriction(int code, @AttributeUsage int usage) {
-    // this gives us room for 256 op_codes. There are 78 as of P.
-    return audioRestrictions.get(getAudioRestrictionKey(code, usage));
-  }
-
-  @Implementation(minSdk = KITKAT)
-  @HiddenApi
-  @RequiresPermission(value = android.Manifest.permission.WATCH_APPOPS)
-  protected void startWatchingMode(int op, String packageName, OnOpChangedListener callback) {
-    appOpListeners.put(getListenerKey(op, packageName), callback);
-  }
-
-  @Implementation(minSdk = KITKAT)
-  @RequiresPermission(value = android.Manifest.permission.WATCH_APPOPS)
-  protected void stopWatchingMode(OnOpChangedListener callback) {
-    appOpListeners.inverse().remove(callback);
-  }
-
-  protected OpEntry toOpEntry(Integer op) {
-    if (RuntimeEnvironment.getApiLevel() < Build.VERSION_CODES.M) {
-      return ReflectionHelpers.callConstructor(
-          OpEntry.class,
-          ClassParameter.from(int.class, op),
-          ClassParameter.from(int.class, AppOpsManager.MODE_ALLOWED),
-          ClassParameter.from(long.class, OP_TIME),
-          ClassParameter.from(long.class, REJECT_TIME),
-          ClassParameter.from(int.class, DURATION));
-    } else if (RuntimeEnvironment.getApiLevel() < Build.VERSION_CODES.Q) {
-      return ReflectionHelpers.callConstructor(
-          OpEntry.class,
-          ClassParameter.from(int.class, op),
-          ClassParameter.from(int.class, AppOpsManager.MODE_ALLOWED),
-          ClassParameter.from(long.class, OP_TIME),
-          ClassParameter.from(long.class, REJECT_TIME),
-          ClassParameter.from(int.class, DURATION),
-          ClassParameter.from(int.class, PROXY_UID),
-          ClassParameter.from(String.class, PROXY_PACKAGE));
-    } else {
-      return ReflectionHelpers.callConstructor(
-          AppOpsManager.OpEntry.class,
-          ClassParameter.from(int.class, op),
-          ClassParameter.from(int.class, AppOpsManager.MODE_ALLOWED));
+    @Implementation(minSdk = Q)
+    public int unsafeCheckOpNoThrow(String op, int uid, String packageName) {
+        System.out.println("ShadowAppOpsManager#unsafeCheckOpNoThrow");
+        return checkOpNoThrow(AppOpsManager.strOpToOp(op), uid, packageName);
     }
-  }
 
-  private static String getInternalKey(int uid, String packageName) {
-    return uid + "|" + packageName;
-  }
-
-  private static String getOpMapKey(int uid, String packageName, int opInt) {
-    return String.format("%s|%s|%s", uid, packageName, opInt);
-  }
-
-  private static int getAudioRestrictionKey(int code, @AttributeUsage int usage) {
-    return code | (usage << 8);
-  }
-
-  private static String getListenerKey(int op, String packageName) {
-    return String.format("%s|%s", op, packageName);
-  }
-
-  /** Class holding usage mode and excpetion packages. */
-  public static class ModeAndException {
-    public final int mode;
-    public final List<String> exceptionPackages;
-
-    public ModeAndException(int mode, String[] exceptionPackages) {
-      this.mode = mode;
-      this.exceptionPackages =
-          exceptionPackages == null
-              ? Collections.emptyList()
-              : Collections.unmodifiableList(Arrays.asList(exceptionPackages));
+    @Implementation(minSdk = P)
+    // renamed to unsafeCheckOpNoThrow
+    @Deprecated
+    protected int checkOpNoThrow(String op, int uid, String packageName) {
+        System.out.println("ShadowAppOpsManager#checkOpNoThrow");
+        return checkOpNoThrow(AppOpsManager.strOpToOp(op), uid, packageName);
     }
-  }
+
+    /**
+     * Like {@link AppOpsManager#checkOp} but instead of throwing a {@link SecurityException} it
+     * returns {@link AppOpsManager#MODE_ERRORED}.
+     *
+     * <p>Made public for testing {@link #setMode} as the method is {@coe @hide}.
+     */
+    @Implementation(minSdk = KITKAT)
+    @HiddenApi
+    public int checkOpNoThrow(int op, int uid, String packageName) {
+        System.out.println("ShadowAppOpsManager#checkOpNoThrow");
+        Integer mode = appModeMap.get(getOpMapKey(uid, packageName, op));
+        if (mode == null) {
+            return AppOpsManager.MODE_ALLOWED;
+        }
+        return mode;
+    }
+
+    @Implementation(minSdk = KITKAT)
+    public int noteOp(int op, int uid, String packageName) {
+        System.out.println("ShadowAppOpsManager#noteOp");
+        mStoredOps.put(getInternalKey(uid, packageName), op);
+        // Permission check not currently implemented in this shadow.
+        return AppOpsManager.MODE_ALLOWED;
+    }
+
+    @Implementation(minSdk = KITKAT)
+    protected int noteOpNoThrow(int op, int uid, String packageName) {
+        System.out.println("ShadowAppOpsManager#noteOpNoThrow");
+        mStoredOps.put(getInternalKey(uid, packageName), op);
+        return checkOpNoThrow(op, uid, packageName);
+    }
+
+    @Implementation(minSdk = M)
+    @HiddenApi
+    protected int noteProxyOpNoThrow(int op, String proxiedPackageName) {
+        System.out.println("ShadowAppOpsManager#noteProxyOpNoThrow");
+        mStoredOps.put(getInternalKey(Binder.getCallingUid(), proxiedPackageName), op);
+        return checkOpNoThrow(op, Binder.getCallingUid(), proxiedPackageName);
+    }
+
+    @Implementation(minSdk = KITKAT)
+    @HiddenApi
+    public List<PackageOps> getOpsForPackage(int uid, String packageName, int[] ops) {
+        System.out.println("ShadowAppOpsManager#getOpsForPackage");
+        Set<Integer> opFilter = new HashSet<>();
+        if (ops != null) {
+            for (int op : ops) {
+                opFilter.add(op);
+            }
+        }
+        List<OpEntry> opEntries = new ArrayList<>();
+        for (Integer op : mStoredOps.get(getInternalKey(uid, packageName))) {
+            if (opFilter.isEmpty() || opFilter.contains(op)) {
+                opEntries.add(toOpEntry(op));
+            }
+        }
+        return ImmutableList.of(new PackageOps(packageName, uid, opEntries));
+    }
+
+    @Implementation(minSdk = KITKAT)
+    protected void checkPackage(int uid, String packageName) {
+        System.out.println("ShadowAppOpsManager#checkPackage");
+        try {
+            // getPackageUid was introduced in API 24, so we call it on the shadow class
+            ShadowApplicationPackageManager shadowApplicationPackageManager = Shadow.extract(context.getPackageManager());
+            int packageUid = shadowApplicationPackageManager.getPackageUid(packageName, 0);
+            if (packageUid == uid) {
+                return;
+            }
+            throw new SecurityException("Package " + packageName + " belongs to " + packageUid);
+        } catch (NameNotFoundException e) {
+            throw new SecurityException("Package " + packageName + " doesn't belong to " + uid, e);
+        }
+    }
+
+    /**
+     * Sets audio restrictions.
+     *
+     * <p>This method is public for testing, as the original method is {@code @hide}.
+     */
+    @Implementation(minSdk = LOLLIPOP)
+    @HiddenApi
+    public void setRestriction(int code, @AttributeUsage int usage, int mode, String[] exceptionPackages) {
+        System.out.println("ShadowAppOpsManager#setRestriction");
+        audioRestrictions.put(getAudioRestrictionKey(code, usage), new ModeAndException(mode, exceptionPackages));
+    }
+
+    @Nullable
+    public ModeAndException getRestriction(int code, @AttributeUsage int usage) {
+        // this gives us room for 256 op_codes. There are 78 as of P.
+        return audioRestrictions.get(getAudioRestrictionKey(code, usage));
+    }
+
+    @Implementation(minSdk = KITKAT)
+    @HiddenApi
+    @RequiresPermission(value = android.Manifest.permission.WATCH_APPOPS)
+    protected void startWatchingMode(int op, String packageName, OnOpChangedListener callback) {
+        System.out.println("ShadowAppOpsManager#startWatchingMode");
+        appOpListeners.put(getListenerKey(op, packageName), callback);
+    }
+
+    @Implementation(minSdk = KITKAT)
+    @RequiresPermission(value = android.Manifest.permission.WATCH_APPOPS)
+    protected void stopWatchingMode(OnOpChangedListener callback) {
+        System.out.println("ShadowAppOpsManager#stopWatchingMode");
+        appOpListeners.inverse().remove(callback);
+    }
+
+    protected OpEntry toOpEntry(Integer op) {
+        if (RuntimeEnvironment.getApiLevel() < Build.VERSION_CODES.M) {
+            return ReflectionHelpers.callConstructor(OpEntry.class, ClassParameter.from(int.class, op), ClassParameter.from(int.class, AppOpsManager.MODE_ALLOWED), ClassParameter.from(long.class, OP_TIME), ClassParameter.from(long.class, REJECT_TIME), ClassParameter.from(int.class, DURATION));
+        } else if (RuntimeEnvironment.getApiLevel() < Build.VERSION_CODES.Q) {
+            return ReflectionHelpers.callConstructor(OpEntry.class, ClassParameter.from(int.class, op), ClassParameter.from(int.class, AppOpsManager.MODE_ALLOWED), ClassParameter.from(long.class, OP_TIME), ClassParameter.from(long.class, REJECT_TIME), ClassParameter.from(int.class, DURATION), ClassParameter.from(int.class, PROXY_UID), ClassParameter.from(String.class, PROXY_PACKAGE));
+        } else {
+            return ReflectionHelpers.callConstructor(AppOpsManager.OpEntry.class, ClassParameter.from(int.class, op), ClassParameter.from(int.class, AppOpsManager.MODE_ALLOWED));
+        }
+    }
+
+    private static String getInternalKey(int uid, String packageName) {
+        return uid + "|" + packageName;
+    }
+
+    private static String getOpMapKey(int uid, String packageName, int opInt) {
+        return String.format("%s|%s|%s", uid, packageName, opInt);
+    }
+
+    private static int getAudioRestrictionKey(int code, @AttributeUsage int usage) {
+        return code | (usage << 8);
+    }
+
+    private static String getListenerKey(int op, String packageName) {
+        return String.format("%s|%s", op, packageName);
+    }
+
+    /**
+     * Class holding usage mode and excpetion packages.
+     */
+    public static class ModeAndException {
+
+        public final int mode;
+
+        public final List<String> exceptionPackages;
+
+        public ModeAndException(int mode, String[] exceptionPackages) {
+            this.mode = mode;
+            this.exceptionPackages = exceptionPackages == null ? Collections.emptyList() : Collections.unmodifiableList(Arrays.asList(exceptionPackages));
+        }
+    }
 }
+

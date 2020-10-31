@@ -3,7 +3,6 @@ package org.robolectric.shadows;
 import static android.os.Build.VERSION_CODES.Q;
 import static java.time.ZoneOffset.UTC;
 import static org.robolectric.shadows.ShadowLooper.assertLooperMode;
-
 import android.os.SimpleClock;
 import android.os.SystemClock;
 import java.time.DateTimeException;
@@ -20,88 +19,96 @@ import org.robolectric.annotation.LooperMode.Mode;
  * LooperMode}. See {@link ShadowLegacySystemClock} and {@link ShadowPausedSystemClock} for more
  * details.
  */
-@Implements(value = SystemClock.class, shadowPicker = ShadowSystemClock.Picker.class,
-    looseSignatures = true)
+@Implements(value = SystemClock.class, shadowPicker = ShadowSystemClock.Picker.class, looseSignatures = true)
 public abstract class ShadowSystemClock {
-  protected static boolean networkTimeAvailable = true;
-  private static boolean gnssTimeAvailable = true;
 
-  /**
-   * Implements {@link System#currentTimeMillis} through ShadowWrangler.
-   *
-   * @return Current time in millis.
-   */
-  @SuppressWarnings("unused")
-  public static long currentTimeMillis() {
-    return ShadowLegacySystemClock.currentTimeMillis();
-  }
+    protected static boolean networkTimeAvailable = true;
 
-  /**
-   * Implements {@link System#nanoTime}.
-   *
-   * @return Current time with nanos.
-   * @deprecated Don't call this method directly; instead, use {@link System#nanoTime()}.
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static long nanoTime() {
-    return ShadowSystem.nanoTime();
-  }
+    private static boolean gnssTimeAvailable = true;
 
-  /**
-   * Sets the value for {@link System#nanoTime()}.
-   *
-   * May only be used for {@link LooperMode.Mode.LEGACY}. For {@link LooperMode.Mode.PAUSED},
-   * `nanoTime` is calculated based on {@link SystemClock#uptimeMillis()} and can't be set
-   * explicitly.
-   */
-  public static void setNanoTime(long nanoTime) {
-    assertLooperMode(Mode.LEGACY);
-    ShadowLegacySystemClock.setNanoTime(nanoTime);
-  }
+    /**
+     * Implements {@link System#currentTimeMillis} through ShadowWrangler.
+     *
+     * @return Current time in millis.
+     */
+    @SuppressWarnings("unused")
+    public static long currentTimeMillis() {
+        return ShadowLegacySystemClock.currentTimeMillis();
+    }
 
-  /** Sets whether network time is available. */
-  public static void setNetworkTimeAvailable(boolean available) {
-    networkTimeAvailable = available;
-  }
+    /**
+     * Implements {@link System#nanoTime}.
+     *
+     * @return Current time with nanos.
+     * @deprecated Don't call this method directly; instead, use {@link System#nanoTime()}.
+     */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static long nanoTime() {
+        return ShadowSystem.nanoTime();
+    }
 
-  /**
-   * A convenience method for advancing the clock via {@link SystemClock#setCurrentTimeMillis(long)}
-   *
-   * @param duration The interval by which to advance.
-   */
-  public static void advanceBy(Duration duration) {
-    SystemClock.setCurrentTimeMillis(SystemClock.uptimeMillis() + duration.toMillis());
-  }
+    /**
+     * Sets the value for {@link System#nanoTime()}.
+     *
+     * May only be used for {@link LooperMode.Mode.LEGACY}. For {@link LooperMode.Mode.PAUSED},
+     * `nanoTime` is calculated based on {@link SystemClock#uptimeMillis()} and can't be set
+     * explicitly.
+     */
+    public static void setNanoTime(long nanoTime) {
+        assertLooperMode(Mode.LEGACY);
+        ShadowLegacySystemClock.setNanoTime(nanoTime);
+    }
 
-  @Implementation(minSdk = Q)
-  protected static Object currentGnssTimeClock() {
-    if (gnssTimeAvailable) {
-      return new SimpleClock(UTC) {
-        @Override
-        public long millis() {
-          return SystemClock.uptimeMillis();
+    /**
+     * Sets whether network time is available.
+     */
+    public static void setNetworkTimeAvailable(boolean available) {
+        networkTimeAvailable = available;
+    }
+
+    /**
+     * A convenience method for advancing the clock via {@link SystemClock#setCurrentTimeMillis(long)}
+     *
+     * @param duration The interval by which to advance.
+     */
+    public static void advanceBy(Duration duration) {
+        SystemClock.setCurrentTimeMillis(SystemClock.uptimeMillis() + duration.toMillis());
+    }
+
+    @Implementation(minSdk = Q)
+    protected static Object currentGnssTimeClock() {
+        System.out.println("ShadowSystemClock#currentGnssTimeClock");
+        if (gnssTimeAvailable) {
+            return new SimpleClock(UTC) {
+
+                @Override
+                public long millis() {
+                    return SystemClock.uptimeMillis();
+                }
+            };
+        } else {
+            throw new DateTimeException("Gnss based time is not available.");
         }
-      };
-    } else {
-      throw new DateTimeException("Gnss based time is not available.");
     }
-  }
 
-  /** Sets whether gnss location based time is available. */
-  public static void setGnssTimeAvailable(boolean available) {
-    gnssTimeAvailable = available;
-  }
-
-  public static void reset() {
-    networkTimeAvailable = true;
-    gnssTimeAvailable = true;
-  }
-
-  public static class Picker extends LooperShadowPicker<ShadowSystemClock> {
-
-    public Picker() {
-      super(ShadowLegacySystemClock.class, ShadowPausedSystemClock.class);
+    /**
+     * Sets whether gnss location based time is available.
+     */
+    public static void setGnssTimeAvailable(boolean available) {
+        gnssTimeAvailable = available;
     }
-  }
+
+    public static void reset() {
+        networkTimeAvailable = true;
+        gnssTimeAvailable = true;
+    }
+
+    public static class Picker extends LooperShadowPicker<ShadowSystemClock> {
+
+        public Picker() {
+            super(ShadowLegacySystemClock.class, ShadowPausedSystemClock.class);
+        }
+    }
 }
+

@@ -7,22 +7,24 @@ import org.robolectric.annotation.Implements;
 import org.robolectric.annotation.RealObject;
 import org.robolectric.shadow.api.Shadow;
 
-/** Dummy container class for nested shadow class */
+/**
+ * Dummy container class for nested shadow class
+ */
 public class ShadowSharedPreferences {
 
-  @Implements(
-      className = "android.app.SharedPreferencesImpl$EditorImpl",
-      minSdk = VERSION_CODES.O,
-      isInAndroidSdk = false)
-  public static class ShadowSharedPreferencesEditorImpl {
+    @Implements(className = "android.app.SharedPreferencesImpl$EditorImpl", minSdk = VERSION_CODES.O, isInAndroidSdk = false)
+    public static class ShadowSharedPreferencesEditorImpl {
 
-    @RealObject Object realObject;
+        @RealObject
+        Object realObject;
 
-    @Implementation
-    protected void apply() {
-      Shadow.directlyOn(realObject, "android.app.SharedPreferencesImpl$EditorImpl", "apply");
-      // Flush QueuedWork. This resolves the deadlock of calling 'apply' followed by 'commit'.
-      QueuedWork.waitToFinish();
+        @Implementation
+        protected void apply() {
+            System.out.println("ShadowSharedPreferencesEditorImpl#apply");
+            Shadow.directlyOn(realObject, "android.app.SharedPreferencesImpl$EditorImpl", "apply");
+            // Flush QueuedWork. This resolves the deadlock of calling 'apply' followed by 'commit'.
+            QueuedWork.waitToFinish();
+        }
     }
-  }
 }
+

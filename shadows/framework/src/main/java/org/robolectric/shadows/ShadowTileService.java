@@ -10,17 +10,19 @@ import org.robolectric.shadow.api.Shadow;
 @Implements(value = TileService.class, minSdk = Build.VERSION_CODES.N)
 public final class ShadowTileService {
 
-  private Tile tile;
+    private Tile tile;
 
-  @Implementation
-  protected final Tile getQsTile() {
-    if (tile == null) {
-      tile = createTile();
+    @Implementation
+    protected final Tile getQsTile() {
+        System.out.println("ShadowTileService#getQsTile");
+        if (tile == null) {
+            tile = createTile();
+        }
+        return tile;
     }
-    return tile;
-  }
 
-  private static Tile createTile() {
-    return Shadow.newInstanceOf(Tile.class);
-  }
+    private static Tile createTile() {
+        return Shadow.newInstanceOf(Tile.class);
+    }
 }
+

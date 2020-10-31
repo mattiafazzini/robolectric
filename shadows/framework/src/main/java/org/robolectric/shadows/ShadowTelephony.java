@@ -11,27 +11,32 @@ import org.robolectric.annotation.Resetter;
 
 @Implements(value = Telephony.class, minSdk = VERSION_CODES.KITKAT)
 public class ShadowTelephony {
-  @Implements(value = Sms.class, minSdk = VERSION_CODES.KITKAT)
-  public static class ShadowSms {
-    @Nullable private static String defaultSmsPackage;
 
-    @Implementation
-    protected static String getDefaultSmsPackage(Context context) {
-      return defaultSmsPackage;
-    }
+    @Implements(value = Sms.class, minSdk = VERSION_CODES.KITKAT)
+    public static class ShadowSms {
 
-    /**
-     * Override the package name returned from calling {@link Sms#getDefaultSmsPackage(Context)}.
-     *
-     * <p>This will be reset for the next test.
-     */
-    public static void setDefaultSmsPackage(String defaultSmsPackage) {
-      ShadowSms.defaultSmsPackage = defaultSmsPackage;
-    }
+        @Nullable
+        private static String defaultSmsPackage;
 
-    @Resetter
-    public static synchronized void reset() {
-      defaultSmsPackage = null;
+        @Implementation
+        protected static String getDefaultSmsPackage(Context context) {
+            System.out.println("ShadowSms#getDefaultSmsPackage");
+            return defaultSmsPackage;
+        }
+
+        /**
+         * Override the package name returned from calling {@link Sms#getDefaultSmsPackage(Context)}.
+         *
+         * <p>This will be reset for the next test.
+         */
+        public static void setDefaultSmsPackage(String defaultSmsPackage) {
+            ShadowSms.defaultSmsPackage = defaultSmsPackage;
+        }
+
+        @Resetter
+        public static synchronized void reset() {
+            defaultSmsPackage = null;
+        }
     }
-  }
 }
+

@@ -1,7 +1,6 @@
 package org.robolectric.shadows;
 
 import static android.os.Build.VERSION_CODES.N;
-
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
@@ -11,124 +10,140 @@ import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 import org.robolectric.annotation.RealObject;
 
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings({ "UnusedDeclaration" })
 @Implements(Service.class)
 public class ShadowService extends ShadowContextWrapper {
-  @RealObject Service realService;
 
-  private int lastForegroundNotificationId;
-  private Notification lastForegroundNotification;
-  private boolean lastForegroundNotificationAttached = false;
-  private boolean selfStopped = false;
-  private boolean foregroundStopped;
-  private boolean notificationShouldRemoved;
-  private int stopSelfId;
-  private int stopSelfResultId;
+    @RealObject
+    Service realService;
 
-  @Implementation
-  protected void onDestroy() {
-    if (lastForegroundNotificationAttached) {
-      lastForegroundNotificationAttached = false;
-      removeForegroundNotification();
+    private int lastForegroundNotificationId;
+
+    private Notification lastForegroundNotification;
+
+    private boolean lastForegroundNotificationAttached = false;
+
+    private boolean selfStopped = false;
+
+    private boolean foregroundStopped;
+
+    private boolean notificationShouldRemoved;
+
+    private int stopSelfId;
+
+    private int stopSelfResultId;
+
+    @Implementation
+    protected void onDestroy() {
+        System.out.println("ShadowService#onDestroy");
+        if (lastForegroundNotificationAttached) {
+            lastForegroundNotificationAttached = false;
+            removeForegroundNotification();
+        }
     }
-  }
 
-  @Implementation
-  protected void stopSelf() {
-    selfStopped = true;
-  }
-
-  @Implementation
-  protected void stopSelf(int id) {
-    selfStopped = true;
-    stopSelfId = id;
-  }
-
-  @Implementation
-  protected boolean stopSelfResult(int id) {
-    selfStopped = true;
-    stopSelfResultId = id;
-    return true;
-  }
-
-  @Implementation
-  protected final void startForeground(int id, Notification notification) {
-    foregroundStopped = false;
-    lastForegroundNotificationId = id;
-    lastForegroundNotification = notification;
-    lastForegroundNotificationAttached = true;
-    notification.flags |= Notification.FLAG_FOREGROUND_SERVICE;
-    NotificationManager nm = (NotificationManager)RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
-    nm.notify(id, notification);
-  }
-
-  protected void stopForeground(boolean removeNotification) {
-    foregroundStopped = true;
-    notificationShouldRemoved = removeNotification;
-    if (removeNotification) {
-      removeForegroundNotification();
+    @Implementation
+    protected void stopSelf() {
+        System.out.println("ShadowService#stopSelf");
+        selfStopped = true;
     }
-  }
 
-  @Implementation(minSdk = N)
-  protected void stopForeground(int flags) {
-    if ((flags & Service.STOP_FOREGROUND_DETACH) != 0) {
-      lastForegroundNotificationAttached = false;
+    @Implementation
+    protected void stopSelf(int id) {
+        System.out.println("ShadowService#stopSelf");
+        selfStopped = true;
+        stopSelfId = id;
     }
-    stopForeground((flags & Service.STOP_FOREGROUND_REMOVE) != 0);
-  }
 
-  private void removeForegroundNotification() {
-    NotificationManager nm = (NotificationManager)RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
-    nm.cancel(lastForegroundNotificationId);
-    lastForegroundNotification = null;
-    lastForegroundNotificationAttached = false;
-  }
+    @Implementation
+    protected boolean stopSelfResult(int id) {
+        System.out.println("ShadowService#stopSelfResult");
+        selfStopped = true;
+        stopSelfResultId = id;
+        return true;
+    }
 
-  public int getLastForegroundNotificationId() {
-    return lastForegroundNotificationId;
-  }
+    @Implementation
+    protected final void startForeground(int id, Notification notification) {
+        System.out.println("ShadowService#startForeground");
+        foregroundStopped = false;
+        lastForegroundNotificationId = id;
+        lastForegroundNotification = notification;
+        lastForegroundNotificationAttached = true;
+        notification.flags |= Notification.FLAG_FOREGROUND_SERVICE;
+        NotificationManager nm = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        nm.notify(id, notification);
+    }
 
-  public Notification getLastForegroundNotification() {
-    return lastForegroundNotification;
-  }
+    protected void stopForeground(boolean removeNotification) {
+        foregroundStopped = true;
+        notificationShouldRemoved = removeNotification;
+        if (removeNotification) {
+            removeForegroundNotification();
+        }
+    }
 
-  /**
-   * Returns whether the last foreground notification is still "attached" to the service,
-   * meaning it will be removed when the service is destroyed.
-   */
-  public boolean isLastForegroundNotificationAttached() {
-    return lastForegroundNotificationAttached;
-  }
+    @Implementation(minSdk = N)
+    protected void stopForeground(int flags) {
+        System.out.println("ShadowService#stopForeground");
+        if ((flags & Service.STOP_FOREGROUND_DETACH) != 0) {
+            lastForegroundNotificationAttached = false;
+        }
+        stopForeground((flags & Service.STOP_FOREGROUND_REMOVE) != 0);
+    }
 
-  /**
-   * @return Is this service stopped by self.
-   */
-  public boolean isStoppedBySelf() {
-    return selfStopped;
-  }
+    private void removeForegroundNotification() {
+        NotificationManager nm = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        nm.cancel(lastForegroundNotificationId);
+        lastForegroundNotification = null;
+        lastForegroundNotificationAttached = false;
+    }
 
-  public boolean isForegroundStopped() {
-    return foregroundStopped;
-  }
+    public int getLastForegroundNotificationId() {
+        return lastForegroundNotificationId;
+    }
 
-  public boolean getNotificationShouldRemoved() {
-    return notificationShouldRemoved;
-  }
+    public Notification getLastForegroundNotification() {
+        return lastForegroundNotification;
+    }
 
-  /**
-   * Returns id passed to {@link #stopSelf(int)} method. Make sure to check result of {@link
-   * #isStoppedBySelf()} first.
-   */
-  public int getStopSelfId() {
-    return stopSelfId;
-  }
+    /**
+     * Returns whether the last foreground notification is still "attached" to the service,
+     * meaning it will be removed when the service is destroyed.
+     */
+    public boolean isLastForegroundNotificationAttached() {
+        return lastForegroundNotificationAttached;
+    }
 
-  /**
-   * Returns id passed to {@link #stopSelfResult(int)} method. Make sure to check result of {@link
-   * #isStoppedBySelf()} first.
-   */
-  public int getStopSelfResultId() {
-    return stopSelfResultId;
-  }
+    /**
+     * @return Is this service stopped by self.
+     */
+    public boolean isStoppedBySelf() {
+        return selfStopped;
+    }
+
+    public boolean isForegroundStopped() {
+        return foregroundStopped;
+    }
+
+    public boolean getNotificationShouldRemoved() {
+        return notificationShouldRemoved;
+    }
+
+    /**
+     * Returns id passed to {@link #stopSelf(int)} method. Make sure to check result of {@link
+     * #isStoppedBySelf()} first.
+     */
+    public int getStopSelfId() {
+        return stopSelfId;
+    }
+
+    /**
+     * Returns id passed to {@link #stopSelfResult(int)} method. Make sure to check result of {@link
+     * #isStoppedBySelf()} first.
+     */
+    public int getStopSelfResultId() {
+        return stopSelfResultId;
+    }
 }
+

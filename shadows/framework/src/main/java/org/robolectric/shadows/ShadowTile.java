@@ -8,6 +8,8 @@ import org.robolectric.annotation.Implements;
 @Implements(value = Tile.class, minSdk = Build.VERSION_CODES.N)
 public final class ShadowTile {
 
-  @Implementation
-  protected void updateTile() {}
+    @Implementation
+    protected void updateTile() {
+    }
 }
+

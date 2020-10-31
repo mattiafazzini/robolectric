@@ -2,7 +2,6 @@ package org.robolectric.shadows;
 
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.O;
-
 import android.annotation.TargetApi;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
@@ -18,387 +17,432 @@ import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 import org.robolectric.util.ReflectionHelpers;
 
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings({ "UnusedDeclaration" })
 @Implements(AudioManager.class)
 public class ShadowAudioManager {
-  public static final int MAX_VOLUME_MUSIC_DTMF = 15;
-  public static final int DEFAULT_MAX_VOLUME = 7;
-  public static final int DEFAULT_VOLUME = 7;
-  public static final int INVALID_VOLUME = 0;
-  public static final int FLAG_NO_ACTION = 0;
-  public static final int[] ALL_STREAMS = {
-    AudioManager.STREAM_MUSIC,
-    AudioManager.STREAM_ALARM,
-    AudioManager.STREAM_NOTIFICATION,
-    AudioManager.STREAM_RING,
-    AudioManager.STREAM_SYSTEM,
-    AudioManager.STREAM_VOICE_CALL,
-    AudioManager.STREAM_DTMF
-  };
 
-  private AudioFocusRequest lastAudioFocusRequest;
-  private int nextResponseValue = AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
-  private AudioManager.OnAudioFocusChangeListener lastAbandonedAudioFocusListener;
-  private android.media.AudioFocusRequest lastAbandonedAudioFocusRequest;
-  private HashMap<Integer, AudioStream> streamStatus = new HashMap<>();
-  private List<AudioPlaybackConfiguration> activePlaybackConfigurations = Collections.emptyList();
-  private int ringerMode = AudioManager.RINGER_MODE_NORMAL;
-  private int mode = AudioManager.MODE_NORMAL;
-  private boolean bluetoothA2dpOn;
-  private boolean isBluetoothScoOn;
-  private boolean isSpeakerphoneOn;
-  private boolean isMicrophoneMuted = false;
-  private boolean isMusicActive;
-  private boolean wiredHeadsetOn;
-  private final Map<String, String> parameters = new HashMap<>();
-  private final Map<Integer, Boolean> streamsMuteState = new HashMap<>();
+    public static final int MAX_VOLUME_MUSIC_DTMF = 15;
 
-  public ShadowAudioManager() {
-    for (int stream : ALL_STREAMS) {
-      streamStatus.put(stream, new AudioStream(DEFAULT_VOLUME, DEFAULT_MAX_VOLUME, FLAG_NO_ACTION));
-    }
-    streamStatus.get(AudioManager.STREAM_MUSIC).setMaxVolume(MAX_VOLUME_MUSIC_DTMF);
-    streamStatus.get(AudioManager.STREAM_DTMF).setMaxVolume(MAX_VOLUME_MUSIC_DTMF);
-  }
+    public static final int DEFAULT_MAX_VOLUME = 7;
 
-  @Implementation
-  protected int getStreamMaxVolume(int streamType) {
-    AudioStream stream = streamStatus.get(streamType);
-    return (stream != null) ? stream.getMaxVolume() : INVALID_VOLUME;
-  }
+    public static final int DEFAULT_VOLUME = 7;
 
-  @Implementation
-  protected int getStreamVolume(int streamType) {
-    AudioStream stream = streamStatus.get(streamType);
-    return (stream != null) ? stream.getCurrentVolume() : INVALID_VOLUME;
-  }
+    public static final int INVALID_VOLUME = 0;
 
-  @Implementation
-  protected void setStreamVolume(int streamType, int index, int flags) {
-    AudioStream stream = streamStatus.get(streamType);
-    if (stream != null) {
-      stream.setCurrentVolume(index);
-      stream.setFlag(flags);
-    }
-  }
+    public static final int FLAG_NO_ACTION = 0;
 
-  @Implementation
-  protected int requestAudioFocus(
-      android.media.AudioManager.OnAudioFocusChangeListener l, int streamType, int durationHint) {
-    lastAudioFocusRequest = new AudioFocusRequest(l, streamType, durationHint);
-    return nextResponseValue;
-  }
+    public static final int[] ALL_STREAMS = { AudioManager.STREAM_MUSIC, AudioManager.STREAM_ALARM, AudioManager.STREAM_NOTIFICATION, AudioManager.STREAM_RING, AudioManager.STREAM_SYSTEM, AudioManager.STREAM_VOICE_CALL, AudioManager.STREAM_DTMF };
 
-  /**
-   * Provides a mock like interface for the requestAudioFocus method by storing the request object
-   * for later inspection and returning the value specified in setNextFocusRequestResponse.
-   */
-  @Implementation(minSdk = O)
-  protected int requestAudioFocus(android.media.AudioFocusRequest audioFocusRequest) {
-    lastAudioFocusRequest = new AudioFocusRequest(audioFocusRequest);
-    return nextResponseValue;
-  }
+    private AudioFocusRequest lastAudioFocusRequest;
 
-  @Implementation
-  protected int abandonAudioFocus(AudioManager.OnAudioFocusChangeListener l) {
-    lastAbandonedAudioFocusListener = l;
-    return nextResponseValue;
-  }
+    private int nextResponseValue = AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
 
-  /**
-   * Provides a mock like interface for the abandonAudioFocusRequest method by storing the request
-   * object for later inspection and returning the value specified in setNextFocusRequestResponse.
-   */
-  @Implementation(minSdk = O)
-  protected int abandonAudioFocusRequest(android.media.AudioFocusRequest audioFocusRequest) {
-    lastAbandonedAudioFocusRequest = audioFocusRequest;
-    return nextResponseValue;
-  }
+    private AudioManager.OnAudioFocusChangeListener lastAbandonedAudioFocusListener;
 
-  @Implementation
-  protected int getRingerMode() {
-    return ringerMode;
-  }
+    private android.media.AudioFocusRequest lastAbandonedAudioFocusRequest;
 
-  @Implementation
-  protected void setRingerMode(int ringerMode) {
-    if (!AudioManager.isValidRingerMode(ringerMode)) {
-      return;
-    }
-    this.ringerMode = ringerMode;
-  }
+    private HashMap<Integer, AudioStream> streamStatus = new HashMap<>();
 
-  public static boolean isValidRingerMode(int ringerMode) {
-    return ringerMode >= 0
-        && ringerMode
-            <= (int) ReflectionHelpers.getStaticField(AudioManager.class, "RINGER_MODE_MAX");
-  }
+    private List<AudioPlaybackConfiguration> activePlaybackConfigurations = Collections.emptyList();
 
-  @Implementation
-  protected void setMode(int mode) {
-    this.mode = mode;
-  }
+    private int ringerMode = AudioManager.RINGER_MODE_NORMAL;
 
-  @Implementation
-  protected int getMode() {
-    return this.mode;
-  }
+    private int mode = AudioManager.MODE_NORMAL;
 
-  public void setStreamMaxVolume(int streamMaxVolume) {
-    for (Map.Entry<Integer, AudioStream> entry : streamStatus.entrySet()) {
-      entry.getValue().setMaxVolume(streamMaxVolume);
-    }
-  }
+    private boolean bluetoothA2dpOn;
 
-  public void setStreamVolume(int streamVolume) {
-    for (Map.Entry<Integer, AudioStream> entry : streamStatus.entrySet()) {
-      entry.getValue().setCurrentVolume(streamVolume);
-    }
-  }
+    private boolean isBluetoothScoOn;
 
-  @Implementation
-  protected void setWiredHeadsetOn(boolean on) {
-    wiredHeadsetOn = on;
-  }
+    private boolean isSpeakerphoneOn;
 
-  @Implementation
-  protected boolean isWiredHeadsetOn() {
-    return wiredHeadsetOn;
-  }
+    private boolean isMicrophoneMuted = false;
 
-  @Implementation
-  protected void setBluetoothA2dpOn(boolean on) {
-    bluetoothA2dpOn = on;
-  }
+    private boolean isMusicActive;
 
-  @Implementation
-  protected boolean isBluetoothA2dpOn() {
-    return bluetoothA2dpOn;
-  }
+    private boolean wiredHeadsetOn;
 
-  @Implementation
-  protected void setSpeakerphoneOn(boolean on) {
-    isSpeakerphoneOn = on;
-  }
+    private final Map<String, String> parameters = new HashMap<>();
 
-  @Implementation
-  protected boolean isSpeakerphoneOn() {
-    return isSpeakerphoneOn;
-  }
+    private final Map<Integer, Boolean> streamsMuteState = new HashMap<>();
 
-  @Implementation
-  protected void setMicrophoneMute(boolean on) {
-    isMicrophoneMuted = on;
-  }
-
-  @Implementation
-  protected boolean isMicrophoneMute() {
-    return isMicrophoneMuted;
-  }
-
-  @Implementation
-  protected boolean isBluetoothScoOn() {
-    return isBluetoothScoOn;
-  }
-
-  @Implementation
-  protected void setBluetoothScoOn(boolean isBluetoothScoOn) {
-    this.isBluetoothScoOn = isBluetoothScoOn;
-  }
-
-  @Implementation
-  protected boolean isMusicActive() {
-    return isMusicActive;
-  }
-
-  @Implementation(minSdk = O)
-  protected List<AudioPlaybackConfiguration> getActivePlaybackConfigurations() {
-    return new ArrayList<>(activePlaybackConfigurations);
-  }
-
-  @Implementation
-  protected void setParameters(String keyValuePairs) {
-    if (keyValuePairs.isEmpty()) {
-      throw new IllegalArgumentException("keyValuePairs should not be empty");
+    public ShadowAudioManager() {
+        for (int stream : ALL_STREAMS) {
+            streamStatus.put(stream, new AudioStream(DEFAULT_VOLUME, DEFAULT_MAX_VOLUME, FLAG_NO_ACTION));
+        }
+        streamStatus.get(AudioManager.STREAM_MUSIC).setMaxVolume(MAX_VOLUME_MUSIC_DTMF);
+        streamStatus.get(AudioManager.STREAM_DTMF).setMaxVolume(MAX_VOLUME_MUSIC_DTMF);
     }
 
-    if (keyValuePairs.charAt(keyValuePairs.length() - 1) != ';') {
-      throw new IllegalArgumentException("keyValuePairs should end with a ';'");
+    @Implementation
+    protected int getStreamMaxVolume(int streamType) {
+        System.out.println("ShadowAudioManager#getStreamMaxVolume");
+        AudioStream stream = streamStatus.get(streamType);
+        return (stream != null) ? stream.getMaxVolume() : INVALID_VOLUME;
     }
 
-    String[] pairs = keyValuePairs.split(";", 0);
-
-    for (String pair : pairs) {
-      if (pair.isEmpty()) {
-        continue;
-      }
-
-      String[] splittedPair = pair.split("=", 0);
-      if (splittedPair.length != 2) {
-        throw new IllegalArgumentException(
-            "keyValuePairs: each pair should be in the format of key=value;");
-      }
-      parameters.put(splittedPair[0], splittedPair[1]);
-    }
-  }
-
-  /**
-   * The expected composition for keys is not well defined.
-   *
-   * <p>For testing purposes this method call always returns null.
-   */
-  @Implementation
-  protected String getParameters(String keys) {
-    return null;
-  }
-
-  /** Returns a single parameter that was set via {@link #setParameters(String)}. */
-  public String getParameter(String key) {
-    return parameters.get(key);
-  }
-
-  /**
-   * Implements {@link AudioManager#adjustStreamVolume(int, int, int)}.
-   *
-   * <p>Currently supports only the directions {@link AudioManager#ADJUST_MUTE} and {@link
-   * AudioManager#ADJUST_UNMUTE}.
-   */
-  @Implementation
-  protected void adjustStreamVolume(int streamType, int direction, int flags) {
-    switch (direction) {
-      case AudioManager.ADJUST_MUTE:
-        streamsMuteState.put(streamType, true);
-        break;
-      case AudioManager.ADJUST_UNMUTE:
-        streamsMuteState.put(streamType, false);
-        break;
-      default:
-        break;
-    }
-  }
-
-  @Implementation(minSdk = M)
-  protected boolean isStreamMute(int streamType) {
-    if (!streamsMuteState.containsKey(streamType)) {
-      return false;
-    }
-    return streamsMuteState.get(streamType);
-  }
-
-  public void setIsStreamMute(int streamType, boolean isMuted) {
-    streamsMuteState.put(streamType, isMuted);
-  }
-
-  /**
-   * Sets active playback configurations that will be served by {@link
-   * AudioManager#getActivePlaybackConfigurations}.
-   *
-   * <p>Note that there is no public {@link AudioPlaybackConfiguration} constructor, so the
-   * configurations returned are specified by their audio attributes only.
-   */
-  @TargetApi(VERSION_CODES.O)
-  public void setActivePlaybackConfigurationsFor(List<AudioAttributes> audioAttributes) {
-    activePlaybackConfigurations = new ArrayList<>(audioAttributes.size());
-    for (AudioAttributes audioAttribute : audioAttributes) {
-      Parcel p = Parcel.obtain();
-      p.writeInt(0); // mPlayerIId
-      p.writeInt(0); // mPlayerType
-      p.writeInt(0); // mClientUid
-      p.writeInt(0); // mClientPid
-      p.writeInt(AudioPlaybackConfiguration.PLAYER_STATE_STARTED); // mPlayerState
-      audioAttribute.writeToParcel(p, 0);
-      p.writeStrongInterface(null);
-      byte[] bytes = p.marshall();
-      p.recycle();
-      p = Parcel.obtain();
-      p.unmarshall(bytes, 0, bytes.length);
-      p.setDataPosition(0);
-      AudioPlaybackConfiguration configuration =
-          AudioPlaybackConfiguration.CREATOR.createFromParcel(p);
-      p.recycle();
-      activePlaybackConfigurations.add(configuration);
-    }
-  }
-
-  public void setIsMusicActive(boolean isMusicActive) {
-    this.isMusicActive = isMusicActive;
-  }
-
-  public AudioFocusRequest getLastAudioFocusRequest() {
-    return lastAudioFocusRequest;
-  }
-
-  public void setNextFocusRequestResponse(int nextResponseValue) {
-    this.nextResponseValue = nextResponseValue;
-  }
-
-  public AudioManager.OnAudioFocusChangeListener getLastAbandonedAudioFocusListener() {
-    return lastAbandonedAudioFocusListener;
-  }
-
-  public android.media.AudioFocusRequest getLastAbandonedAudioFocusRequest() {
-    return lastAbandonedAudioFocusRequest;
-  }
-
-  public static class AudioFocusRequest {
-    public final AudioManager.OnAudioFocusChangeListener listener;
-    public final int streamType;
-    public final int durationHint;
-    public final android.media.AudioFocusRequest audioFocusRequest;
-
-    private AudioFocusRequest(
-        AudioManager.OnAudioFocusChangeListener listener, int streamType, int durationHint) {
-      this.listener = listener;
-      this.streamType = streamType;
-      this.durationHint = durationHint;
-      this.audioFocusRequest = null;
+    @Implementation
+    protected int getStreamVolume(int streamType) {
+        System.out.println("ShadowAudioManager#getStreamVolume");
+        AudioStream stream = streamStatus.get(streamType);
+        return (stream != null) ? stream.getCurrentVolume() : INVALID_VOLUME;
     }
 
-    private AudioFocusRequest(android.media.AudioFocusRequest audioFocusRequest) {
-      this.listener = null;
-      this.streamType = this.durationHint = -1;
-      this.audioFocusRequest = audioFocusRequest;
-    }
-  }
-
-  private static class AudioStream {
-    private int currentVolume;
-    private int maxVolume;
-    private int flag;
-
-    public AudioStream(int currVol, int maxVol, int flag) {
-      setCurrentVolume(currVol);
-      setMaxVolume(maxVol);
-      setFlag(flag);
+    @Implementation
+    protected void setStreamVolume(int streamType, int index, int flags) {
+        System.out.println("ShadowAudioManager#setStreamVolume");
+        AudioStream stream = streamStatus.get(streamType);
+        if (stream != null) {
+            stream.setCurrentVolume(index);
+            stream.setFlag(flags);
+        }
     }
 
-    public int getCurrentVolume() {
-      return currentVolume;
+    @Implementation
+    protected int requestAudioFocus(android.media.AudioManager.OnAudioFocusChangeListener l, int streamType, int durationHint) {
+        System.out.println("ShadowAudioManager#requestAudioFocus");
+        lastAudioFocusRequest = new AudioFocusRequest(l, streamType, durationHint);
+        return nextResponseValue;
     }
 
-    public int getMaxVolume() {
-      return maxVolume;
+    /**
+     * Provides a mock like interface for the requestAudioFocus method by storing the request object
+     * for later inspection and returning the value specified in setNextFocusRequestResponse.
+     */
+    @Implementation(minSdk = O)
+    protected int requestAudioFocus(android.media.AudioFocusRequest audioFocusRequest) {
+        System.out.println("ShadowAudioManager#requestAudioFocus");
+        lastAudioFocusRequest = new AudioFocusRequest(audioFocusRequest);
+        return nextResponseValue;
     }
 
-    public int getFlag() {
-      return flag;
+    @Implementation
+    protected int abandonAudioFocus(AudioManager.OnAudioFocusChangeListener l) {
+        System.out.println("ShadowAudioManager#abandonAudioFocus");
+        lastAbandonedAudioFocusListener = l;
+        return nextResponseValue;
     }
 
-    public void setCurrentVolume(int vol) {
-      if (vol > maxVolume) {
-        vol = maxVolume;
-      } else if (vol < 0) {
-        vol = 0;
-      }
-      currentVolume = vol;
+    /**
+     * Provides a mock like interface for the abandonAudioFocusRequest method by storing the request
+     * object for later inspection and returning the value specified in setNextFocusRequestResponse.
+     */
+    @Implementation(minSdk = O)
+    protected int abandonAudioFocusRequest(android.media.AudioFocusRequest audioFocusRequest) {
+        System.out.println("ShadowAudioManager#abandonAudioFocusRequest");
+        lastAbandonedAudioFocusRequest = audioFocusRequest;
+        return nextResponseValue;
     }
 
-    public void setMaxVolume(int vol) {
-      maxVolume = vol;
+    @Implementation
+    protected int getRingerMode() {
+        System.out.println("ShadowAudioManager#getRingerMode");
+        return ringerMode;
     }
 
-    public void setFlag(int flag) {
-      this.flag = flag;
+    @Implementation
+    protected void setRingerMode(int ringerMode) {
+        System.out.println("ShadowAudioManager#setRingerMode");
+        if (!AudioManager.isValidRingerMode(ringerMode)) {
+            return;
+        }
+        this.ringerMode = ringerMode;
     }
-  }
+
+    public static boolean isValidRingerMode(int ringerMode) {
+        return ringerMode >= 0 && ringerMode <= (int) ReflectionHelpers.getStaticField(AudioManager.class, "RINGER_MODE_MAX");
+    }
+
+    @Implementation
+    protected void setMode(int mode) {
+        System.out.println("ShadowAudioManager#setMode");
+        this.mode = mode;
+    }
+
+    @Implementation
+    protected int getMode() {
+        System.out.println("ShadowAudioManager#getMode");
+        return this.mode;
+    }
+
+    public void setStreamMaxVolume(int streamMaxVolume) {
+        for (Map.Entry<Integer, AudioStream> entry : streamStatus.entrySet()) {
+            entry.getValue().setMaxVolume(streamMaxVolume);
+        }
+    }
+
+    public void setStreamVolume(int streamVolume) {
+        for (Map.Entry<Integer, AudioStream> entry : streamStatus.entrySet()) {
+            entry.getValue().setCurrentVolume(streamVolume);
+        }
+    }
+
+    @Implementation
+    protected void setWiredHeadsetOn(boolean on) {
+        System.out.println("ShadowAudioManager#setWiredHeadsetOn");
+        wiredHeadsetOn = on;
+    }
+
+    @Implementation
+    protected boolean isWiredHeadsetOn() {
+        System.out.println("ShadowAudioManager#isWiredHeadsetOn");
+        return wiredHeadsetOn;
+    }
+
+    @Implementation
+    protected void setBluetoothA2dpOn(boolean on) {
+        System.out.println("ShadowAudioManager#setBluetoothA2dpOn");
+        bluetoothA2dpOn = on;
+    }
+
+    @Implementation
+    protected boolean isBluetoothA2dpOn() {
+        System.out.println("ShadowAudioManager#isBluetoothA2dpOn");
+        return bluetoothA2dpOn;
+    }
+
+    @Implementation
+    protected void setSpeakerphoneOn(boolean on) {
+        System.out.println("ShadowAudioManager#setSpeakerphoneOn");
+        isSpeakerphoneOn = on;
+    }
+
+    @Implementation
+    protected boolean isSpeakerphoneOn() {
+        System.out.println("ShadowAudioManager#isSpeakerphoneOn");
+        return isSpeakerphoneOn;
+    }
+
+    @Implementation
+    protected void setMicrophoneMute(boolean on) {
+        System.out.println("ShadowAudioManager#setMicrophoneMute");
+        isMicrophoneMuted = on;
+    }
+
+    @Implementation
+    protected boolean isMicrophoneMute() {
+        System.out.println("ShadowAudioManager#isMicrophoneMute");
+        return isMicrophoneMuted;
+    }
+
+    @Implementation
+    protected boolean isBluetoothScoOn() {
+        System.out.println("ShadowAudioManager#isBluetoothScoOn");
+        return isBluetoothScoOn;
+    }
+
+    @Implementation
+    protected void setBluetoothScoOn(boolean isBluetoothScoOn) {
+        System.out.println("ShadowAudioManager#setBluetoothScoOn");
+        this.isBluetoothScoOn = isBluetoothScoOn;
+    }
+
+    @Implementation
+    protected boolean isMusicActive() {
+        System.out.println("ShadowAudioManager#isMusicActive");
+        return isMusicActive;
+    }
+
+    @Implementation(minSdk = O)
+    protected List<AudioPlaybackConfiguration> getActivePlaybackConfigurations() {
+        System.out.println("ShadowAudioManager#getActivePlaybackConfigurations");
+        return new ArrayList<>(activePlaybackConfigurations);
+    }
+
+    @Implementation
+    protected void setParameters(String keyValuePairs) {
+        System.out.println("ShadowAudioManager#setParameters");
+        if (keyValuePairs.isEmpty()) {
+            throw new IllegalArgumentException("keyValuePairs should not be empty");
+        }
+        if (keyValuePairs.charAt(keyValuePairs.length() - 1) != ';') {
+            throw new IllegalArgumentException("keyValuePairs should end with a ';'");
+        }
+        String[] pairs = keyValuePairs.split(";", 0);
+        for (String pair : pairs) {
+            if (pair.isEmpty()) {
+                continue;
+            }
+            String[] splittedPair = pair.split("=", 0);
+            if (splittedPair.length != 2) {
+                throw new IllegalArgumentException("keyValuePairs: each pair should be in the format of key=value;");
+            }
+            parameters.put(splittedPair[0], splittedPair[1]);
+        }
+    }
+
+    /**
+     * The expected composition for keys is not well defined.
+     *
+     * <p>For testing purposes this method call always returns null.
+     */
+    @Implementation
+    protected String getParameters(String keys) {
+        System.out.println("ShadowAudioManager#getParameters");
+        return null;
+    }
+
+    /**
+     * Returns a single parameter that was set via {@link #setParameters(String)}.
+     */
+    public String getParameter(String key) {
+        return parameters.get(key);
+    }
+
+    /**
+     * Implements {@link AudioManager#adjustStreamVolume(int, int, int)}.
+     *
+     * <p>Currently supports only the directions {@link AudioManager#ADJUST_MUTE} and {@link
+     * AudioManager#ADJUST_UNMUTE}.
+     */
+    @Implementation
+    protected void adjustStreamVolume(int streamType, int direction, int flags) {
+        System.out.println("ShadowAudioManager#adjustStreamVolume");
+        switch(direction) {
+            case AudioManager.ADJUST_MUTE:
+                streamsMuteState.put(streamType, true);
+                break;
+            case AudioManager.ADJUST_UNMUTE:
+                streamsMuteState.put(streamType, false);
+                break;
+            default:
+                break;
+        }
+    }
+
+    @Implementation(minSdk = M)
+    protected boolean isStreamMute(int streamType) {
+        System.out.println("ShadowAudioManager#isStreamMute");
+        if (!streamsMuteState.containsKey(streamType)) {
+            return false;
+        }
+        return streamsMuteState.get(streamType);
+    }
+
+    public void setIsStreamMute(int streamType, boolean isMuted) {
+        streamsMuteState.put(streamType, isMuted);
+    }
+
+    /**
+     * Sets active playback configurations that will be served by {@link
+     * AudioManager#getActivePlaybackConfigurations}.
+     *
+     * <p>Note that there is no public {@link AudioPlaybackConfiguration} constructor, so the
+     * configurations returned are specified by their audio attributes only.
+     */
+    @TargetApi(VERSION_CODES.O)
+    public void setActivePlaybackConfigurationsFor(List<AudioAttributes> audioAttributes) {
+        activePlaybackConfigurations = new ArrayList<>(audioAttributes.size());
+        for (AudioAttributes audioAttribute : audioAttributes) {
+            Parcel p = Parcel.obtain();
+            // mPlayerIId
+            p.writeInt(0);
+            // mPlayerType
+            p.writeInt(0);
+            // mClientUid
+            p.writeInt(0);
+            // mClientPid
+            p.writeInt(0);
+            // mPlayerState
+            p.writeInt(AudioPlaybackConfiguration.PLAYER_STATE_STARTED);
+            audioAttribute.writeToParcel(p, 0);
+            p.writeStrongInterface(null);
+            byte[] bytes = p.marshall();
+            p.recycle();
+            p = Parcel.obtain();
+            p.unmarshall(bytes, 0, bytes.length);
+            p.setDataPosition(0);
+            AudioPlaybackConfiguration configuration = AudioPlaybackConfiguration.CREATOR.createFromParcel(p);
+            p.recycle();
+            activePlaybackConfigurations.add(configuration);
+        }
+    }
+
+    public void setIsMusicActive(boolean isMusicActive) {
+        this.isMusicActive = isMusicActive;
+    }
+
+    public AudioFocusRequest getLastAudioFocusRequest() {
+        return lastAudioFocusRequest;
+    }
+
+    public void setNextFocusRequestResponse(int nextResponseValue) {
+        this.nextResponseValue = nextResponseValue;
+    }
+
+    public AudioManager.OnAudioFocusChangeListener getLastAbandonedAudioFocusListener() {
+        return lastAbandonedAudioFocusListener;
+    }
+
+    public android.media.AudioFocusRequest getLastAbandonedAudioFocusRequest() {
+        return lastAbandonedAudioFocusRequest;
+    }
+
+    public static class AudioFocusRequest {
+
+        public final AudioManager.OnAudioFocusChangeListener listener;
+
+        public final int streamType;
+
+        public final int durationHint;
+
+        public final android.media.AudioFocusRequest audioFocusRequest;
+
+        private AudioFocusRequest(AudioManager.OnAudioFocusChangeListener listener, int streamType, int durationHint) {
+            this.listener = listener;
+            this.streamType = streamType;
+            this.durationHint = durationHint;
+            this.audioFocusRequest = null;
+        }
+
+        private AudioFocusRequest(android.media.AudioFocusRequest audioFocusRequest) {
+            this.listener = null;
+            this.streamType = this.durationHint = -1;
+            this.audioFocusRequest = audioFocusRequest;
+        }
+    }
+
+    private static class AudioStream {
+
+        private int currentVolume;
+
+        private int maxVolume;
+
+        private int flag;
+
+        public AudioStream(int currVol, int maxVol, int flag) {
+            setCurrentVolume(currVol);
+            setMaxVolume(maxVol);
+            setFlag(flag);
+        }
+
+        public int getCurrentVolume() {
+            return currentVolume;
+        }
+
+        public int getMaxVolume() {
+            return maxVolume;
+        }
+
+        public int getFlag() {
+            return flag;
+        }
+
+        public void setCurrentVolume(int vol) {
+            if (vol > maxVolume) {
+                vol = maxVolume;
+            } else if (vol < 0) {
+                vol = 0;
+            }
+            currentVolume = vol;
+        }
+
+        public void setMaxVolume(int vol) {
+            maxVolume = vol;
+        }
+
+        public void setFlag(int flag) {
+            this.flag = flag;
+        }
+    }
 }
+

@@ -7,162 +7,187 @@ import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 
 @Implements(VideoView.class)
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings({ "UnusedDeclaration" })
 public class ShadowVideoView extends ShadowSurfaceView {
-  private MediaPlayer.OnCompletionListener completionListner;
-  private MediaPlayer.OnErrorListener errorListener;
-  private MediaPlayer.OnPreparedListener preparedListener;
 
-  private Uri uri;
-  private String path;
-  private int duration = 0;
+    private MediaPlayer.OnCompletionListener completionListner;
 
-  public static final int STOP = 0;
-  public static final int START = 1;
-  public static final int SUSPEND = 2;
-  public static final int PAUSE = 3;
-  public static final int RESUME = 4;
+    private MediaPlayer.OnErrorListener errorListener;
 
-  private int currentState = -1;
-  private int prevState;
-  private int currentPosition;
+    private MediaPlayer.OnPreparedListener preparedListener;
 
-  @Implementation
-  protected void setOnPreparedListener(MediaPlayer.OnPreparedListener l) {
-    preparedListener = l;
-  }
+    private Uri uri;
 
-  @Implementation
-  protected void setOnErrorListener(MediaPlayer.OnErrorListener l) {
-    errorListener = l;
-  }
+    private String path;
 
-  @Implementation
-  protected void setOnCompletionListener(MediaPlayer.OnCompletionListener l) {
-    completionListner = l;
-  }
+    private int duration = 0;
 
-  @Implementation
-  protected void setVideoPath(String path) {
-    this.path = path;
-  }
+    public static final int STOP = 0;
 
-  @Implementation
-  protected void setVideoURI(Uri uri) {
-    this.uri = uri;
-  }
+    public static final int START = 1;
 
-  @Implementation
-  protected void start() {
-    savePrevState();
-    currentState = ShadowVideoView.START;
-  }
+    public static final int SUSPEND = 2;
 
-  @Implementation
-  protected void stopPlayback() {
-    savePrevState();
-    currentState = ShadowVideoView.STOP;
-  }
+    public static final int PAUSE = 3;
 
-  @Implementation
-  protected void suspend() {
-    savePrevState();
-    currentState = ShadowVideoView.SUSPEND;
-  }
+    public static final int RESUME = 4;
 
-  @Implementation
-  protected void pause() {
-    savePrevState();
-    currentState = ShadowVideoView.PAUSE;
-  }
+    private int currentState = -1;
 
-  @Implementation
-  protected void resume() {
-    savePrevState();
-    currentState = ShadowVideoView.RESUME;
-  }
+    private int prevState;
 
-  @Implementation
-  protected boolean isPlaying() {
-    return (currentState == ShadowVideoView.START);
-  }
+    private int currentPosition;
 
-  @Implementation
-  protected boolean canPause() {
-    return (currentState != ShadowVideoView.PAUSE &&
-        currentState != ShadowVideoView.STOP &&
-        currentState != ShadowVideoView.SUSPEND);
-  }
+    @Implementation
+    protected void setOnPreparedListener(MediaPlayer.OnPreparedListener l) {
+        System.out.println("ShadowVideoView#setOnPreparedListener");
+        preparedListener = l;
+    }
 
-  @Implementation
-  protected void seekTo(int msec) {
-    currentPosition = msec;
-  }
+    @Implementation
+    protected void setOnErrorListener(MediaPlayer.OnErrorListener l) {
+        System.out.println("ShadowVideoView#setOnErrorListener");
+        errorListener = l;
+    }
 
-  @Implementation
-  protected int getCurrentPosition() {
-    return currentPosition;
-  }
+    @Implementation
+    protected void setOnCompletionListener(MediaPlayer.OnCompletionListener l) {
+        System.out.println("ShadowVideoView#setOnCompletionListener");
+        completionListner = l;
+    }
 
-  @Implementation
-  protected int getDuration() {
-    return duration;
-  }
+    @Implementation
+    protected void setVideoPath(String path) {
+        System.out.println("ShadowVideoView#setVideoPath");
+        this.path = path;
+    }
 
-  /**
-   * @return On prepared listener.
-   */
-  public MediaPlayer.OnPreparedListener getOnPreparedListener() {
-    return preparedListener;
-  }
+    @Implementation
+    protected void setVideoURI(Uri uri) {
+        System.out.println("ShadowVideoView#setVideoURI");
+        this.uri = uri;
+    }
 
-  /**
-   * @return On error listener.
-   */
-  public MediaPlayer.OnErrorListener getOnErrorListener() {
-    return errorListener;
-  }
+    @Implementation
+    protected void start() {
+        System.out.println("ShadowVideoView#start");
+        savePrevState();
+        currentState = ShadowVideoView.START;
+    }
 
-  /**
-   * @return On completion listener.
-   */
-  public MediaPlayer.OnCompletionListener getOnCompletionListener() {
-    return completionListner;
-  }
+    @Implementation
+    protected void stopPlayback() {
+        System.out.println("ShadowVideoView#stopPlayback");
+        savePrevState();
+        currentState = ShadowVideoView.STOP;
+    }
 
-  /**
-   * @return Video path.
-   */
-  public String getVideoPath() {
-    return path;
-  }
+    @Implementation
+    protected void suspend() {
+        System.out.println("ShadowVideoView#suspend");
+        savePrevState();
+        currentState = ShadowVideoView.SUSPEND;
+    }
 
-  /**
-   * @return Video URI.
-   */
-  public String getVideoURIString() {
-    return uri == null ? null : uri.toString();
-  }
+    @Implementation
+    protected void pause() {
+        System.out.println("ShadowVideoView#pause");
+        savePrevState();
+        currentState = ShadowVideoView.PAUSE;
+    }
 
-  /**
-   * @return Current video state.
-   */
-  public int getCurrentVideoState() {
-    return currentState;
-  }
+    @Implementation
+    protected void resume() {
+        System.out.println("ShadowVideoView#resume");
+        savePrevState();
+        currentState = ShadowVideoView.RESUME;
+    }
 
-  /**
-   * @return Previous video state.
-   */
-  public int getPrevVideoState() {
-    return prevState;
-  }
+    @Implementation
+    protected boolean isPlaying() {
+        System.out.println("ShadowVideoView#isPlaying");
+        return (currentState == ShadowVideoView.START);
+    }
 
-  public void setDuration(int duration) {
-    this.duration = duration;
-  }
+    @Implementation
+    protected boolean canPause() {
+        System.out.println("ShadowVideoView#canPause");
+        return (currentState != ShadowVideoView.PAUSE && currentState != ShadowVideoView.STOP && currentState != ShadowVideoView.SUSPEND);
+    }
 
-  private void savePrevState() {
-    prevState = currentState;
-  }
+    @Implementation
+    protected void seekTo(int msec) {
+        System.out.println("ShadowVideoView#seekTo");
+        currentPosition = msec;
+    }
+
+    @Implementation
+    protected int getCurrentPosition() {
+        System.out.println("ShadowVideoView#getCurrentPosition");
+        return currentPosition;
+    }
+
+    @Implementation
+    protected int getDuration() {
+        System.out.println("ShadowVideoView#getDuration");
+        return duration;
+    }
+
+    /**
+     * @return On prepared listener.
+     */
+    public MediaPlayer.OnPreparedListener getOnPreparedListener() {
+        return preparedListener;
+    }
+
+    /**
+     * @return On error listener.
+     */
+    public MediaPlayer.OnErrorListener getOnErrorListener() {
+        return errorListener;
+    }
+
+    /**
+     * @return On completion listener.
+     */
+    public MediaPlayer.OnCompletionListener getOnCompletionListener() {
+        return completionListner;
+    }
+
+    /**
+     * @return Video path.
+     */
+    public String getVideoPath() {
+        return path;
+    }
+
+    /**
+     * @return Video URI.
+     */
+    public String getVideoURIString() {
+        return uri == null ? null : uri.toString();
+    }
+
+    /**
+     * @return Current video state.
+     */
+    public int getCurrentVideoState() {
+        return currentState;
+    }
+
+    /**
+     * @return Previous video state.
+     */
+    public int getPrevVideoState() {
+        return prevState;
+    }
+
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
+
+    private void savePrevState() {
+        prevState = currentState;
+    }
 }
+

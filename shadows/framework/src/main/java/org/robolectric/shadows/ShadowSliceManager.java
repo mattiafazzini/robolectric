@@ -1,7 +1,6 @@
 package org.robolectric.shadows;
 
 import static android.os.Build.VERSION_CODES.P;
-
 import android.app.slice.SliceManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -18,70 +17,78 @@ import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 import org.robolectric.annotation.Resetter;
 
-/** Shadow of {@link SliceManager}. */
+/**
+ * Shadow of {@link SliceManager}.
+ */
 @Implements(value = SliceManager.class, minSdk = P)
 public class ShadowSliceManager {
 
-  private static final Map<Integer, Collection<Uri>> packageUidsToPermissionGrantedSliceUris =
-      new HashMap<>();
-  private Context context;
+    private static final Map<Integer, Collection<Uri>> packageUidsToPermissionGrantedSliceUris = new HashMap<>();
 
-  @Implementation
-  protected void __constructor__(Context context, Handler handler) {
-    this.context = context;
-  }
+    private Context context;
 
-  @Implementation
-  protected synchronized List<Uri> getPinnedSlices() {
-    return ImmutableList.of();
-  }
-
-  @Implementation
-  protected synchronized void grantSlicePermission(String toPackage, Uri uri) {
-    int packageUid = getUidForPackage(toPackage);
-    Collection<Uri> uris = packageUidsToPermissionGrantedSliceUris.get(packageUid);
-    if (uris == null) {
-      uris = new ArrayList<>();
-      packageUidsToPermissionGrantedSliceUris.put(packageUid, uris);
+    @Implementation
+    protected void __constructor__(Context context, Handler handler) {
+        System.out.println("ShadowSliceManager#__constructor__");
+        this.context = context;
     }
-    uris.add(uri);
-  }
 
-  @Implementation
-  protected synchronized void revokeSlicePermission(String toPackage, Uri uri) {
-    int packageUid = getUidForPackage(toPackage);
-    Collection<Uri> uris = packageUidsToPermissionGrantedSliceUris.get(packageUid);
-    if (uris != null) {
-      uris.remove(uri);
-      if (uris.isEmpty()) {
-        packageUidsToPermissionGrantedSliceUris.remove(packageUid);
-      }
+    @Implementation
+    protected synchronized List<Uri> getPinnedSlices() {
+        System.out.println("ShadowSliceManager#getPinnedSlices");
+        return ImmutableList.of();
     }
-  }
 
-  @Implementation
-  protected synchronized int checkSlicePermission(Uri uri, int pid, int uid) {
-    if (uid == 0) {
-      return PackageManager.PERMISSION_GRANTED;
+    @Implementation
+    protected synchronized void grantSlicePermission(String toPackage, Uri uri) {
+        System.out.println("ShadowSliceManager#grantSlicePermission");
+        int packageUid = getUidForPackage(toPackage);
+        Collection<Uri> uris = packageUidsToPermissionGrantedSliceUris.get(packageUid);
+        if (uris == null) {
+            uris = new ArrayList<>();
+            packageUidsToPermissionGrantedSliceUris.put(packageUid, uris);
+        }
+        uris.add(uri);
     }
-    Collection<Uri> uris = packageUidsToPermissionGrantedSliceUris.get(uid);
-    if (uris != null && uris.contains(uri)) {
-      return PackageManager.PERMISSION_GRANTED;
-    }
-    return PackageManager.PERMISSION_DENIED;
-  }
 
-  private int getUidForPackage(String packageName) {
-    PackageManager packageManager = context.getPackageManager();
-    try {
-      return packageManager.getPackageUid(packageName, 0);
-    } catch (NameNotFoundException e) {
-      throw new RuntimeException(e);
+    @Implementation
+    protected synchronized void revokeSlicePermission(String toPackage, Uri uri) {
+        System.out.println("ShadowSliceManager#revokeSlicePermission");
+        int packageUid = getUidForPackage(toPackage);
+        Collection<Uri> uris = packageUidsToPermissionGrantedSliceUris.get(packageUid);
+        if (uris != null) {
+            uris.remove(uri);
+            if (uris.isEmpty()) {
+                packageUidsToPermissionGrantedSliceUris.remove(packageUid);
+            }
+        }
     }
-  }
 
-  @Resetter
-  public static synchronized void reset() {
-    packageUidsToPermissionGrantedSliceUris.clear();
-  }
+    @Implementation
+    protected synchronized int checkSlicePermission(Uri uri, int pid, int uid) {
+        System.out.println("ShadowSliceManager#checkSlicePermission");
+        if (uid == 0) {
+            return PackageManager.PERMISSION_GRANTED;
+        }
+        Collection<Uri> uris = packageUidsToPermissionGrantedSliceUris.get(uid);
+        if (uris != null && uris.contains(uri)) {
+            return PackageManager.PERMISSION_GRANTED;
+        }
+        return PackageManager.PERMISSION_DENIED;
+    }
+
+    private int getUidForPackage(String packageName) {
+        PackageManager packageManager = context.getPackageManager();
+        try {
+            return packageManager.getPackageUid(packageName, 0);
+        } catch (NameNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Resetter
+    public static synchronized void reset() {
+        packageUidsToPermissionGrantedSliceUris.clear();
+    }
 }
+

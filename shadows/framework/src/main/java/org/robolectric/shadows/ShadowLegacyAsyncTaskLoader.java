@@ -13,45 +13,52 @@ import org.robolectric.annotation.RealObject;
 /**
  * The shadow {@link AsyncTaskLoader} for {@link LooperMode.Mode.LEGACY}.
  */
-@Implements(value = AsyncTaskLoader.class, shadowPicker = ShadowAsyncTaskLoader.Picker.class,
-    isInAndroidSdk = false)
+@Implements(value = AsyncTaskLoader.class, shadowPicker = ShadowAsyncTaskLoader.Picker.class, isInAndroidSdk = false)
 public class ShadowLegacyAsyncTaskLoader<D> extends ShadowAsyncTaskLoader {
-  @RealObject private AsyncTaskLoader<D> realObject;
-  private BackgroundWorker worker;
 
-  @Implementation
-  protected void __constructor__(Context context) {
-    worker = new BackgroundWorker();
-  }
+    @RealObject
+    private AsyncTaskLoader<D> realObject;
 
-  @Implementation
-  protected void onForceLoad() {
-    FutureTask<D> future = new FutureTask<D>(worker) {
-      @Override
-      protected void done() {
-        try {
-          final D result = get();
-          ShadowApplication.getInstance().getForegroundThreadScheduler().post(new Runnable() {
-            @Override
-            public void run() {
-              realObject.deliverResult(result);
-            }
-          });
-        } catch (InterruptedException e) {
-          // Ignore
-        } catch (ExecutionException e) {
-          throw new RuntimeException(e.getCause());
-        }
-      }
-    };
+    private BackgroundWorker worker;
 
-    ShadowApplication.getInstance().getBackgroundThreadScheduler().post(future);
-  }
-
-  private final class BackgroundWorker implements Callable<D> {
-    @Override
-    public D call() throws Exception {
-      return realObject.loadInBackground();
+    @Implementation
+    protected void __constructor__(Context context) {
+        System.out.println("ShadowLegacyAsyncTaskLoader#__constructor__");
+        worker = new BackgroundWorker();
     }
-  }
+
+    @Implementation
+    protected void onForceLoad() {
+        System.out.println("ShadowLegacyAsyncTaskLoader#onForceLoad");
+        FutureTask<D> future = new FutureTask<D>(worker) {
+
+            @Override
+            protected void done() {
+                try {
+                    final D result = get();
+                    ShadowApplication.getInstance().getForegroundThreadScheduler().post(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            realObject.deliverResult(result);
+                        }
+                    });
+                } catch (InterruptedException e) {
+                // Ignore
+                } catch (ExecutionException e) {
+                    throw new RuntimeException(e.getCause());
+                }
+            }
+        };
+        ShadowApplication.getInstance().getBackgroundThreadScheduler().post(future);
+    }
+
+    private final class BackgroundWorker implements Callable<D> {
+
+        @Override
+        public D call() throws Exception {
+            return realObject.loadInBackground();
+        }
+    }
 }
+

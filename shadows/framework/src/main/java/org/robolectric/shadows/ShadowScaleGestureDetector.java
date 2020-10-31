@@ -6,64 +6,73 @@ import android.view.ScaleGestureDetector;
 import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings({ "UnusedDeclaration" })
 @Implements(ScaleGestureDetector.class)
 public class ShadowScaleGestureDetector {
 
-  private MotionEvent onTouchEventMotionEvent;
-  private ScaleGestureDetector.OnScaleGestureListener listener;
-  private float scaleFactor = 1;
-  private float focusX;
-  private float focusY;
+    private MotionEvent onTouchEventMotionEvent;
 
-  @Implementation
-  protected void __constructor__(
-      Context context, ScaleGestureDetector.OnScaleGestureListener listener) {
-    this.listener = listener;
-  }
+    private ScaleGestureDetector.OnScaleGestureListener listener;
 
-  @Implementation
-  protected boolean onTouchEvent(MotionEvent event) {
-    onTouchEventMotionEvent = event;
-    return true;
-  }
+    private float scaleFactor = 1;
 
-  public MotionEvent getOnTouchEventMotionEvent() {
-    return onTouchEventMotionEvent;
-  }
+    private float focusX;
 
-  public void reset() {
-    onTouchEventMotionEvent = null;
-    scaleFactor = 1;
-    focusX = 0;
-    focusY = 0;
-  }
+    private float focusY;
 
-  public ScaleGestureDetector.OnScaleGestureListener getListener() {
-    return listener;
-  }
+    @Implementation
+    protected void __constructor__(Context context, ScaleGestureDetector.OnScaleGestureListener listener) {
+        System.out.println("ShadowScaleGestureDetector#__constructor__");
+        this.listener = listener;
+    }
 
-  public void setScaleFactor(float scaleFactor) {
-    this.scaleFactor = scaleFactor;
-  }
+    @Implementation
+    protected boolean onTouchEvent(MotionEvent event) {
+        System.out.println("ShadowScaleGestureDetector#onTouchEvent");
+        onTouchEventMotionEvent = event;
+        return true;
+    }
 
-  @Implementation
-  protected float getScaleFactor() {
-    return scaleFactor;
-  }
+    public MotionEvent getOnTouchEventMotionEvent() {
+        return onTouchEventMotionEvent;
+    }
 
-  public void setFocusXY(float focusX, float focusY) {
-    this.focusX = focusX;
-    this.focusY = focusY;
-  }
+    public void reset() {
+        onTouchEventMotionEvent = null;
+        scaleFactor = 1;
+        focusX = 0;
+        focusY = 0;
+    }
 
-  @Implementation
-  protected float getFocusX() {
-    return focusX;
-  }
+    public ScaleGestureDetector.OnScaleGestureListener getListener() {
+        return listener;
+    }
 
-  @Implementation
-  protected float getFocusY() {
-    return focusY;
-  }
+    public void setScaleFactor(float scaleFactor) {
+        this.scaleFactor = scaleFactor;
+    }
+
+    @Implementation
+    protected float getScaleFactor() {
+        System.out.println("ShadowScaleGestureDetector#getScaleFactor");
+        return scaleFactor;
+    }
+
+    public void setFocusXY(float focusX, float focusY) {
+        this.focusX = focusX;
+        this.focusY = focusY;
+    }
+
+    @Implementation
+    protected float getFocusX() {
+        System.out.println("ShadowScaleGestureDetector#getFocusX");
+        return focusX;
+    }
+
+    @Implementation
+    protected float getFocusY() {
+        System.out.println("ShadowScaleGestureDetector#getFocusY");
+        return focusY;
+    }
 }
+

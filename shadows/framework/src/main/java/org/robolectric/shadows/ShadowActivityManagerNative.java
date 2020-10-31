@@ -8,11 +8,13 @@ import org.robolectric.util.ReflectionHelpers;
 
 @Implements(value = ActivityManagerNative.class, isInAndroidSdk = false)
 public class ShadowActivityManagerNative {
-  private static final IActivityManager activityManager =
-      ReflectionHelpers.createNullProxy(IActivityManager.class);
 
-  @Implementation
-  static public IActivityManager getDefault() {
-    return activityManager;
-  }
+    private static final IActivityManager activityManager = ReflectionHelpers.createNullProxy(IActivityManager.class);
+
+    @Implementation
+    static public IActivityManager getDefault() {
+        System.out.println("ShadowActivityManagerNative#getDefault");
+        return activityManager;
+    }
 }
+

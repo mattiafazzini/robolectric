@@ -13,152 +13,186 @@ import org.robolectric.shadow.api.Shadow;
 @Implements(EventLog.class)
 public class ShadowEventLog {
 
-  /**
-   * Constant written to the log if the parameter is null.
-   *
-   * <p>This matches how the real android code handles nulls.
-   */
-  static final String NULL_PLACE_HOLDER = "NULL";
+    /**
+     * Constant written to the log if the parameter is null.
+     *
+     * <p>This matches how the real android code handles nulls.
+     */
+    static final String NULL_PLACE_HOLDER = "NULL";
 
-  @Implements(EventLog.Event.class)
-  public static class ShadowEvent {
+    @Implements(EventLog.Event.class)
+    public static class ShadowEvent {
 
-    private Object data;
-    private int tag;
-    private int processId;
-    private int threadId;
-    private long timeNanos;
+        private Object data;
 
-    @Implementation
-    protected Object getData() {
-      return data;
-    }
+        private int tag;
 
-    @Implementation
-    protected int getTag() {
-      return tag;
-    }
+        private int processId;
 
-    @Implementation
-    protected int getProcessId() {
-      return processId;
-    }
+        private int threadId;
 
-    @Implementation
-    protected int getThreadId() {
-      return threadId;
-    }
+        private long timeNanos;
 
-    @Implementation
-    protected long getTimeNanos() {
-      return timeNanos;
-    }
-  }
-
-  private static final List<EventLog.Event> events = new ArrayList<>();
-
-  /** Class to build {@link EventLog.Event} */
-  public static class EventBuilder {
-
-    private final Object data;
-    private final int tag;
-    private int processId = ShadowProcess.myPid();
-    private int threadId = ShadowProcess.myTid();
-    private long timeNanos = System.nanoTime();
-
-    public EventBuilder(int tag, Object data) {
-      this.tag = tag;
-      this.data = data;
-    }
-
-    public EventBuilder setProcessId(int processId) {
-      this.processId = processId;
-      return this;
-    }
-
-    public EventBuilder setThreadId(int threadId) {
-      this.threadId = threadId;
-      return this;
-    }
-
-    public EventBuilder setTimeNanos(long timeNanos) {
-      this.timeNanos = timeNanos;
-      return this;
-    }
-
-    public EventLog.Event build() {
-      EventLog.Event event = Shadow.newInstanceOf(EventLog.Event.class);
-      ShadowEvent shadowEvent = Shadow.extract(event);
-      shadowEvent.data = data;
-      shadowEvent.tag = tag;
-      shadowEvent.processId = processId;
-      shadowEvent.threadId = threadId;
-      shadowEvent.timeNanos = timeNanos;
-      return event;
-    }
-  }
-
-  /** Add event to {@link EventLog}. */
-  public static void addEvent(EventLog.Event event) {
-    events.add(event);
-  }
-
-  @Resetter
-  public static void clearAll() {
-    events.clear();
-  }
-
-  /** Writes an event log message, returning an approximation of the bytes written. */
-  @Implementation
-  protected static int writeEvent(int tag, String str) {
-    if (str == null) {
-      str = NULL_PLACE_HOLDER;
-    }
-    addEvent(new EventBuilder(tag, str).build());
-    return Integer.BYTES + str.length();
-  }
-
-  /** Writes an event log message, returning an approximation of the bytes written. */
-  @Implementation
-  protected static int writeEvent(int tag, Object... list) {
-    if (list == null) {
-      // This matches how the real android code handles nulls
-      return writeEvent(tag, (String) null);
-    }
-    addEvent(new EventBuilder(tag, list).build());
-    return Integer.BYTES + list.length * Integer.BYTES;
-  }
-
-  /** Writes an event log message, returning an approximation of the bytes written. */
-  @Implementation
-  protected static int writeEvent(int tag, int value) {
-    addEvent(new EventBuilder(tag, value).build());
-    return Integer.BYTES + Integer.BYTES;
-  }
-
-  /** Writes an event log message, returning an approximation of the bytes written. */
-  @Implementation(minSdk = VERSION_CODES.M)
-  protected static int writeEvent(int tag, float value) {
-    addEvent(new EventBuilder(tag, value).build());
-    return Integer.BYTES + Float.BYTES;
-  }
-
-  /** Writes an event log message, returning an approximation of the bytes written. */
-  @Implementation
-  protected static int writeEvent(int tag, long value) {
-    addEvent(new EventBuilder(tag, value).build());
-    return Integer.BYTES + Long.BYTES;
-  }
-
-  @Implementation
-  protected static void readEvents(int[] tags, Collection<EventLog.Event> output) {
-    for (EventLog.Event event : events) {
-      for (int tag : tags) {
-        if (tag == event.getTag()) {
-          output.add(event);
-          break;
+        @Implementation
+        protected Object getData() {
+            System.out.println("ShadowEvent#getData");
+            return data;
         }
-      }
+
+        @Implementation
+        protected int getTag() {
+            System.out.println("ShadowEvent#getTag");
+            return tag;
+        }
+
+        @Implementation
+        protected int getProcessId() {
+            System.out.println("ShadowEvent#getProcessId");
+            return processId;
+        }
+
+        @Implementation
+        protected int getThreadId() {
+            System.out.println("ShadowEvent#getThreadId");
+            return threadId;
+        }
+
+        @Implementation
+        protected long getTimeNanos() {
+            System.out.println("ShadowEvent#getTimeNanos");
+            return timeNanos;
+        }
     }
-  }
+
+    private static final List<EventLog.Event> events = new ArrayList<>();
+
+    /**
+     * Class to build {@link EventLog.Event}
+     */
+    public static class EventBuilder {
+
+        private final Object data;
+
+        private final int tag;
+
+        private int processId = ShadowProcess.myPid();
+
+        private int threadId = ShadowProcess.myTid();
+
+        private long timeNanos = System.nanoTime();
+
+        public EventBuilder(int tag, Object data) {
+            this.tag = tag;
+            this.data = data;
+        }
+
+        public EventBuilder setProcessId(int processId) {
+            this.processId = processId;
+            return this;
+        }
+
+        public EventBuilder setThreadId(int threadId) {
+            this.threadId = threadId;
+            return this;
+        }
+
+        public EventBuilder setTimeNanos(long timeNanos) {
+            this.timeNanos = timeNanos;
+            return this;
+        }
+
+        public EventLog.Event build() {
+            EventLog.Event event = Shadow.newInstanceOf(EventLog.Event.class);
+            ShadowEvent shadowEvent = Shadow.extract(event);
+            shadowEvent.data = data;
+            shadowEvent.tag = tag;
+            shadowEvent.processId = processId;
+            shadowEvent.threadId = threadId;
+            shadowEvent.timeNanos = timeNanos;
+            return event;
+        }
+    }
+
+    /**
+     * Add event to {@link EventLog}.
+     */
+    public static void addEvent(EventLog.Event event) {
+        events.add(event);
+    }
+
+    @Resetter
+    public static void clearAll() {
+        events.clear();
+    }
+
+    /**
+     * Writes an event log message, returning an approximation of the bytes written.
+     */
+    @Implementation
+    protected static int writeEvent(int tag, String str) {
+        System.out.println("ShadowEventLog#writeEvent");
+        if (str == null) {
+            str = NULL_PLACE_HOLDER;
+        }
+        addEvent(new EventBuilder(tag, str).build());
+        return Integer.BYTES + str.length();
+    }
+
+    /**
+     * Writes an event log message, returning an approximation of the bytes written.
+     */
+    @Implementation
+    protected static int writeEvent(int tag, Object... list) {
+        System.out.println("ShadowEventLog#writeEvent");
+        if (list == null) {
+            // This matches how the real android code handles nulls
+            return writeEvent(tag, (String) null);
+        }
+        addEvent(new EventBuilder(tag, list).build());
+        return Integer.BYTES + list.length * Integer.BYTES;
+    }
+
+    /**
+     * Writes an event log message, returning an approximation of the bytes written.
+     */
+    @Implementation
+    protected static int writeEvent(int tag, int value) {
+        System.out.println("ShadowEventLog#writeEvent");
+        addEvent(new EventBuilder(tag, value).build());
+        return Integer.BYTES + Integer.BYTES;
+    }
+
+    /**
+     * Writes an event log message, returning an approximation of the bytes written.
+     */
+    @Implementation(minSdk = VERSION_CODES.M)
+    protected static int writeEvent(int tag, float value) {
+        System.out.println("ShadowEventLog#writeEvent");
+        addEvent(new EventBuilder(tag, value).build());
+        return Integer.BYTES + Float.BYTES;
+    }
+
+    /**
+     * Writes an event log message, returning an approximation of the bytes written.
+     */
+    @Implementation
+    protected static int writeEvent(int tag, long value) {
+        System.out.println("ShadowEventLog#writeEvent");
+        addEvent(new EventBuilder(tag, value).build());
+        return Integer.BYTES + Long.BYTES;
+    }
+
+    @Implementation
+    protected static void readEvents(int[] tags, Collection<EventLog.Event> output) {
+        System.out.println("ShadowEventLog#readEvents");
+        for (EventLog.Event event : events) {
+            for (int tag : tags) {
+                if (tag == event.getTag()) {
+                    output.add(event);
+                    break;
+                }
+            }
+        }
+    }
 }
+

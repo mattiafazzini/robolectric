@@ -5,24 +5,28 @@ import android.widget.ZoomButtonsController;
 import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings({ "UnusedDeclaration" })
 @Implements(ZoomButtonsController.class)
 public class ShadowZoomButtonsController {
-  private ZoomButtonsController.OnZoomListener listener;
 
-  @Implementation
-  protected void __constructor__(View ownerView) {}
+    private ZoomButtonsController.OnZoomListener listener;
 
-  @Implementation
-  protected void setOnZoomListener(ZoomButtonsController.OnZoomListener listener) {
-    this.listener = listener;
-  }
+    @Implementation
+    protected void __constructor__(View ownerView) {
+    }
 
-  public void simulateZoomInButtonClick() {
-    listener.onZoom(true);
-  }
+    @Implementation
+    protected void setOnZoomListener(ZoomButtonsController.OnZoomListener listener) {
+        System.out.println("ShadowZoomButtonsController#setOnZoomListener");
+        this.listener = listener;
+    }
 
-  public void simulateZoomOutButtonClick() {
-    listener.onZoom(false);
-  }
+    public void simulateZoomInButtonClick() {
+        listener.onZoom(true);
+    }
+
+    public void simulateZoomOutButtonClick() {
+        listener.onZoom(false);
+    }
 }
+

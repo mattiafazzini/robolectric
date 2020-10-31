@@ -7,8 +7,8 @@ import org.robolectric.annotation.Implements;
 @Implements(NsdManager.class)
 public class ShadowNsdManager {
 
-  @Implementation
-  protected void init() {
-    // do not blow up.
-  }
+    @Implementation
+    protected void init() {
+    }
 }
+
