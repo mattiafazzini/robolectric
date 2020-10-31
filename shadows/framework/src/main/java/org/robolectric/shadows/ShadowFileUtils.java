@@ -2,7 +2,6 @@ package org.robolectric.shadows;
 
 import static android.os.Build.VERSION_CODES.P;
 import static org.robolectric.util.ReflectionHelpers.ClassParameter.from;
-
 import android.os.CancellationSignal;
 import android.os.FileUtils;
 import android.os.FileUtils.ProgressListener;
@@ -16,23 +15,11 @@ import org.robolectric.util.ReflectionHelpers;
 @Implements(value = FileUtils.class, isInAndroidSdk = false, minSdk = P)
 public class ShadowFileUtils {
 
-  @Implementation(minSdk = P, maxSdk = P)
-  protected static long copy(
-      FileDescriptor in,
-      FileDescriptor out,
-      ProgressListener listener,
-      CancellationSignal signal,
-      long count)
-      throws IOException {
-    // never do the native copy optimization block
-    return ReflectionHelpers.callStaticMethod(FileUtils.class,
-        "copyInternalUserspace",
-        from(FileDescriptor.class, in),
-        from(FileDescriptor.class, out),
-        from(ProgressListener.class, listener),
-        from(CancellationSignal.class, signal),
-        from(long.class, count));
-  }
-
-
+    @Implementation(minSdk = P, maxSdk = P)
+    protected static long copy(FileDescriptor in, FileDescriptor out, ProgressListener listener, CancellationSignal signal, long count) throws IOException {
+        System.out.println("ShadowFileUtils#copy");
+        // never do the native copy optimization block
+        return ReflectionHelpers.callStaticMethod(FileUtils.class, "copyInternalUserspace", from(FileDescriptor.class, in), from(FileDescriptor.class, out), from(ProgressListener.class, listener), from(CancellationSignal.class, signal), from(long.class, count));
+    }
 }
+

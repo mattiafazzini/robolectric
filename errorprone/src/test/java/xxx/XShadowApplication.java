@@ -11,31 +11,36 @@ import org.robolectric.annotation.Implements;
  */
 @Implements(Application.class)
 public class XShadowApplication {
-  public static XShadowApplication getInstance() {
-    return null;
-  }
 
-  @Implementation
-  public Context getApplicationContext() {
-    return null;
-  }
+    public static XShadowApplication getInstance() {
+        return null;
+    }
 
-  public XShadowAlertDialog getLatestAlertDialog() {
-    return null;
-  }
+    @Implementation
+    public Context getApplicationContext() {
+        System.out.println("XShadowApplication#getApplicationContext");
+        return null;
+    }
 
-  public XShadowDialog getLatestDialog() {
-    return null;
-  }
+    public XShadowAlertDialog getLatestAlertDialog() {
+        return null;
+    }
 
-  public XShadowPopupMenu getLatestPopupMenu() {
-    return null;
-  }
+    public XShadowDialog getLatestDialog() {
+        return null;
+    }
 
-  @Implementation
-  public Looper getMainLooper() {
-    return null;
-  }
+    public XShadowPopupMenu getLatestPopupMenu() {
+        return null;
+    }
 
-  public void runBackgroundTasks() {}
+    @Implementation
+    public Looper getMainLooper() {
+        System.out.println("XShadowApplication#getMainLooper");
+        return null;
+    }
+
+    public void runBackgroundTasks() {
+    }
 }
+

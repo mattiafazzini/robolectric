@@ -11,43 +11,49 @@ import org.robolectric.shadow.api.Shadow;
 
 @Implements(AppWidgetHost.class)
 public class ShadowAppWidgetHost {
-  @RealObject
-  private AppWidgetHost realAppWidgetHost;
 
-  private Context context;
-  private int hostId;
-  private int appWidgetIdToAllocate;
+    @RealObject
+    private AppWidgetHost realAppWidgetHost;
 
-  @Implementation
-  protected void __constructor__(Context context, int hostId) {
-    this.context = context;
-    this.hostId = hostId;
-  }
+    private Context context;
 
-  public Context getContext() {
-    return context;
-  }
+    private int hostId;
 
-  public int getHostId() {
-    return hostId;
-  }
+    private int appWidgetIdToAllocate;
 
-  public void setAppWidgetIdToAllocate(int idToAllocate) {
-    appWidgetIdToAllocate = idToAllocate;
-  }
+    @Implementation
+    protected void __constructor__(Context context, int hostId) {
+        System.out.println("ShadowAppWidgetHost#__constructor__");
+        this.context = context;
+        this.hostId = hostId;
+    }
 
-  @Implementation
-  protected int allocateAppWidgetId() {
-    return appWidgetIdToAllocate;
-  }
+    public Context getContext() {
+        return context;
+    }
 
-  @Implementation
-  protected AppWidgetHostView createView(
-      Context context, int appWidgetId, AppWidgetProviderInfo appWidget) {
-    AppWidgetHostView hostView = new AppWidgetHostView(context);
-    hostView.setAppWidget(appWidgetId, appWidget);
-    ShadowAppWidgetHostView shadowAppWidgetHostView = Shadow.extract(hostView);
-    shadowAppWidgetHostView.setHost(realAppWidgetHost);
-    return hostView;
-  }
+    public int getHostId() {
+        return hostId;
+    }
+
+    public void setAppWidgetIdToAllocate(int idToAllocate) {
+        appWidgetIdToAllocate = idToAllocate;
+    }
+
+    @Implementation
+    protected int allocateAppWidgetId() {
+        System.out.println("ShadowAppWidgetHost#allocateAppWidgetId");
+        return appWidgetIdToAllocate;
+    }
+
+    @Implementation
+    protected AppWidgetHostView createView(Context context, int appWidgetId, AppWidgetProviderInfo appWidget) {
+        System.out.println("ShadowAppWidgetHost#createView");
+        AppWidgetHostView hostView = new AppWidgetHostView(context);
+        hostView.setAppWidget(appWidgetId, appWidget);
+        ShadowAppWidgetHostView shadowAppWidgetHostView = Shadow.extract(hostView);
+        shadowAppWidgetHostView.setHost(realAppWidgetHost);
+        return hostView;
+    }
 }
+

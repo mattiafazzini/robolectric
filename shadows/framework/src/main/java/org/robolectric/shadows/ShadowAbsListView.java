@@ -6,60 +6,68 @@ import org.robolectric.annotation.Implements;
 
 @Implements(AbsListView.class)
 public class ShadowAbsListView extends ShadowAdapterView {
-  private AbsListView.OnScrollListener onScrollListener;
-  private int smoothScrolledPosition;
-  private int lastSmoothScrollByDistance;
-  private int lastSmoothScrollByDuration;
 
-  @Implementation
-  protected void setOnScrollListener(AbsListView.OnScrollListener l) {
-    onScrollListener = l;
-  }
+    private AbsListView.OnScrollListener onScrollListener;
 
-  @Implementation
-  protected void smoothScrollToPosition(int position) {
-    smoothScrolledPosition = position;
-  }
+    private int smoothScrolledPosition;
 
-  @Implementation
-  protected void smoothScrollBy(int distance, int duration) {
-    this.lastSmoothScrollByDistance = distance;
-    this.lastSmoothScrollByDuration = duration;
-  }
+    private int lastSmoothScrollByDistance;
 
-  /**
-   * Robolectric accessor for the onScrollListener
-   *
-   * @return AbsListView.OnScrollListener
-   */
-  public AbsListView.OnScrollListener getOnScrollListener() {
-    return onScrollListener;
-  }
+    private int lastSmoothScrollByDuration;
 
-  /**
-   * Robolectric accessor for the last smoothScrolledPosition
-   *
-   * @return int position
-   */
-  public int getSmoothScrolledPosition() {
-    return smoothScrolledPosition;
-  }
+    @Implementation
+    protected void setOnScrollListener(AbsListView.OnScrollListener l) {
+        System.out.println("ShadowAbsListView#setOnScrollListener");
+        onScrollListener = l;
+    }
 
-  /**
-   * Robolectric accessor for the last smoothScrollBy distance
-   *
-   * @return int distance
-   */
-  public int getLastSmoothScrollByDistance() {
-    return lastSmoothScrollByDistance;
-  }
+    @Implementation
+    protected void smoothScrollToPosition(int position) {
+        System.out.println("ShadowAbsListView#smoothScrollToPosition");
+        smoothScrolledPosition = position;
+    }
 
-  /**
-   * Robolectric accessor for the last smoothScrollBy duration
-   *
-   * @return int duration
-   */
-  public int getLastSmoothScrollByDuration() {
-    return lastSmoothScrollByDuration;
-  }
+    @Implementation
+    protected void smoothScrollBy(int distance, int duration) {
+        System.out.println("ShadowAbsListView#smoothScrollBy");
+        this.lastSmoothScrollByDistance = distance;
+        this.lastSmoothScrollByDuration = duration;
+    }
+
+    /**
+     * Robolectric accessor for the onScrollListener
+     *
+     * @return AbsListView.OnScrollListener
+     */
+    public AbsListView.OnScrollListener getOnScrollListener() {
+        return onScrollListener;
+    }
+
+    /**
+     * Robolectric accessor for the last smoothScrolledPosition
+     *
+     * @return int position
+     */
+    public int getSmoothScrolledPosition() {
+        return smoothScrolledPosition;
+    }
+
+    /**
+     * Robolectric accessor for the last smoothScrollBy distance
+     *
+     * @return int distance
+     */
+    public int getLastSmoothScrollByDistance() {
+        return lastSmoothScrollByDistance;
+    }
+
+    /**
+     * Robolectric accessor for the last smoothScrollBy duration
+     *
+     * @return int duration
+     */
+    public int getLastSmoothScrollByDuration() {
+        return lastSmoothScrollByDuration;
+    }
 }
+

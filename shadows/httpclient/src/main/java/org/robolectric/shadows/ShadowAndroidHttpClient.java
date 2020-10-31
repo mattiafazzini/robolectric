@@ -21,85 +21,82 @@ import org.robolectric.util.ReflectionHelpers;
 
 @Implements(AndroidHttpClient.class)
 public class ShadowAndroidHttpClient {
-  @RealObject private AndroidHttpClient client;
 
-  private HttpClient httpClient = new DefaultHttpClient();
+    @RealObject
+    private AndroidHttpClient client;
 
-  @Implementation
-  protected static AndroidHttpClient newInstance(String userAgent) {
-    return ReflectionHelpers.callConstructor(AndroidHttpClient.class);
-  }
+    private HttpClient httpClient = new DefaultHttpClient();
 
-  @Implementation
-  protected static AndroidHttpClient newInstance(String userAgent, Context context) {
-    return ReflectionHelpers.callConstructor(AndroidHttpClient.class);
-  }
+    @Implementation
+    protected static AndroidHttpClient newInstance(String userAgent) {
+        System.out.println("ShadowAndroidHttpClient#newInstance");
+        return ReflectionHelpers.callConstructor(AndroidHttpClient.class);
+    }
 
-  @Implementation
-  protected HttpParams getParams() {
-    return httpClient.getParams();
-  }
+    @Implementation
+    protected static AndroidHttpClient newInstance(String userAgent, Context context) {
+        System.out.println("ShadowAndroidHttpClient#newInstance");
+        return ReflectionHelpers.callConstructor(AndroidHttpClient.class);
+    }
 
-  @Implementation
-  protected ClientConnectionManager getConnectionManager() {
-    return httpClient.getConnectionManager();
-  }
+    @Implementation
+    protected HttpParams getParams() {
+        System.out.println("ShadowAndroidHttpClient#getParams");
+        return httpClient.getParams();
+    }
 
-  @Implementation
-  protected HttpResponse execute(HttpUriRequest httpUriRequest)
-      throws IOException, ClientProtocolException {
-    return httpClient.execute(httpUriRequest);
-  }
+    @Implementation
+    protected ClientConnectionManager getConnectionManager() {
+        System.out.println("ShadowAndroidHttpClient#getConnectionManager");
+        return httpClient.getConnectionManager();
+    }
 
-  @Implementation
-  protected HttpResponse execute(HttpUriRequest httpUriRequest, HttpContext httpContext)
-      throws IOException, ClientProtocolException {
-    return httpClient.execute(httpUriRequest, httpContext);
-  }
+    @Implementation
+    protected HttpResponse execute(HttpUriRequest httpUriRequest) throws IOException, ClientProtocolException {
+        System.out.println("ShadowAndroidHttpClient#execute");
+        return httpClient.execute(httpUriRequest);
+    }
 
-  @Implementation
-  protected HttpResponse execute(HttpHost httpHost, HttpRequest httpRequest)
-      throws IOException, ClientProtocolException {
-    return httpClient.execute(httpHost, httpRequest);
-  }
+    @Implementation
+    protected HttpResponse execute(HttpUriRequest httpUriRequest, HttpContext httpContext) throws IOException, ClientProtocolException {
+        System.out.println("ShadowAndroidHttpClient#execute");
+        return httpClient.execute(httpUriRequest, httpContext);
+    }
 
-  @Implementation
-  protected HttpResponse execute(
-      HttpHost httpHost, HttpRequest httpRequest, HttpContext httpContext)
-      throws IOException, ClientProtocolException {
-    return httpClient.execute(httpHost, httpRequest, httpContext);
-  }
+    @Implementation
+    protected HttpResponse execute(HttpHost httpHost, HttpRequest httpRequest) throws IOException, ClientProtocolException {
+        System.out.println("ShadowAndroidHttpClient#execute");
+        return httpClient.execute(httpHost, httpRequest);
+    }
 
-  @Implementation
-  protected <T> T execute(
-      HttpUriRequest httpUriRequest, ResponseHandler<? extends T> responseHandler)
-      throws IOException, ClientProtocolException {
-    return httpClient.execute(httpUriRequest, responseHandler);
-  }
+    @Implementation
+    protected HttpResponse execute(HttpHost httpHost, HttpRequest httpRequest, HttpContext httpContext) throws IOException, ClientProtocolException {
+        System.out.println("ShadowAndroidHttpClient#execute");
+        return httpClient.execute(httpHost, httpRequest, httpContext);
+    }
 
-  @Implementation
-  protected <T> T execute(
-      HttpUriRequest httpUriRequest,
-      ResponseHandler<? extends T> responseHandler,
-      HttpContext httpContext)
-      throws IOException, ClientProtocolException {
-    return httpClient.execute(httpUriRequest, responseHandler, httpContext);
-  }
+    @Implementation
+    protected <T> T execute(HttpUriRequest httpUriRequest, ResponseHandler<? extends T> responseHandler) throws IOException, ClientProtocolException {
+        System.out.println("ShadowAndroidHttpClient#execute");
+        return httpClient.execute(httpUriRequest, responseHandler);
+    }
 
-  @Implementation
-  protected <T> T execute(
-      HttpHost httpHost, HttpRequest httpRequest, ResponseHandler<? extends T> responseHandler)
-      throws IOException, ClientProtocolException {
-    return httpClient.execute(httpHost, httpRequest, responseHandler);
-  }
+    @Implementation
+    protected <T> T execute(HttpUriRequest httpUriRequest, ResponseHandler<? extends T> responseHandler, HttpContext httpContext) throws IOException, ClientProtocolException {
+        System.out.println("ShadowAndroidHttpClient#execute");
+        return httpClient.execute(httpUriRequest, responseHandler, httpContext);
+    }
 
-  @Implementation
-  protected <T> T execute(
-      HttpHost httpHost,
-      HttpRequest httpRequest,
-      ResponseHandler<? extends T> responseHandler,
-      HttpContext httpContext)
-      throws IOException, ClientProtocolException {
-    return httpClient.execute(httpHost, httpRequest, responseHandler, httpContext);
-  }
+    @Implementation
+    protected <T> T execute(HttpHost httpHost, HttpRequest httpRequest, ResponseHandler<? extends T> responseHandler) throws IOException, ClientProtocolException {
+        System.out.println("ShadowAndroidHttpClient#execute");
+        return httpClient.execute(httpHost, httpRequest, responseHandler);
+    }
+
+    @Implementation
+    protected <T> T execute(HttpHost httpHost, HttpRequest httpRequest, ResponseHandler<? extends T> responseHandler, HttpContext httpContext) throws IOException, ClientProtocolException {
+        System.out.println("ShadowAndroidHttpClient#execute");
+        return httpClient.execute(httpHost, httpRequest, responseHandler, httpContext);
+    }
 }
+

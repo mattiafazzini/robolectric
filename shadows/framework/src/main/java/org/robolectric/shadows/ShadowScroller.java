@@ -6,97 +6,117 @@ import org.robolectric.annotation.Implements;
 
 @Implements(Scroller.class)
 public class ShadowScroller {
-  private int startX;
-  private int startY;
-  private int finalX;
-  private int finalY;
-  private long startTime;
-  private long duration;
-  private boolean started;
 
-  @Implementation
-  protected int getStartX() {
-    return startX;
-  }
+    private int startX;
 
-  @Implementation
-  protected int getStartY() {
-    return startY;
-  }
+    private int startY;
 
-  @Implementation
-  protected int getCurrX() {
-    long dt = deltaTime();
-    return dt >= duration ? finalX : startX + (int) ((deltaX() * dt) / duration);
-  }
+    private int finalX;
 
-  @Implementation
-  protected int getCurrY() {
-    long dt = deltaTime();
-    return dt >= duration ? finalY : startY + (int) ((deltaY() * dt) / duration);
-  }
+    private int finalY;
 
-  @Implementation
-  protected int getFinalX() {
-    return finalX;
-  }
+    private long startTime;
 
-  @Implementation
-  protected int getFinalY() {
-    return finalY;
-  }
+    private long duration;
 
-  @Implementation
-  protected int getDuration() {
-    return (int) duration;
-  }
+    private boolean started;
 
-  @Implementation
-  protected void startScroll(int startX, int startY, int dx, int dy, int duration) {
-    this.startX = startX;
-    this.startY = startY;
-    finalX = startX + dx;
-    finalY = startY + dy;
-    startTime = ShadowApplication.getInstance().getForegroundThreadScheduler().getCurrentTime();
-    this.duration = duration;
-    started = true;
-    // enque a dummy task so that the scheduler will actually run
-    ShadowApplication.getInstance().getForegroundThreadScheduler().postDelayed(new Runnable() {
-      @Override
-      public void run() {
-        // do nothing
-      }
-    }, duration);
-  }
-
-  @Implementation
-  protected boolean computeScrollOffset() {
-    if (!started) {
-      return false;
+    @Implementation
+    protected int getStartX() {
+        System.out.println("ShadowScroller#getStartX");
+        return startX;
     }
-    started &= deltaTime() < duration;
-    return true;
-  }
 
-  @Implementation
-  protected boolean isFinished() {
-    return deltaTime() > duration;
-  }
+    @Implementation
+    protected int getStartY() {
+        System.out.println("ShadowScroller#getStartY");
+        return startY;
+    }
 
-  @Implementation
-  protected int timePassed() {
-    return (int) deltaTime();
-  }
+    @Implementation
+    protected int getCurrX() {
+        System.out.println("ShadowScroller#getCurrX");
+        long dt = deltaTime();
+        return dt >= duration ? finalX : startX + (int) ((deltaX() * dt) / duration);
+    }
 
-  private long deltaTime() {
-    return ShadowApplication.getInstance().getForegroundThreadScheduler().getCurrentTime() - startTime;
-  }
+    @Implementation
+    protected int getCurrY() {
+        System.out.println("ShadowScroller#getCurrY");
+        long dt = deltaTime();
+        return dt >= duration ? finalY : startY + (int) ((deltaY() * dt) / duration);
+    }
 
-  private int deltaX() {
-    return (finalX - startX);
-  }
+    @Implementation
+    protected int getFinalX() {
+        System.out.println("ShadowScroller#getFinalX");
+        return finalX;
+    }
 
-  private int deltaY() {
-    return (finalY - startY);
-  }
+    @Implementation
+    protected int getFinalY() {
+        System.out.println("ShadowScroller#getFinalY");
+        return finalY;
+    }
+
+    @Implementation
+    protected int getDuration() {
+        System.out.println("ShadowScroller#getDuration");
+        return (int) duration;
+    }
+
+    @Implementation
+    protected void startScroll(int startX, int startY, int dx, int dy, int duration) {
+        System.out.println("ShadowScroller#startScroll");
+        this.startX = startX;
+        this.startY = startY;
+        finalX = startX + dx;
+        finalY = startY + dy;
+        startTime = ShadowApplication.getInstance().getForegroundThreadScheduler().getCurrentTime();
+        this.duration = duration;
+        started = true;
+        // enque a dummy task so that the scheduler will actually run
+        ShadowApplication.getInstance().getForegroundThreadScheduler().postDelayed(new Runnable() {
+
+            @Override
+            public void run() {
+            // do nothing
+            }
+        }, duration);
+    }
+
+    @Implementation
+    protected boolean computeScrollOffset() {
+        System.out.println("ShadowScroller#computeScrollOffset");
+        if (!started) {
+            return false;
+        }
+        started &= deltaTime() < duration;
+        return true;
+    }
+
+    @Implementation
+    protected boolean isFinished() {
+        System.out.println("ShadowScroller#isFinished");
+        return deltaTime() > duration;
+    }
+
+    @Implementation
+    protected int timePassed() {
+        System.out.println("ShadowScroller#timePassed");
+        return (int) deltaTime();
+    }
+
+    private long deltaTime() {
+        return ShadowApplication.getInstance().getForegroundThreadScheduler().getCurrentTime() - startTime;
+    }
+
+    private int deltaX() {
+        return (finalX - startX);
+    }
+
+    private int deltaY() {
+        return (finalY - startY);
+    }
 }
+

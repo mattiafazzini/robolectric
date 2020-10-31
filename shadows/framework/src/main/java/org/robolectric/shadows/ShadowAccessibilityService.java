@@ -12,15 +12,17 @@ import org.robolectric.annotation.Implements;
 @Implements(AccessibilityService.class)
 public class ShadowAccessibilityService extends ShadowService {
 
-  private final List<Integer> globalActionsPerformed = new ArrayList<>();
+    private final List<Integer> globalActionsPerformed = new ArrayList<>();
 
-  @Implementation
-  protected final boolean performGlobalAction(int action) {
-      globalActionsPerformed.add(action);
-      return true;
+    @Implementation
+    protected final boolean performGlobalAction(int action) {
+        System.out.println("ShadowAccessibilityService#performGlobalAction");
+        globalActionsPerformed.add(action);
+        return true;
     }
 
     public List<Integer> getGlobalActionsPerformed() {
-      return globalActionsPerformed;
+        return globalActionsPerformed;
     }
 }
+

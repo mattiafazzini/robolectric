@@ -9,21 +9,27 @@ import org.robolectric.annotation.RealObject;
 
 @Implements(TouchDelegate.class)
 public class ShadowTouchDelegate {
-  @RealObject private TouchDelegate realObject;
-  private Rect bounds;
-  private View delegateView;
 
-  @Implementation
-  protected void __constructor__(Rect bounds, View delegateView) {
-    this.bounds = bounds;
-    this.delegateView = delegateView;
-  }
+    @RealObject
+    private TouchDelegate realObject;
 
-  public Rect getBounds() {
-    return this.bounds;
-  }
+    private Rect bounds;
 
-  public View getDelegateView() {
-    return this.delegateView;
-  }
+    private View delegateView;
+
+    @Implementation
+    protected void __constructor__(Rect bounds, View delegateView) {
+        System.out.println("ShadowTouchDelegate#__constructor__");
+        this.bounds = bounds;
+        this.delegateView = delegateView;
+    }
+
+    public Rect getBounds() {
+        return this.bounds;
+    }
+
+    public View getDelegateView() {
+        return this.delegateView;
+    }
 }
+

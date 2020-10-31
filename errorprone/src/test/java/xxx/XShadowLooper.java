@@ -9,15 +9,18 @@ import org.robolectric.annotation.Implements;
  */
 @Implements(Looper.class)
 public class XShadowLooper {
-  @Implementation
-  public static Looper getMainLooper() {
-    return null;
-  }
 
-  public String getSchedule() {
-    return null;
-  }
+    @Implementation
+    public static Looper getMainLooper() {
+        System.out.println("XShadowLooper#getMainLooper");
+        return null;
+    }
 
-  public void runToEndOfTasks() {
-  }
+    public String getSchedule() {
+        return null;
+    }
+
+    public void runToEndOfTasks() {
+    }
 }
+

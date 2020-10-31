@@ -10,62 +10,65 @@ import org.robolectric.annotation.Resetter;
 
 @Implements(Binder.class)
 public class ShadowBinder {
-  @RealObject
-  Binder realObject;
 
-  private static Integer callingUid;
-  private static Integer callingPid;
+    @RealObject
+    Binder realObject;
 
-  @Implementation
-  protected boolean transact(int code, Parcel data, Parcel reply, int flags)
-      throws RemoteException {
-   if (data != null) {
-     data.setDataPosition(0);
-   }
+    private static Integer callingUid;
 
-   boolean result;
-   try {
-     result = new ShadowBinderBridge(realObject).onTransact(code, data, reply, flags);
-   } catch (Exception e) {
-     result = true;
-     if (reply != null) {
-       reply.writeException(e);
-     }
-   }
+    private static Integer callingPid;
 
-   if (reply != null) {
-     reply.setDataPosition(0);
-   }
-   return result;
-  }
-
-  @Implementation
-  protected static final int getCallingPid() {
-    if (callingPid != null) {
-      return callingPid;
+    @Implementation
+    protected boolean transact(int code, Parcel data, Parcel reply, int flags) throws RemoteException {
+        System.out.println("ShadowBinder#transact");
+        if (data != null) {
+            data.setDataPosition(0);
+        }
+        boolean result;
+        try {
+            result = new ShadowBinderBridge(realObject).onTransact(code, data, reply, flags);
+        } catch (Exception e) {
+            result = true;
+            if (reply != null) {
+                reply.writeException(e);
+            }
+        }
+        if (reply != null) {
+            reply.setDataPosition(0);
+        }
+        return result;
     }
-    return android.os.Process.myPid();
-  }
 
-  @Implementation
-  protected static final int getCallingUid() {
-    if (callingUid != null) {
-      return callingUid;
+    @Implementation
+    protected static final int getCallingPid() {
+        System.out.println("ShadowBinder#getCallingPid");
+        if (callingPid != null) {
+            return callingPid;
+        }
+        return android.os.Process.myPid();
     }
-    return android.os.Process.myUid();
-  }
 
-  public static void setCallingPid(int pid) {
-    ShadowBinder.callingPid = pid;
-  }
+    @Implementation
+    protected static final int getCallingUid() {
+        System.out.println("ShadowBinder#getCallingUid");
+        if (callingUid != null) {
+            return callingUid;
+        }
+        return android.os.Process.myUid();
+    }
 
-  public static void setCallingUid(int uid) {
-    ShadowBinder.callingUid = uid;
-  }
+    public static void setCallingPid(int pid) {
+        ShadowBinder.callingPid = pid;
+    }
 
-  @Resetter
-  public static void reset() {
-    ShadowBinder.callingPid = null;
-    ShadowBinder.callingUid = null;
-  }
+    public static void setCallingUid(int uid) {
+        ShadowBinder.callingUid = uid;
+    }
+
+    @Resetter
+    public static void reset() {
+        ShadowBinder.callingPid = null;
+        ShadowBinder.callingUid = null;
+    }
 }
+

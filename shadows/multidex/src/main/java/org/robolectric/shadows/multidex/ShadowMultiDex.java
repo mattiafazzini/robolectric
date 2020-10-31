@@ -8,8 +8,8 @@ import org.robolectric.annotation.Implements;
 @Implements(MultiDex.class)
 public class ShadowMultiDex {
 
-  @Implementation
-  protected static void install(Context context) {
-    // Do nothing since with Robolectric nothing is dexed.
-  }
+    @Implementation
+    protected static void install(Context context) {
+    }
 }
+

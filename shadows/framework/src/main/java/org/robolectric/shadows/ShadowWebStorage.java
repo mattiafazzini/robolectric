@@ -11,8 +11,10 @@ import org.robolectric.annotation.Implements;
 @Implements(value = WebStorage.class)
 public class ShadowWebStorage {
 
-  @Implementation
-  protected static WebStorage getInstance() {
-    return new WebStorage();
-  }
+    @Implementation
+    protected static WebStorage getInstance() {
+        System.out.println("ShadowWebStorage#getInstance");
+        return new WebStorage();
+    }
 }
+

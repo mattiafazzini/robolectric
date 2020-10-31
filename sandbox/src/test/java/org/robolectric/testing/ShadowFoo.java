@@ -7,20 +7,26 @@ import org.robolectric.annotation.RealObject;
 
 @Implements(Foo.class)
 public class ShadowFoo extends ShadowWranglerIntegrationTest.ShadowFooParent {
-  @RealObject public Foo realFooField;
-  public Foo realFooInConstructor;
-  public String name;
 
-  @Override
-  @Implementation
-  protected void __constructor__(String name) {
-    super.__constructor__(name);
-    this.name = name;
-    realFooInConstructor = realFooField;
-  }
+    @RealObject
+    public Foo realFooField;
 
-  @SuppressWarnings({"UnusedDeclaration"})
-  public String getName() {
-    return name;
-  }
+    public Foo realFooInConstructor;
+
+    public String name;
+
+    @Override
+    @Implementation
+    protected void __constructor__(String name) {
+        System.out.println("ShadowFoo#__constructor__");
+        super.__constructor__(name);
+        this.name = name;
+        realFooInConstructor = realFooField;
+    }
+
+    @SuppressWarnings({ "UnusedDeclaration" })
+    public String getName() {
+        return name;
+    }
 }
+

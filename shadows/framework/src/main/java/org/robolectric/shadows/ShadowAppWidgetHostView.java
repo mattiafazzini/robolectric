@@ -9,31 +9,37 @@ import org.robolectric.annotation.Implements;
 @Implements(AppWidgetHostView.class)
 public class ShadowAppWidgetHostView extends ShadowViewGroup {
 
-  private int appWidgetId;
-  private AppWidgetProviderInfo appWidgetInfo;
-  private AppWidgetHost host;
+    private int appWidgetId;
 
-  @Implementation
-  protected void setAppWidget(int appWidgetId, AppWidgetProviderInfo info) {
-    this.appWidgetId = appWidgetId;
-    this.appWidgetInfo = info;
-  }
+    private AppWidgetProviderInfo appWidgetInfo;
 
-  @Implementation
-  protected int getAppWidgetId() {
-    return appWidgetId;
-  }
+    private AppWidgetHost host;
 
-  @Implementation
-  protected AppWidgetProviderInfo getAppWidgetInfo() {
-    return appWidgetInfo;
-  }
+    @Implementation
+    protected void setAppWidget(int appWidgetId, AppWidgetProviderInfo info) {
+        System.out.println("ShadowAppWidgetHostView#setAppWidget");
+        this.appWidgetId = appWidgetId;
+        this.appWidgetInfo = info;
+    }
 
-  public AppWidgetHost getHost() {
-    return host;
-  }
+    @Implementation
+    protected int getAppWidgetId() {
+        System.out.println("ShadowAppWidgetHostView#getAppWidgetId");
+        return appWidgetId;
+    }
 
-  public void setHost(AppWidgetHost host) {
-    this.host = host;
-  }
+    @Implementation
+    protected AppWidgetProviderInfo getAppWidgetInfo() {
+        System.out.println("ShadowAppWidgetHostView#getAppWidgetInfo");
+        return appWidgetInfo;
+    }
+
+    public AppWidgetHost getHost() {
+        return host;
+    }
+
+    public void setHost(AppWidgetHost host) {
+        this.host = host;
+    }
 }
+

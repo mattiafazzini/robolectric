@@ -10,8 +10,11 @@ import org.robolectric.annotation.Implements;
  */
 @Implements(ConnectivityManager.class)
 public class XShadowConnectivityManager {
-  @Implementation
-  public NetworkInfo getActiveNetworkInfo() {
-    return null;
-  }
+
+    @Implementation
+    public NetworkInfo getActiveNetworkInfo() {
+        System.out.println("XShadowConnectivityManager#getActiveNetworkInfo");
+        return null;
+    }
 }
+

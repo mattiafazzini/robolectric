@@ -1,7 +1,6 @@
 package org.robolectric.shadows;
 
 import static android.os.Build.VERSION_CODES.KITKAT;
-
 import android.content.Context;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
@@ -19,90 +18,99 @@ import org.robolectric.util.ReflectionHelpers;
 @Implements(WifiP2pManager.class)
 public class ShadowWifiP2pManager {
 
-  private static final int NO_FAILURE = -1;
+    private static final int NO_FAILURE = -1;
 
-  private int listeningChannel;
-  private int operatingChannel;
-  private WifiP2pManager.GroupInfoListener groupInfoListener;
-  private Handler handler;
-  private int nextActionFailure = NO_FAILURE;
-  private Map<Channel, WifiP2pGroup> p2pGroupmap = new HashMap<>();
+    private int listeningChannel;
 
-  public int getListeningChannel() {
-    return listeningChannel;
-  }
+    private int operatingChannel;
 
-  public int getOperatingChannel() {
-    return operatingChannel;
-  }
+    private WifiP2pManager.GroupInfoListener groupInfoListener;
 
-  public WifiP2pManager.GroupInfoListener getGroupInfoListener() {
-    return groupInfoListener;
-  }
+    private Handler handler;
 
-  @Implementation(minSdk = KITKAT)
-  protected void setWifiP2pChannels(
-      Channel c, int listeningChannel, int operatingChannel, ActionListener al) {
-    Preconditions.checkNotNull(c);
-    Preconditions.checkNotNull(al);
-    this.listeningChannel = listeningChannel;
-    this.operatingChannel = operatingChannel;
-  }
+    private int nextActionFailure = NO_FAILURE;
 
-  @Implementation
-  protected Channel initialize(
-      Context context, Looper looper, WifiP2pManager.ChannelListener listener) {
-    handler = new Handler(looper);
-    return ReflectionHelpers.newInstance(Channel.class);
-  }
+    private Map<Channel, WifiP2pGroup> p2pGroupmap = new HashMap<>();
 
-  @Implementation
-  protected void createGroup(Channel c, ActionListener al) {
-    postActionListener(al);
-  }
-
-  private void postActionListener(final ActionListener al) {
-    if (al == null) {
-      return;
+    public int getListeningChannel() {
+        return listeningChannel;
     }
 
-    handler.post(new Runnable() {
-      @Override
-      public void run() {
-        if (nextActionFailure == -1) {
-          al.onSuccess();
-        } else {
-          al.onFailure(nextActionFailure);
+    public int getOperatingChannel() {
+        return operatingChannel;
+    }
+
+    public WifiP2pManager.GroupInfoListener getGroupInfoListener() {
+        return groupInfoListener;
+    }
+
+    @Implementation(minSdk = KITKAT)
+    protected void setWifiP2pChannels(Channel c, int listeningChannel, int operatingChannel, ActionListener al) {
+        System.out.println("ShadowWifiP2pManager#setWifiP2pChannels");
+        Preconditions.checkNotNull(c);
+        Preconditions.checkNotNull(al);
+        this.listeningChannel = listeningChannel;
+        this.operatingChannel = operatingChannel;
+    }
+
+    @Implementation
+    protected Channel initialize(Context context, Looper looper, WifiP2pManager.ChannelListener listener) {
+        System.out.println("ShadowWifiP2pManager#initialize");
+        handler = new Handler(looper);
+        return ReflectionHelpers.newInstance(Channel.class);
+    }
+
+    @Implementation
+    protected void createGroup(Channel c, ActionListener al) {
+        System.out.println("ShadowWifiP2pManager#createGroup");
+        postActionListener(al);
+    }
+
+    private void postActionListener(final ActionListener al) {
+        if (al == null) {
+            return;
         }
-        nextActionFailure = NO_FAILURE;
-      }
-    });
-  }
+        handler.post(new Runnable() {
 
-  @Implementation
-  protected void requestGroupInfo(final Channel c, final WifiP2pManager.GroupInfoListener gl) {
-    if (gl == null) {
-      return;
+            @Override
+            public void run() {
+                if (nextActionFailure == -1) {
+                    al.onSuccess();
+                } else {
+                    al.onFailure(nextActionFailure);
+                }
+                nextActionFailure = NO_FAILURE;
+            }
+        });
     }
 
-    handler.post(new Runnable() {
-      @Override
-      public void run() {
-        gl.onGroupInfoAvailable(p2pGroupmap.get(c));
-      }
-    });
-  }
+    @Implementation
+    protected void requestGroupInfo(final Channel c, final WifiP2pManager.GroupInfoListener gl) {
+        System.out.println("ShadowWifiP2pManager#requestGroupInfo");
+        if (gl == null) {
+            return;
+        }
+        handler.post(new Runnable() {
 
-  @Implementation
-  protected void removeGroup(Channel c, ActionListener al) {
-    postActionListener(al);
-  }
+            @Override
+            public void run() {
+                gl.onGroupInfoAvailable(p2pGroupmap.get(c));
+            }
+        });
+    }
 
-  public void setNextActionFailure(int nextActionFailure) {
-    this.nextActionFailure = nextActionFailure;
-  }
+    @Implementation
+    protected void removeGroup(Channel c, ActionListener al) {
+        System.out.println("ShadowWifiP2pManager#removeGroup");
+        postActionListener(al);
+    }
 
-  public void setGroupInfo(Channel channel, WifiP2pGroup wifiP2pGroup) {
-    p2pGroupmap.put(channel, wifiP2pGroup);
-  }
+    public void setNextActionFailure(int nextActionFailure) {
+        this.nextActionFailure = nextActionFailure;
+    }
+
+    public void setGroupInfo(Channel channel, WifiP2pGroup wifiP2pGroup) {
+        p2pGroupmap.put(channel, wifiP2pGroup);
+    }
 }
+

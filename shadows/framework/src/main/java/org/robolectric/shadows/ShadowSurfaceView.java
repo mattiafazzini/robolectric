@@ -11,89 +11,94 @@ import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 
 @Implements(SurfaceView.class)
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings({ "UnusedDeclaration" })
 public class ShadowSurfaceView extends ShadowView {
-  private final FakeSurfaceHolder fakeSurfaceHolder = new FakeSurfaceHolder();
 
-  @Implementation
-  protected void onAttachedToWindow() {}
+    private final FakeSurfaceHolder fakeSurfaceHolder = new FakeSurfaceHolder();
 
-  @Implementation
-  protected SurfaceHolder getHolder() {
-    return fakeSurfaceHolder;
-  }
-
-  public FakeSurfaceHolder getFakeSurfaceHolder() {
-    return fakeSurfaceHolder;
-  }
-
-  /**
-   * Robolectric implementation of {@link android.view.SurfaceHolder}.
-   */
-  public static class FakeSurfaceHolder implements SurfaceHolder {
-    private final Set<Callback> callbacks = new HashSet<>();
-
-    @Override
-    public void addCallback(Callback callback) {
-      callbacks.add(callback);
+    @Implementation
+    protected void onAttachedToWindow() {
     }
 
-    public Set<Callback> getCallbacks() {
-      return callbacks;
+    @Implementation
+    protected SurfaceHolder getHolder() {
+        System.out.println("ShadowSurfaceView#getHolder");
+        return fakeSurfaceHolder;
     }
 
-    @Override
-    public void removeCallback(Callback callback) {
-      callbacks.remove(callback);
+    public FakeSurfaceHolder getFakeSurfaceHolder() {
+        return fakeSurfaceHolder;
     }
 
-    @Override
-    public boolean isCreating() {
-      return false;
-    }
+    /**
+     * Robolectric implementation of {@link android.view.SurfaceHolder}.
+     */
+    public static class FakeSurfaceHolder implements SurfaceHolder {
 
-    @Override
-    public void setType(int i) {
-    }
+        private final Set<Callback> callbacks = new HashSet<>();
 
-    @Override
-    public void setFixedSize(int i, int i1) {
-    }
+        @Override
+        public void addCallback(Callback callback) {
+            callbacks.add(callback);
+        }
 
-    @Override
-    public void setSizeFromLayout() {
-    }
+        public Set<Callback> getCallbacks() {
+            return callbacks;
+        }
 
-    @Override
-    public void setFormat(int i) {
-    }
+        @Override
+        public void removeCallback(Callback callback) {
+            callbacks.remove(callback);
+        }
 
-    @Override
-    public void setKeepScreenOn(boolean b) {
-    }
+        @Override
+        public boolean isCreating() {
+            return false;
+        }
 
-    @Override
-    public Canvas lockCanvas() {
-      return null;
-    }
+        @Override
+        public void setType(int i) {
+        }
 
-    @Override
-    public Canvas lockCanvas(Rect rect) {
-      return null;
-    }
+        @Override
+        public void setFixedSize(int i, int i1) {
+        }
 
-    @Override
-    public void unlockCanvasAndPost(Canvas canvas) {
-    }
+        @Override
+        public void setSizeFromLayout() {
+        }
 
-    @Override
-    public Rect getSurfaceFrame() {
-      return null;
-    }
+        @Override
+        public void setFormat(int i) {
+        }
 
-    @Override
-    public Surface getSurface() {
-      return null;
+        @Override
+        public void setKeepScreenOn(boolean b) {
+        }
+
+        @Override
+        public Canvas lockCanvas() {
+            return null;
+        }
+
+        @Override
+        public Canvas lockCanvas(Rect rect) {
+            return null;
+        }
+
+        @Override
+        public void unlockCanvasAndPost(Canvas canvas) {
+        }
+
+        @Override
+        public Rect getSurfaceFrame() {
+            return null;
+        }
+
+        @Override
+        public Surface getSurface() {
+            return null;
+        }
     }
-  }
 }
+

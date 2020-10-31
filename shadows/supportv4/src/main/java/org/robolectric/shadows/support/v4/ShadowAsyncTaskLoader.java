@@ -12,38 +12,50 @@ import org.robolectric.annotation.RealObject;
 
 @Implements(AsyncTaskLoader.class)
 public class ShadowAsyncTaskLoader<D> {
-  @RealObject private AsyncTaskLoader<D> realLoader;
-  private BackgroundWorker worker;
 
-  @Implementation
-  protected void __constructor__(Context context) {
-    worker = new BackgroundWorker();
-  }
+    @RealObject
+    private AsyncTaskLoader<D> realLoader;
 
-  @Implementation
-  protected void onForceLoad() {
-    FutureTask<D> future = new FutureTask<D>(worker) {
-      @Override protected void done() {
-        try {
-          final D result = get();
-          Robolectric.getForegroundThreadScheduler().post(new Runnable() {
-            @Override public void run() {
-              realLoader.deliverResult(result);
-            }
-          });
-        } catch (InterruptedException e) {
-          // Ignore
-        } catch (ExecutionException e) {
-          throw new RuntimeException(e.getCause());
-        }
-      }
-    };
-    Robolectric.getBackgroundThreadScheduler().post(future);
-  }
+    private BackgroundWorker worker;
 
-  private final class BackgroundWorker implements Callable<D> {
-    @Override public D call() throws Exception {
-      return realLoader.loadInBackground();
+    @Implementation
+    protected void __constructor__(Context context) {
+        System.out.println("ShadowAsyncTaskLoader#__constructor__");
+        worker = new BackgroundWorker();
     }
-  }
+
+    @Implementation
+    protected void onForceLoad() {
+        System.out.println("ShadowAsyncTaskLoader#onForceLoad");
+        FutureTask<D> future = new FutureTask<D>(worker) {
+
+            @Override
+            protected void done() {
+                try {
+                    final D result = get();
+                    Robolectric.getForegroundThreadScheduler().post(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            realLoader.deliverResult(result);
+                        }
+                    });
+                } catch (InterruptedException e) {
+                // Ignore
+                } catch (ExecutionException e) {
+                    throw new RuntimeException(e.getCause());
+                }
+            }
+        };
+        Robolectric.getBackgroundThreadScheduler().post(future);
+    }
+
+    private final class BackgroundWorker implements Callable<D> {
+
+        @Override
+        public D call() throws Exception {
+            return realLoader.loadInBackground();
+        }
+    }
 }
+
